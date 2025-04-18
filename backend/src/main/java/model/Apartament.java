@@ -26,4 +26,8 @@ public class Apartament {
     @ManyToOne
     @JoinColumn(name = "building_id", nullable = false)
     private Building building;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "resident_id")
+    private Resident resident;
 }
