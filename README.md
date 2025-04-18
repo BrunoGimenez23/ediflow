@@ -30,9 +30,7 @@ JPA / Hibernate para persistencia
 MySQL como base de datos
 
 📦 Estructura del proyecto
-css
-Copiar
-Editar
+
 ediflow/
 ├── backend/
 │   └── src/
