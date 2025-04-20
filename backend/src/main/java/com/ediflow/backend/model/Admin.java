@@ -1,11 +1,10 @@
-package model;
+package com.ediflow.backend.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.nio.MappedByteBuffer;
 import java.util.List;
 @Data
 @NoArgsConstructor

@@ -1,6 +1,6 @@
-package repository;
+package com.ediflow.backend.repository;
 
-import model.Resident;
+import com.ediflow.backend.model.Resident;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

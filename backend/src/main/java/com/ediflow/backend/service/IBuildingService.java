@@ -1,7 +1,6 @@
 package com.ediflow.backend.service;
 
-import model.Building;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.ediflow.backend.model.Building;
 
 import java.util.List;
 import java.util.Optional;

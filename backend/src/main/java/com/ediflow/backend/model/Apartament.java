@@ -1,4 +1,4 @@
-package model;
+package com.ediflow.backend.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

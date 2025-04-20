@@ -1,9 +1,9 @@
 package com.ediflow.backend.service.impl;
 
 import com.ediflow.backend.service.IBuildingService;
-import model.Building;
+import com.ediflow.backend.model.Building;
 import org.springframework.beans.factory.annotation.Autowired;
-import repository.IBuildingRepository;
+import com.ediflow.backend.repository.IBuildingRepository;
 
 import java.util.List;
 import java.util.Optional;

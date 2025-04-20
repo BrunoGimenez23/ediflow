@@ -1,6 +1,6 @@
-package repository;
+package com.ediflow.backend.repository;
 
-import model.Building;
+import com.ediflow.backend.model.Building;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
