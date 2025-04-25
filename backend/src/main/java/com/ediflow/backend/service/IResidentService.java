@@ -1,6 +1,6 @@
 package com.ediflow.backend.service;
 
-import com.ediflow.backend.model.Resident;
+import com.ediflow.backend.entity.Resident;
 
 import java.util.List;
 import java.util.Optional;

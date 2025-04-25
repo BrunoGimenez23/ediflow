@@ -1,6 +1,6 @@
 package com.ediflow.backend.service.impl;
 
-import com.ediflow.backend.model.Resident;
+import com.ediflow.backend.entity.Resident;
 import com.ediflow.backend.repository.IResidentRepository;
 import com.ediflow.backend.service.IResidentService;
 import org.springframework.beans.factory.annotation.Autowired;

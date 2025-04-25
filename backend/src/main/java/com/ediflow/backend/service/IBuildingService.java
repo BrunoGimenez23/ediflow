@@ -1,6 +1,6 @@
 package com.ediflow.backend.service;
 
-import com.ediflow.backend.model.Building;
+import com.ediflow.backend.entity.Building;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.ediflow.backend.model;
+package com.ediflow.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

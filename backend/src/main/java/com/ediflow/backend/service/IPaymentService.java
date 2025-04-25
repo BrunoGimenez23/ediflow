@@ -1,6 +1,6 @@
 package com.ediflow.backend.service;
 
-import com.ediflow.backend.model.Payment;
+import com.ediflow.backend.entity.Payment;
 
 import java.util.List;
 import java.util.Optional;

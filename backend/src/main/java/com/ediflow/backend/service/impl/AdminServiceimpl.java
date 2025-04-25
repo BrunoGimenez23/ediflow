@@ -1,7 +1,7 @@
 package com.ediflow.backend.service.impl;
 
 import com.ediflow.backend.service.IAdminService;
-import com.ediflow.backend.model.Admin;
+import com.ediflow.backend.entity.Admin;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.ediflow.backend.repository.IAdminRepository;
 

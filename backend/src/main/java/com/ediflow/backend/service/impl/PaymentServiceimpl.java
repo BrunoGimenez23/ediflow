@@ -1,6 +1,6 @@
 package com.ediflow.backend.service.impl;
 
-import com.ediflow.backend.model.Payment;
+import com.ediflow.backend.entity.Payment;
 import com.ediflow.backend.repository.IPaymentRepository;
 import com.ediflow.backend.service.IPaymentService;
 import org.springframework.beans.factory.annotation.Autowired;

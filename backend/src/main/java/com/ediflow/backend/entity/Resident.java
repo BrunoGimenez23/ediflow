@@ -1,4 +1,4 @@
-package com.ediflow.backend.model;
+package com.ediflow.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -19,27 +19,20 @@ public class Resident {
     private Long id;
 
     @Column
-    private String name;
-
-    @Column
-    private String email;
-
-    @Column
     private Integer phone;
 
     @Column
     private Integer ci;
 
-    @Column
-    private String username;
-
-    @Column
-    private String password;
 
     @OneToOne(mappedBy = "resident")
     private Apartament apartament;
 
     @OneToMany(mappedBy = "resident", cascade = CascadeType.ALL)
     private List<Payment> payment;
+
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "user_id")
+    private User user;
 
 }

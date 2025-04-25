@@ -1,7 +1,7 @@
 package com.ediflow.backend.service.impl;
 
 import com.ediflow.backend.service.IApartamentService;
-import com.ediflow.backend.model.Apartament;
+import com.ediflow.backend.entity.Apartament;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.ediflow.backend.repository.IApartamentRepository;
 
