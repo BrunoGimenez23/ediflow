@@ -4,10 +4,11 @@ import com.ediflow.backend.service.IApartamentService;
 import com.ediflow.backend.entity.Apartament;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.ediflow.backend.repository.IApartamentRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-
+@Service
 public class ApartamantServiceimpl implements IApartamentService {
 
     private IApartamentRepository apartamentRepository;

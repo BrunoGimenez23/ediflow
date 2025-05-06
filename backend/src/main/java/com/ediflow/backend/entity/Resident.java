@@ -7,12 +7,16 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-@Data
+
 @NoArgsConstructor
 @AllArgsConstructor
+@Data
 @Entity
 @Table(name = "Residents")
 public class Resident {
+
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "resident_id")

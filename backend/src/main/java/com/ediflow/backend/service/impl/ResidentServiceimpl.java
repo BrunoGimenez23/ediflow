@@ -4,19 +4,20 @@ import com.ediflow.backend.entity.Resident;
 import com.ediflow.backend.repository.IResidentRepository;
 import com.ediflow.backend.service.IResidentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-
+@Service
 public class ResidentServiceimpl implements IResidentService {
 
     private IResidentRepository residentRepository;
-
+    @Autowired
     public ResidentServiceimpl(IResidentRepository residentRepository) {
         this.residentRepository = residentRepository;
     }
 
-    @Autowired
+
 
 
     @Override

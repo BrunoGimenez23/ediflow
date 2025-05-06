@@ -1,16 +1,22 @@
 package com.ediflow.backend.entity;
 
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "Users")
 public class User {
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column
@@ -22,11 +28,11 @@ public class User {
     @Column
     private String username;
 
-    private enum role{
-        ADMIN, RESIDENT
-    }
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")
+    private Enums.Role role;
 
-    @OneToOne(mappedBy = "user")
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private Admin admin;
 
     @OneToOne(mappedBy = "user")

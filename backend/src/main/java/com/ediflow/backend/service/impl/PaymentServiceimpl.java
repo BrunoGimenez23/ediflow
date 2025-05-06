@@ -4,10 +4,11 @@ import com.ediflow.backend.entity.Payment;
 import com.ediflow.backend.repository.IPaymentRepository;
 import com.ediflow.backend.service.IPaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-
+@Service
 public class PaymentServiceimpl implements IPaymentService {
 
     private IPaymentRepository paymentRepository;

@@ -5,12 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data
+
 @NoArgsConstructor
 @AllArgsConstructor
+@Data
 @Table(name = "Apartaments")
 @Entity
 public class Apartament {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,7 +20,7 @@ public class Apartament {
     private Long id;
 
     @Column
-    private String number;
+    private Integer number;
 
     @Column
     private Integer floor;
