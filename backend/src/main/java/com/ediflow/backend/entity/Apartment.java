@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@Table(name = "Apartaments")
+@Table
 @Entity
-public class Apartament {
+public class Apartment {
 
 
     @Id

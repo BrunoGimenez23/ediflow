@@ -12,9 +12,8 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 @Entity
-@Table(name = "Residents")
+@Table
 public class Resident {
-
 
 
     @Id
@@ -26,11 +25,11 @@ public class Resident {
     private Integer phone;
 
     @Column
-    private Integer ci;
+    private Long ci;
 
 
     @OneToOne(mappedBy = "resident")
-    private Apartament apartament;
+    private Apartment apartment;
 
     @OneToMany(mappedBy = "resident", cascade = CascadeType.ALL)
     private List<Payment> payment;
@@ -39,4 +38,6 @@ public class Resident {
     @JoinColumn(name = "user_id")
     private User user;
 
+    public void setBuilding(Building building) {
+    }
 }

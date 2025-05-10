@@ -1,8 +1,8 @@
 package com.ediflow.backend.controller;
 
 import com.ediflow.backend.dto.admin.AdminDTO;
-import com.ediflow.backend.entity.Admin;
 import com.ediflow.backend.service.IAdminService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +32,12 @@ public class AdminController {
     public ResponseEntity<List<AdminDTO>> findAll() {
         List<AdminDTO> admins = iadminservice.findAll();
         return new ResponseEntity<>(admins, HttpStatus.OK);
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<String> updateAdmin(@PathVariable @Valid Long id, @RequestBody AdminDTO adminDTO){
+        return iadminservice.updateAdmin(id, adminDTO);
+
     }
 
 }

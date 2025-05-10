@@ -1,35 +1,35 @@
 package com.ediflow.backend.service.impl;
 
-import com.ediflow.backend.service.IApartamentService;
-import com.ediflow.backend.entity.Apartament;
+import com.ediflow.backend.service.IApartmentService;
+import com.ediflow.backend.entity.Apartment;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.ediflow.backend.repository.IApartamentRepository;
+import com.ediflow.backend.repository.IApartmentRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 @Service
-public class ApartamantServiceimpl implements IApartamentService {
+public class ApartamantServiceimpl implements IApartmentService {
 
-    private IApartamentRepository apartamentRepository;
+    private IApartmentRepository apartamentRepository;
     @Autowired
-    public ApartamantServiceimpl(IApartamentRepository apartamentRepository) {
+    public ApartamantServiceimpl(IApartmentRepository apartamentRepository) {
         this.apartamentRepository = apartamentRepository;
     }
 
     @Override
-    public Apartament save(Apartament apartament) {
-        return apartamentRepository.save(apartament);
+    public Apartment save(Apartment apartment) {
+        return apartamentRepository.save(apartment);
     }
 
     @Override
-    public Optional<Apartament> findById(Long id) {
+    public Optional<Apartment> findById(Long id) {
         return apartamentRepository.findById(id);
     }
 
     @Override
-    public void update(Apartament apartament) {
-        apartamentRepository.save(apartament);
+    public void update(Apartment apartment) {
+        apartamentRepository.save(apartment);
     }
 
     @Override
@@ -38,7 +38,7 @@ public class ApartamantServiceimpl implements IApartamentService {
     }
 
     @Override
-    public List<Apartament> findAll() {
+    public List<Apartment> findAll() {
         return apartamentRepository.findAll();
     }
 }

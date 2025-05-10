@@ -7,10 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ApartamentDTO {
-
+public class ApartmentDTO {
+    private Long id;
     private Integer floor;
-
     private Integer number;
 
 }

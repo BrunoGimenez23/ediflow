@@ -10,10 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ResidentDTO {
 
-    private Long id;
-    private UserDTO userDTO;
-    private String apartamentNumber;
-    private BuildingDTO buildingDTO;
 
+    private Long ci;
+    private UserDTO userDTO;
+    private BuildingDTO buildingDTO;
+    private ApartmentDTO apartmentDTO;
 //    private boolean hasPendingPayments;
 }

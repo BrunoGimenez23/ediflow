@@ -1,19 +1,23 @@
 package com.ediflow.backend.service;
 
+import com.ediflow.backend.dto.ResidentDTO;
 import com.ediflow.backend.entity.Resident;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface IResidentService {
-    Resident save (Resident resident);
+
+    ResponseEntity<String> createResident(ResidentDTO newResident);
 
     Optional<Resident> findById (Long id);
 
-    void update (Resident resident);
+
+    ResponseEntity<String> updateResident(Long id, ResidentDTO residentDTO);
 
     void delete (Long id);
 
-    List<Resident> findAll();
+    List<ResidentDTO> findAll();
 
 }

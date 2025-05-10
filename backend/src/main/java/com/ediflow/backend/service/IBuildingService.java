@@ -11,7 +11,9 @@ public interface IBuildingService {
 
     String createBuilding (Building newBuilding);
     Optional<Building> findById (Long id);
-    void update (Building building);
+
+    ResponseEntity<String> updateBuilding(Long id, BuildingDTO buildingDTO);
+
     ResponseEntity<String> deleteBuilding (Long id);
 
     List<BuildingDTO> findAll();

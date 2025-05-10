@@ -39,34 +39,32 @@ public class AdminServiceimpl implements IAdminService {
             return new ResponseEntity<>("Falta informacion del usuario", HttpStatus.BAD_REQUEST);
         }
 
+        // 1. Crear el User
         User user = new User();
+        user.setId(newAdmin.getUserDTO().getId());
         user.setUsername(newAdmin.getUserDTO().getUsername());
         user.setEmail(newAdmin.getUserDTO().getEmail());
-        user.setRole(Enums.Role.ADMIN);
+        user.setRole(Enums.Role.ADMIN);  // Establecer el rol del usuario
 
-        // Intentamos guardar el usuario
+        // 2. Guardar el User primero
         try {
-            user = userRepository.save(user);
+            user = userRepository.save(user); // Guardamos el User
         } catch (Exception e) {
             return new ResponseEntity<>("Error al crear el usuario: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // Crear el admin
+        // 3. Crear el Admin y asociarlo con el User
         Admin admin = new Admin();
-        admin.setUser(user);
+        admin.setUser(user);  // Asociamos el User creado con el Admin
 
-        // Intentamos guardar el admin
+        // 4. Guardar el Admin con el User ya asociado
         try {
-            adminRepository.save(admin);
+            adminRepository.save(admin);  // Guardamos el Admin con la relación establecida
         } catch (Exception e) {
             return new ResponseEntity<>("Error al crear el admin: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         return new ResponseEntity<>("Admin creado correctamente", HttpStatus.CREATED);
-
-
-
-
     }
 
     @Override
@@ -75,8 +73,33 @@ public class AdminServiceimpl implements IAdminService {
     }
 
     @Override
-    public void update(Admin admin) {
-        adminRepository.save(admin);
+    public ResponseEntity<String> updateAdmin(Long id, AdminDTO adminDTO) {
+        boolean adminExist = adminRepository.existsById(id);
+        if (!adminExist) {
+            return new ResponseEntity<>("El admin con id: " + id + "no existe", HttpStatus.BAD_REQUEST);
+        }
+        Admin updateAdmin = adminRepository.findById(id).orElse(null);
+        if (updateAdmin == null) {
+            return new ResponseEntity<>("El admin con id: " + id + " no existe", HttpStatus.BAD_REQUEST);
+        }
+        if (adminDTO.getUserDTO() == null){
+            return new ResponseEntity<>("Falta información del usuario", HttpStatus.BAD_REQUEST);
+        }
+        User user = updateAdmin.getUser();
+        if (user == null){
+            return new ResponseEntity<>("El admin no tiene un usuario asociado", HttpStatus.BAD_REQUEST);
+        }
+
+        user.setUsername(adminDTO.getUserDTO().getUsername());
+        user.setEmail(adminDTO.getUserDTO().getEmail());
+
+        try {
+            adminRepository.save(updateAdmin);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error al actualizar el admin: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>("El admin se actualizo correctamente", HttpStatus.OK);
     }
 
     @Override
@@ -92,28 +115,28 @@ public class AdminServiceimpl implements IAdminService {
     }
 
     @Override
+    @Transactional
     public List<AdminDTO> findAll() {
         List<Admin> admins = adminRepository.findAll();
-
         List<AdminDTO> adminDTOS = new ArrayList<>();
 
         for (Admin admin : admins) {
             if (admin.getUser() != null) {
                 UserDTO userDTO = new UserDTO(
+                        admin.getUser().getId(),
                         admin.getUser().getUsername(),
                         admin.getUser().getEmail(),
-                        admin.getUser().getRole().toString()
+                        admin.getUser().getRole()
                 );
                 AdminDTO adminDTO = new AdminDTO();
                 adminDTO.setId(admin.getId());
                 adminDTO.setUserDTO(userDTO);
+//                adminDTO.setBuildingDTO(adminDTO.getBuildingDTO().getAddress()); Ver como pasar la lista de edificios al findall de admin
                 adminDTOS.add(adminDTO);
             } else {
                 System.out.println("Admin sin usuario: " + admin.getId());
             }
         }
-
-
         return adminDTOS;
     }
 }

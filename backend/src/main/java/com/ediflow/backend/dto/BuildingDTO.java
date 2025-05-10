@@ -17,12 +17,8 @@ import lombok.Setter;
 public class BuildingDTO {
 
     private Long id;
-
     private String name;
-
     private String address;
-
-    private AdminDTO admin;
-
-
+    private AdminDTO adminDTO;
+    private int residentCount;
 }

@@ -19,37 +19,24 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "Admins")
+@Table
 public class Admin {
 
-    public Long getId() {
-        return id;
-    }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public List<Building> getBuildings() {
-        return buildings;
-    }
-
-    public void setBuildings(List<Building> buildings) {
-        this.buildings = buildings;
-    }
-
+    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "admin_id")
     private Long id;
 
 
+    @Setter
     @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<Building> buildings = new ArrayList<>();
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id", nullable = false)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
 
