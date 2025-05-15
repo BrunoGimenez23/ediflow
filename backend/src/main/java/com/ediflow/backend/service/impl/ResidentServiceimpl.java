@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -129,8 +130,16 @@ public class ResidentServiceimpl implements IResidentService {
 
 
     @Override
-    public void delete(Long id) {
-        residentRepository.deleteById(id);
+    public ResponseEntity<String> deleteResident(Long id) {
+        boolean residentExist = residentRepository.findById(id).isPresent();
+        if (residentExist) {
+            residentRepository.deleteById(id);
+            return new ResponseEntity<>("Residente eliminado correctamente",HttpStatus.OK);
+        } else {
+
+                return new ResponseEntity<>("Residente no encontrado",HttpStatus.BAD_REQUEST);
+        }
+
     }
 
     @Override

@@ -31,8 +31,7 @@ public class BuildingController {
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteBuilding(@PathVariable Long id) {
-        iBuildingService.deleteBuilding(id);
-        return new ResponseEntity<>("Edificio eliminado correctamente",HttpStatus.OK);
+        return iBuildingService.deleteBuilding(id);
     }
 
     @PutMapping("/update/{id}")

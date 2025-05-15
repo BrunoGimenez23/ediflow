@@ -82,8 +82,14 @@ public class BuildingServiceimpl implements IBuildingService {
 
     @Override
     public ResponseEntity<String> deleteBuilding(Long id) {
-        buildingRepository.deleteById(id);
-        return new ResponseEntity<>("Usuario eliminado correctamente", HttpStatus.OK);
+        boolean buildingExist = buildingRepository.findById(id).isPresent();
+        if (buildingExist){
+            buildingRepository.deleteById(id);
+            return new ResponseEntity<>("Edificio eliminado correctamente",HttpStatus.OK);
+        } else {
+
+            return new ResponseEntity<>("Edificio no encontrado",HttpStatus.BAD_REQUEST);
+        }
     }
 
     @Override
@@ -113,6 +119,16 @@ public class BuildingServiceimpl implements IBuildingService {
                                 0 // residentCount
                         );
                         adminBuildings.add(adminBuildingDTO);
+                    }
+                }
+
+                System.out.println("Building admin: " + building.getAdmin());
+                if (building.getAdmin() != null) {
+                    System.out.println("Admin ID: " + building.getAdmin().getId());
+                    System.out.println("Admin User: " + building.getAdmin().getUser());
+                    if (building.getAdmin().getUser() != null) {
+                        System.out.println("User ID: " + building.getAdmin().getUser().getId());
+                        System.out.println("User email: " + building.getAdmin().getUser().getEmail());
                     }
                 }
 

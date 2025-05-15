@@ -1,5 +1,6 @@
 package com.ediflow.backend.service.impl;
 
+import com.ediflow.backend.dto.BuildingDTO;
 import com.ediflow.backend.dto.admin.AdminDTO;
 import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.entity.Admin;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +36,7 @@ public class AdminServiceimpl implements IAdminService {
 
     @Override
     @Transactional
-    public ResponseEntity<String> createAdmin(AdminDTO newAdmin) {
+    public ResponseEntity<String> createAdmin(@RequestBody AdminDTO newAdmin) {
         if (newAdmin.getUserDTO() == null) {
             return new ResponseEntity<>("Falta informacion del usuario", HttpStatus.BAD_REQUEST);
         }
@@ -128,10 +130,26 @@ public class AdminServiceimpl implements IAdminService {
                         admin.getUser().getEmail(),
                         admin.getUser().getRole()
                 );
+
+                // Convertir lista de Building a lista de BuildingDTO
+                List<BuildingDTO> buildingDTOS = new ArrayList<>();
+                if (admin.getBuildings() != null) {
+                    for (Building building : admin.getBuildings()) {
+                        BuildingDTO buildingDTO = new BuildingDTO(
+                                building.getId(),
+                                building.getName(),
+                                building.getAddress()
+                                // si tenés más campos, agregalos acá
+                        );
+                        buildingDTOS.add(buildingDTO);
+                    }
+                }
+
                 AdminDTO adminDTO = new AdminDTO();
                 adminDTO.setId(admin.getId());
                 adminDTO.setUserDTO(userDTO);
-//                adminDTO.setBuildingDTO(adminDTO.getBuildingDTO().getAddress()); Ver como pasar la lista de edificios al findall de admin
+                adminDTO.setBuildings(buildingDTOS);  // <-- Aquí seteás la lista de edificios
+
                 adminDTOS.add(adminDTO);
             } else {
                 System.out.println("Admin sin usuario: " + admin.getId());

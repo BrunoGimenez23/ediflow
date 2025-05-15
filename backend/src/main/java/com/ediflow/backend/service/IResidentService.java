@@ -16,7 +16,7 @@ public interface IResidentService {
 
     ResponseEntity<String> updateResident(Long id, ResidentDTO residentDTO);
 
-    void delete (Long id);
+    ResponseEntity<String> deleteResident (Long id);
 
     List<ResidentDTO> findAll();
 
