@@ -1,5 +1,7 @@
-package com.ediflow.backend.dto;
+package com.ediflow.backend.dto.apartment;
 
+import com.ediflow.backend.dto.building.BuildingDTO;
+import com.ediflow.backend.dto.resident.ResidentDTO;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,4 +23,5 @@ public class ApartmentDTO {
     @NotNull(message = "El edificio es obligatorio")
     private BuildingDTO buildingDTO;
 
+    private ResidentDTO residentDTO;
 }

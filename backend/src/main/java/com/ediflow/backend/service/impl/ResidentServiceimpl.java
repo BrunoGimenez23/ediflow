@@ -1,6 +1,8 @@
 package com.ediflow.backend.service.impl;
 
-import com.ediflow.backend.dto.ResidentDTO;
+import com.ediflow.backend.dto.apartment.ApartmentDTO;
+import com.ediflow.backend.dto.building.BuildingDTO;
+import com.ediflow.backend.dto.resident.ResidentDTO;
 import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.entity.Apartment;
 import com.ediflow.backend.entity.Building;
@@ -12,11 +14,9 @@ import com.ediflow.backend.repository.IResidentRepository;
 import com.ediflow.backend.repository.IUserRepository;
 import com.ediflow.backend.service.IResidentService;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,13 +44,13 @@ public class ResidentServiceimpl implements IResidentService {
         User user = new User();
         user.setUsername(newResident.getUserDTO().getUsername());
         user.setEmail(newResident.getUserDTO().getEmail());
+        user.setPassword(newResident.getUserDTO().getPassword());
 
         if (newResident.getUserDTO().getRole() == null) {
             return new ResponseEntity<>("El campo role es obligatorio", HttpStatus.BAD_REQUEST);
         }
 
         try {
-            // Asegurarse de que el role recibido sea un valor válido del enum
             user.setRole(newResident.getUserDTO().getRole());
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>("Valor de role inválido", HttpStatus.BAD_REQUEST);
@@ -60,8 +60,19 @@ public class ResidentServiceimpl implements IResidentService {
         resident.setUser(user);
         resident.setCi(newResident.getCi());
 
+        // ✅ Vincular departamento y edificio si vienen en el DTO
+        if (newResident.getApartmentDTO() != null && newResident.getApartmentDTO().getId() != null) {
+            Optional<Apartment> apartmentOptional = apartmentRepository.findById(newResident.getApartmentDTO().getId());
+            if (apartmentOptional.isPresent()) {
+                Apartment apartment = apartmentOptional.get();
+                resident.setApartment(apartment);
+                resident.setBuilding(apartment.getBuilding());
+            } else {
+                return new ResponseEntity<>("Apartamento no encontrado", HttpStatus.BAD_REQUEST);
+            }
+        }
+
         try {
-            // Guardar el User y el Resident
             userRepository.save(user);
             residentRepository.save(resident);
         } catch (Exception e) {
@@ -145,28 +156,49 @@ public class ResidentServiceimpl implements IResidentService {
     @Override
     public List<ResidentDTO> findAll() {
         List<Resident> residents = residentRepository.findAll();
-
         List<ResidentDTO> residentDTOS = new ArrayList<>();
 
         for (Resident resident : residents) {
-            if (resident.getUser() != null) {
+            if (resident.getUser() == null) continue; // Si no tiene usuario, lo saltamos
 
-                UserDTO userDTO = new UserDTO(
-                        resident.getUser().getId(),
-                        resident.getUser().getUsername(),
-                        resident.getUser().getEmail(),
-                        resident.getUser().getRole()
-                );
+            // Crear UserDTO
+            User user = resident.getUser();
+            UserDTO userDTO = new UserDTO(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRole()
+            );
 
-                ResidentDTO residentDTO = new ResidentDTO();
-                residentDTO.setCi(resident.getCi());
-                residentDTO.setUserDTO(userDTO);
+            // Crear ResidentDTO base
+            ResidentDTO residentDTO = new ResidentDTO();
+            residentDTO.setId(resident.getId());
+            residentDTO.setCi(resident.getCi());
+            residentDTO.setUserDTO(userDTO);
 
-                residentDTOS.add(residentDTO);
+            // Obtener apartment y armar ApartmentDTO si existe
+            Apartment apartment = resident.getApartment();
+            if (apartment != null) {
+                ApartmentDTO apartmentDTO = new ApartmentDTO();
+                apartmentDTO.setId(apartment.getId());
+                apartmentDTO.setNumber(apartment.getNumber());
+                apartmentDTO.setFloor(apartment.getFloor());
+                residentDTO.setApartmentDTO(apartmentDTO);
 
-
+                // Obtener building desde apartment y armar BuildingDTO si existe
+                Building building = apartment.getBuilding();
+                if (building != null) {
+                    BuildingDTO buildingDTO = new BuildingDTO();
+                    buildingDTO.setId(building.getId());
+                    buildingDTO.setName(building.getName());
+                    buildingDTO.setAddress(building.getAddress());
+                    residentDTO.setBuildingDTO(buildingDTO);
+                }
             }
+
+            residentDTOS.add(residentDTO);
         }
+
         return residentDTOS;
     }
 }

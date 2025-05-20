@@ -1,10 +1,7 @@
-package com.ediflow.backend.entity;
-
-public class Enums {
+package com.ediflow.backend.enums;
 
     public enum Role {
         ADMIN,
         RESIDENT
     }
 
-}

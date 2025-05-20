@@ -1,7 +1,8 @@
 package com.ediflow.backend.service.impl;
 
-import com.ediflow.backend.dto.ApartmentDTO;
-import com.ediflow.backend.dto.BuildingDTO;
+import com.ediflow.backend.dto.apartment.ApartmentDTO;
+import com.ediflow.backend.dto.apartment.ApartmentSummaryDTO;
+import com.ediflow.backend.dto.building.BuildingDTO;
 import com.ediflow.backend.entity.Building;
 import com.ediflow.backend.repository.IBuildingRepository;
 import com.ediflow.backend.service.IApartmentService;
@@ -38,24 +39,20 @@ public class ApartmentServiceimpl implements IApartmentService {
         }
 
         Optional<Building> buildingOpt = buildingRepository.findById(newApartment.getBuildingDTO().getId());
-        if (!buildingOpt.isPresent()) {
+        if (buildingOpt.isEmpty()) {
             return new ResponseEntity<>("Edificio no encontrado", HttpStatus.NOT_FOUND);
         }
 
         Building building = buildingOpt.get();
 
-        try {
-            Apartment apartment = new Apartment();
-            apartment.setNumber(newApartment.getNumber());
-            apartment.setFloor(newApartment.getFloor());
-            apartment.setBuilding(building);
+        Apartment apartment = new Apartment();
+        apartment.setNumber(newApartment.getNumber());
+        apartment.setFloor(newApartment.getFloor());
+        apartment.setBuilding(building);
 
-            apartmentRepository.save(apartment);
+        apartmentRepository.save(apartment);
 
-            return new ResponseEntity<>("Apartamento creado con éxito", HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error al crear el apartamento: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        return new ResponseEntity<>("Apartamento creado con éxito", HttpStatus.CREATED);
     }
 
     @Override
@@ -64,13 +61,42 @@ public class ApartmentServiceimpl implements IApartmentService {
     }
 
     @Override
-    public void update(Apartment apartment) {
-        apartmentRepository.save(apartment);
+    public ResponseEntity<String> updateApartment(Long id, ApartmentDTO apartmentDTO) {
+        if (apartmentDTO == null) {
+            return new ResponseEntity<>("Datos del apartamento requeridos", HttpStatus.BAD_REQUEST);
+        }
+
+        Optional<Apartment> optionalApartment = apartmentRepository.findById(id);
+
+        if (optionalApartment.isEmpty()) {
+            return new ResponseEntity<>("Apartamento no encontrado", HttpStatus.BAD_REQUEST);
+        }
+
+        Apartment apartment = optionalApartment.get();
+
+        if (apartmentDTO.getNumber() != null) {
+            apartment.setNumber(apartmentDTO.getNumber());
+        }
+
+        if (apartmentDTO.getFloor() != null) {
+            apartment.setFloor(apartmentDTO.getFloor());
+        }
+
+        try {
+            apartmentRepository.save(apartment);
+            return new ResponseEntity<>("Apartamento actualizado correctamente", HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Error al actualizar el apartamento: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
-    public void delete(Long id) {
+    public ResponseEntity<String> deleteApartment(Long id) {
+        if (!apartmentRepository.existsById(id)){
+            return new ResponseEntity<>("Apartamento no encontrado",HttpStatus.BAD_REQUEST);
+        }
         apartmentRepository.deleteById(id);
+        return new ResponseEntity<>("Apartamento eliminado correctamente",HttpStatus.OK);
     }
 
     @Override
@@ -98,5 +124,22 @@ public class ApartmentServiceimpl implements IApartmentService {
         }
 
         return apartmentsDTO;
+    }
+
+    @Override
+    public List<ApartmentSummaryDTO> findByBuildingId(Long id) {
+       List<Apartment> apartments = apartmentRepository.findByBuildingId(id);
+       List<ApartmentSummaryDTO> apartamentsDTO = new ArrayList<>();
+
+       for (Apartment apartment : apartments){
+           ApartmentSummaryDTO dto = new ApartmentSummaryDTO();
+
+           dto.setId(apartment.getId());
+           dto.setNumber(apartment.getNumber());
+           dto.setFloor(apartment.getFloor());
+
+           apartamentsDTO.add(dto);
+       }
+       return apartamentsDTO;
     }
 }

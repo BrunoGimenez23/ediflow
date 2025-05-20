@@ -1,12 +1,15 @@
 package com.ediflow.backend.service.impl;
 
-import com.ediflow.backend.dto.BuildingDTO;
+import com.ediflow.backend.dto.building.BuildingDTO;
 import com.ediflow.backend.dto.admin.AdminDTO;
+import com.ediflow.backend.dto.building.BuildingDetailDTO;
+import com.ediflow.backend.dto.building.BuildingSummaryDTO;
 import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.entity.Admin;
 import com.ediflow.backend.entity.Building;
-import com.ediflow.backend.entity.Enums;
+import com.ediflow.backend.enums.Role;
 import com.ediflow.backend.entity.User;
+import com.ediflow.backend.exception.ResourceNotFoundException;
 import com.ediflow.backend.repository.IAdminRepository;
 import com.ediflow.backend.repository.IUserRepository;
 import com.ediflow.backend.service.IAdminService;
@@ -20,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 @Service
 public class AdminServiceimpl implements IAdminService {
     @Autowired
@@ -36,72 +41,105 @@ public class AdminServiceimpl implements IAdminService {
 
     @Override
     @Transactional
-    public ResponseEntity<String> createAdmin(@RequestBody AdminDTO newAdmin) {
+    public AdminDTO createAdmin(AdminDTO newAdmin) {
         if (newAdmin.getUserDTO() == null) {
-            return new ResponseEntity<>("Falta informacion del usuario", HttpStatus.BAD_REQUEST);
+            throw new IllegalArgumentException("Falta información del usuario");
         }
 
-        // 1. Crear el User
+        // Crear y guardar el User
         User user = new User();
-        user.setId(newAdmin.getUserDTO().getId());
         user.setUsername(newAdmin.getUserDTO().getUsername());
+        user.setPassword("admin123");
         user.setEmail(newAdmin.getUserDTO().getEmail());
-        user.setRole(Enums.Role.ADMIN);  // Establecer el rol del usuario
+        user.setRole(Role.ADMIN);
 
-        // 2. Guardar el User primero
-        try {
-            user = userRepository.save(user); // Guardamos el User
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error al crear el usuario: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        user = userRepository.save(user);
 
-        // 3. Crear el Admin y asociarlo con el User
+        // Crear y guardar el Admin
         Admin admin = new Admin();
-        admin.setUser(user);  // Asociamos el User creado con el Admin
+        admin.setUser(user);
+        admin = adminRepository.save(admin);
 
-        // 4. Guardar el Admin con el User ya asociado
-        try {
-            adminRepository.save(admin);  // Guardamos el Admin con la relación establecida
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error al crear el admin: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        // Preparar el AdminDTO de respuesta
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(user.getId());
+        userDTO.setUsername(user.getUsername());
+        userDTO.setEmail(user.getEmail());
+        userDTO.setRole(user.getRole());
 
-        return new ResponseEntity<>("Admin creado correctamente", HttpStatus.CREATED);
+        AdminDTO responseDTO = new AdminDTO();
+        responseDTO.setId(admin.getId());
+        responseDTO.setUserDTO(userDTO);
+        return responseDTO;
     }
 
     @Override
-    public Optional<Admin> findById(Long id) {
-        return adminRepository.findById(id);
+    public Optional<AdminDTO> getAdminById(Long id) {
+        Admin admin = adminRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found with id: " + id));
+
+        // Convertimos a DTO manualmente
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(admin.getUser().getId());
+        userDTO.setUsername(admin.getUser().getUsername());
+        userDTO.setEmail(admin.getUser().getEmail());
+
+        AdminDTO adminDTO = new AdminDTO();
+        adminDTO.setId(admin.getId());
+        adminDTO.setUserDTO(userDTO);
+
+        List<BuildingSummaryDTO> buildingSummaryDTO = admin.getBuildings().stream().map(building -> {
+            BuildingSummaryDTO dto = new BuildingSummaryDTO();
+            dto.setId(building.getId());
+            dto.setName(building.getName());
+            dto.setAddress(building.getAddress());
+
+            return dto;
+        }).collect(Collectors.toList());
+
+        adminDTO.setBuildings(buildingSummaryDTO);
+
+        return Optional.of(adminDTO);
     }
+
 
     @Override
     public ResponseEntity<String> updateAdmin(Long id, AdminDTO adminDTO) {
-        boolean adminExist = adminRepository.existsById(id);
-        if (!adminExist) {
-            return new ResponseEntity<>("El admin con id: " + id + "no existe", HttpStatus.BAD_REQUEST);
+        // 1. Validar que el DTO no sea nulo
+        if (adminDTO == null || adminDTO.getUserDTO() == null) {
+            return new ResponseEntity<>("Falta información del administrador o usuario", HttpStatus.BAD_REQUEST);
         }
-        Admin updateAdmin = adminRepository.findById(id).orElse(null);
-        if (updateAdmin == null) {
+
+        // 2. Buscar el admin por ID en una sola consulta
+        Optional<Admin> optionalAdmin = adminRepository.findById(id);
+        if (optionalAdmin.isEmpty()) {
             return new ResponseEntity<>("El admin con id: " + id + " no existe", HttpStatus.BAD_REQUEST);
         }
-        if (adminDTO.getUserDTO() == null){
-            return new ResponseEntity<>("Falta información del usuario", HttpStatus.BAD_REQUEST);
-        }
+
+        // 3. Obtener el admin existente
+        Admin updateAdmin = optionalAdmin.get();
+
+        // 4. Validar y actualizar el usuario asociado
         User user = updateAdmin.getUser();
-        if (user == null){
+        if (user == null) {
             return new ResponseEntity<>("El admin no tiene un usuario asociado", HttpStatus.BAD_REQUEST);
         }
 
-        user.setUsername(adminDTO.getUserDTO().getUsername());
-        user.setEmail(adminDTO.getUserDTO().getEmail());
+        // 5. Actualizar campos del usuario si vienen con datos
+        if (adminDTO.getUserDTO().getUsername() != null) {
+            user.setUsername(adminDTO.getUserDTO().getUsername());
+        }
+        if (adminDTO.getUserDTO().getEmail() != null) {
+            user.setEmail(adminDTO.getUserDTO().getEmail());
+        }
 
+        // 6. Guardar cambios
         try {
             adminRepository.save(updateAdmin);
+            return new ResponseEntity<>("El admin se actualizó correctamente", HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>("Error al actualizar el admin: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        return new ResponseEntity<>("El admin se actualizo correctamente", HttpStatus.OK);
     }
 
     @Override
@@ -131,28 +169,25 @@ public class AdminServiceimpl implements IAdminService {
                         admin.getUser().getRole()
                 );
 
-                // Convertir lista de Building a lista de BuildingDTO
-                List<BuildingDTO> buildingDTOS = new ArrayList<>();
+                // Convertir lista de Building a lista de BuildingSummaryDTO
+                List<BuildingSummaryDTO> buildingSummaries = new ArrayList<>();
                 if (admin.getBuildings() != null) {
                     for (Building building : admin.getBuildings()) {
-                        BuildingDTO buildingDTO = new BuildingDTO(
+                        BuildingSummaryDTO summary = new BuildingSummaryDTO(
                                 building.getId(),
                                 building.getName(),
                                 building.getAddress()
-                                // si tenés más campos, agregalos acá
                         );
-                        buildingDTOS.add(buildingDTO);
+                        buildingSummaries.add(summary);
                     }
                 }
 
                 AdminDTO adminDTO = new AdminDTO();
                 adminDTO.setId(admin.getId());
                 adminDTO.setUserDTO(userDTO);
-                adminDTO.setBuildings(buildingDTOS);  // <-- Aquí seteás la lista de edificios
+                adminDTO.setBuildings(buildingSummaries);  // <-- Aquí asignás la lista de BuildingSummaryDTO
 
                 adminDTOS.add(adminDTO);
-            } else {
-                System.out.println("Admin sin usuario: " + admin.getId());
             }
         }
         return adminDTOS;

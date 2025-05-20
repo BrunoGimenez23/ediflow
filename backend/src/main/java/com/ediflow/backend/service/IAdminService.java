@@ -9,8 +9,8 @@ import java.util.Optional;
 
 public interface IAdminService {
 
-    ResponseEntity<String> createAdmin (AdminDTO newAdmin);
-    Optional<Admin> findById (Long id);
+    AdminDTO createAdmin (AdminDTO newAdmin);
+    Optional<AdminDTO> getAdminById(Long id);
     ResponseEntity<String> updateAdmin (Long id, AdminDTO adminDTO);
     ResponseEntity<String> deleteAdmin (Long id);
     List<AdminDTO> findAll();

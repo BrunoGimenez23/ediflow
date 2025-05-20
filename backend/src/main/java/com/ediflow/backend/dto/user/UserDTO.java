@@ -1,7 +1,7 @@
 package com.ediflow.backend.dto.user;
 
-import com.ediflow.backend.entity.Enums;
-import lombok.AllArgsConstructor;
+import com.ediflow.backend.enums.Role;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,10 +14,12 @@ public class UserDTO {
     private Long id;
     private String username;
     private String email;
-    private Enums.Role role;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
+    private Role role;
 
     // Constructor para findAll
-    public UserDTO(Long id, String username, String email, Enums.Role role) {
+    public UserDTO(Long id, String username, String email, Role role) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -28,7 +30,7 @@ public class UserDTO {
     public UserDTO(String username, String email, String role) {
         this.username = username;
         this.email = email;
-        this.role = role != null ? Enums.Role.valueOf(role) : null;
+        this.role = role != null ? Role.valueOf(role) : null;
     }
 
     // Constructor adicional (opcional, si lo necesitas)
@@ -36,5 +38,8 @@ public class UserDTO {
         this.id = id;
         this.username = username;
         this.email = email;
+    }
+
+    public UserDTO(String username) {
     }
 }

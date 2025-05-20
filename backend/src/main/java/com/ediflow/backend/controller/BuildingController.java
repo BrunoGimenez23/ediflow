@@ -1,6 +1,9 @@
 package com.ediflow.backend.controller;
 
-import com.ediflow.backend.dto.BuildingDTO;
+import com.ediflow.backend.dto.building.BuildingDTO;
+import com.ediflow.backend.dto.building.BuildingDetailDTO;
+import com.ediflow.backend.dto.building.BuildingSummaryDTO;
+import com.ediflow.backend.dto.resident.ResidentSummaryDTO;
 import com.ediflow.backend.entity.Building;
 import com.ediflow.backend.service.IBuildingService;
 import jakarta.validation.Valid;
@@ -18,15 +21,32 @@ public class BuildingController {
     private IBuildingService iBuildingService;
 
     @PostMapping("/building")
-    public String createBuilding(@RequestBody Building newBuilding){
-        iBuildingService.createBuilding(newBuilding);
-        return "Edificio creado";
+    public ResponseEntity<String> createBuilding(@RequestBody BuildingDTO newBuilding) {
+        return iBuildingService.createBuilding(newBuilding);
+
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<BuildingDTO>> findAll() {
-        List<BuildingDTO> buildings = iBuildingService.findAll();
+    @GetMapping("/admin/buildings")
+    public ResponseEntity<List<BuildingDTO>> findAllForAdminPanel() {
+        List<BuildingDTO> buildings = iBuildingService.findAllForAdminPanel();
         return new ResponseEntity<>(buildings, HttpStatus.OK);
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<List<BuildingSummaryDTO>> findAllBuildings(){
+        List<BuildingSummaryDTO> buildings = iBuildingService.findAllBuildings();
+        return new ResponseEntity<>(buildings, HttpStatus.OK);
+    }
+
+    @GetMapping("/building/{id}")
+    public ResponseEntity<BuildingDetailDTO> buildingDetail(@PathVariable @Valid Long id){
+        return iBuildingService.buildingDetail(id);
+
+    }
+
+    @GetMapping("/{id}/residents")
+    public ResponseEntity<ResidentSummaryDTO> residentSummary(@PathVariable @Valid Long id){
+        return iBuildingService.residentSummary(id);
     }
 
     @DeleteMapping("/delete/{id}")

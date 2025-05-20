@@ -1,4 +1,4 @@
-package com.ediflow.backend.dto;
+package com.ediflow.backend.dto.building;
 
 
 
@@ -11,9 +11,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BuildingDTO {
-
-    @NotNull(message = "El ID del edificio es obligatorio")
-    private Long id;
+    Long id;
 
     private String name;
 
@@ -23,9 +21,4 @@ public class BuildingDTO {
 
     private int residentCount;
 
-    public BuildingDTO(Long id, String name, String address) {
-        this.id = id;
-        this.name = name;
-        this.address = address;
-    }
 }

@@ -1,6 +1,7 @@
 package com.ediflow.backend.controller;
 
-import com.ediflow.backend.dto.ResidentDTO;
+import com.ediflow.backend.dto.apartment.ApartmentSummaryDTO;
+import com.ediflow.backend.dto.resident.ResidentDTO;
 import com.ediflow.backend.service.IResidentService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,8 +19,8 @@ public class ResidentController {
 
     @PostMapping("/create")
     public ResponseEntity<String> createResident(@RequestBody ResidentDTO newResident) {
-        residentService.createResident(newResident);
-        return new ResponseEntity<>("Residente guardado", HttpStatus.OK);
+        return residentService.createResident(newResident);
+
     }
 
     @GetMapping("/all")
@@ -37,5 +38,6 @@ public class ResidentController {
     public ResponseEntity<String> deleteResident(@PathVariable Long id) {
         return residentService.deleteResident(id);
     }
+
 
 }

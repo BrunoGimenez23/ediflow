@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 @Entity
-@Table
+@Table(name = "resident")
 public class Resident {
 
 
@@ -28,7 +28,8 @@ public class Resident {
     private Long ci;
 
 
-    @OneToOne(mappedBy = "resident")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "apartment_id", unique = true)
     private Apartment apartment;
 
     @OneToMany(mappedBy = "resident", cascade = CascadeType.ALL)
@@ -38,6 +39,8 @@ public class Resident {
     @JoinColumn(name = "user_id")
     private User user;
 
-    public void setBuilding(Building building) {
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "building_id")
+    private Building building;
+
 }

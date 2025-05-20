@@ -1,18 +1,19 @@
 package com.ediflow.backend.entity;
 
+import com.ediflow.backend.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDate;
 
 
-@Setter
-@Getter
+
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table
+@Table(name = "payment")
 public class Payment {
 
     @Id
@@ -23,16 +24,17 @@ public class Payment {
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal amount;
 
-    @Column
-    private Date date;
+    @Column(nullable = false)
+    private LocalDate date;
 
-    @Column
+    @Column(nullable = false)
     private String concept;
 
-    @Column
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus status;
 
-    @ManyToOne
-    @JoinColumn(name = "resident_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resident_id", nullable = false)
     private Resident resident;
 }

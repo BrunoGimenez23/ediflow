@@ -1,6 +1,9 @@
 package com.ediflow.backend.service;
 
-import com.ediflow.backend.dto.BuildingDTO;
+import com.ediflow.backend.dto.building.BuildingDTO;
+import com.ediflow.backend.dto.building.BuildingDetailDTO;
+import com.ediflow.backend.dto.building.BuildingSummaryDTO;
+import com.ediflow.backend.dto.resident.ResidentSummaryDTO;
 import com.ediflow.backend.entity.Building;
 import org.springframework.http.ResponseEntity;
 
@@ -9,12 +12,18 @@ import java.util.Optional;
 
 public interface IBuildingService {
 
-    String createBuilding (Building newBuilding);
-    Optional<Building> findById (Long id);
+    ResponseEntity<String> createBuilding (BuildingDTO newBuilding);
+    ResponseEntity<BuildingDetailDTO> buildingDetail(Long id);
+
+    ResponseEntity<ResidentSummaryDTO> residentSummary(Long id);
+
+    List<BuildingSummaryDTO> findAllForAdminPanel(Long id);
 
     ResponseEntity<String> updateBuilding(Long id, BuildingDTO buildingDTO);
 
     ResponseEntity<String> deleteBuilding (Long id);
 
-    List<BuildingDTO> findAll();
+    List<BuildingDTO> findAllForAdminPanel();
+
+    List<BuildingSummaryDTO> findAllBuildings();
 }

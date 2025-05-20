@@ -1,6 +1,6 @@
 package com.ediflow.backend.service;
 
-import com.ediflow.backend.dto.ResidentDTO;
+import com.ediflow.backend.dto.resident.ResidentDTO;
 import com.ediflow.backend.entity.Resident;
 import org.springframework.http.ResponseEntity;
 

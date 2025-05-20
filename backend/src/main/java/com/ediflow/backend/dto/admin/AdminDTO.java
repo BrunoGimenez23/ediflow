@@ -1,6 +1,8 @@
 package com.ediflow.backend.dto.admin;
 
-import com.ediflow.backend.dto.BuildingDTO;
+import com.ediflow.backend.dto.building.BuildingDTO;
+import com.ediflow.backend.dto.building.BuildingDetailDTO;
+import com.ediflow.backend.dto.building.BuildingSummaryDTO;
 import com.ediflow.backend.dto.user.UserDTO;
 import lombok.*;
 
@@ -15,6 +17,7 @@ public class AdminDTO {
 
     private UserDTO userDTO;
 
-    private List<BuildingDTO> buildings;
+    private List<BuildingSummaryDTO> buildings;
+
 
 }

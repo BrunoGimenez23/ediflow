@@ -9,27 +9,27 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-@Table
 @Entity
+@Table(name = "apartment")
 public class Apartment {
 
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "apartament_id")
+    @Column(name = "apartment_id")
     private Long id;
 
-    @Column
+    @Column(nullable = false)
     private Integer number;
 
-    @Column
+    @Column(nullable = false)
     private Integer floor;
 
-    @ManyToOne
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "building_id", nullable = false)
     private Building building;
 
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "resident_id")
+    @OneToOne(mappedBy = "apartment", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = true)
     private Resident resident;
 }
