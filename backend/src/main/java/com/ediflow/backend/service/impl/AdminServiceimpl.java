@@ -192,4 +192,9 @@ public class AdminServiceimpl implements IAdminService {
         }
         return adminDTOS;
     }
+
+    @Override
+    public boolean existsByUserId(Long userId) {
+        return adminRepository.existsByUserId(userId);
+    }
 }

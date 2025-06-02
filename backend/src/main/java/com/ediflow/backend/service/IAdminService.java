@@ -14,4 +14,5 @@ public interface IAdminService {
     ResponseEntity<String> updateAdmin (Long id, AdminDTO adminDTO);
     ResponseEntity<String> deleteAdmin (Long id);
     List<AdminDTO> findAll();
+    boolean existsByUserId(Long userId);
 }

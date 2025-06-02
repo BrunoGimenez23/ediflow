@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -24,7 +25,7 @@ public class AdminController {
     private IAdminService iadminservice;
     @Autowired
     private IBuildingService buildingService;
-
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create")
     public ResponseEntity<?> createAdmin(@RequestBody AdminDTO newAdmin) {
         AdminDTO createdAdmin = iadminservice.createAdmin(newAdmin);
@@ -38,32 +39,32 @@ public class AdminController {
         return ResponseEntity.created(location).body(createdAdmin);
     }
 
-
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteAdmin(@PathVariable Long id) {
         return iadminservice.deleteAdmin(id);
 
     }
-
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<AdminDTO> getAdminById(@PathVariable Long id) {
         AdminDTO admin = iadminservice.getAdminById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found with id: " + id));
         return ResponseEntity.ok(admin);
     }
-
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
     public ResponseEntity<List<AdminDTO>> findAll() {
         List<AdminDTO> admins = iadminservice.findAll();
         return new ResponseEntity<>(admins, HttpStatus.OK);
     }
-
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/update/{id}")
     public ResponseEntity<String> updateAdmin(@PathVariable @Valid Long id, @RequestBody AdminDTO adminDTO){
         return iadminservice.updateAdmin(id, adminDTO);
 
     }
-
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}/buildings")
     public ResponseEntity<List<BuildingSummaryDTO>> getBuildingsOfAdmin(@PathVariable Long id) {
         List<BuildingSummaryDTO> buildings = buildingService.findAllForAdminPanel(id);
