@@ -2,14 +2,14 @@ package com.ediflow.backend.dto.user;
 
 import com.ediflow.backend.enums.Role;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 
 @NoArgsConstructor
 @Getter
 @Setter
+@AllArgsConstructor
+@Builder
 public class UserDTO {
     private Long id;
     private String username;

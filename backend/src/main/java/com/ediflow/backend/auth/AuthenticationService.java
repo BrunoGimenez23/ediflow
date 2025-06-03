@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthenticationService {
 
+
     private static final String VALID_ADMIN_INVITE_CODE = "EDIFLOW-ADMIN-2025";
 
     private final IUserRepository userRepository;

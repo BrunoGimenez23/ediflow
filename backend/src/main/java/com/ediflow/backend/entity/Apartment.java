@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 @Table(name = "apartment")
 public class Apartment {
 
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "apartment_id")
