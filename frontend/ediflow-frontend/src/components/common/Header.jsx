@@ -1,5 +1,5 @@
 import React from 'react'
-import Main from './Dashboard/DashboardOverview'
+import Main from '../Dashboard/DashboardOverview'
 
 const Header = () => {
   return (

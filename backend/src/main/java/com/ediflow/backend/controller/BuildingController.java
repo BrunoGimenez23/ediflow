@@ -27,7 +27,7 @@ public class BuildingController {
 
     }
     @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/admin/buildings")
+    @GetMapping
     public ResponseEntity<List<BuildingDTO>> findAllForAdminPanel() {
         List<BuildingDTO> buildings = iBuildingService.findAllForAdminPanel();
         return new ResponseEntity<>(buildings, HttpStatus.OK);

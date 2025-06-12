@@ -11,9 +11,11 @@ import com.ediflow.backend.repository.IApartmentRepository;
 import com.ediflow.backend.repository.IResidentRepository;
 import com.ediflow.backend.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +35,7 @@ public class AuthenticationService {
     public AuthenticationResponse registerAdmin(RegisterRequest request) {
 
         if (!VALID_ADMIN_INVITE_CODE.equals(request.getInviteCode())) {
-            throw new RuntimeException("Código de invitación inválido");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Código de invitación inválido");
         }
 
         var user = User.builder()

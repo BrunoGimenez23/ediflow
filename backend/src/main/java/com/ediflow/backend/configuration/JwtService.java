@@ -1,5 +1,6 @@
 package com.ediflow.backend.configuration;
 
+import com.ediflow.backend.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -23,18 +25,18 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+    public String generateToken(User user) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("roles", List.of("ROLE_" + user.getRole().name()));
+        return buildToken(extraClaims, user.getEmail());
     }
 
-    public String generateToken(
-            Map<String, Object> extractClaims,
-            UserDetails userDetails
+    private String buildToken(Map<String, Object> extractClaims, String subject
     ) {
         return Jwts
                 .builder()
                 .setClaims(extractClaims)
-                .setSubject(userDetails.getUsername())
+                .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
@@ -54,7 +56,7 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    public<T> T extractClaim(String token, Function<Claims, T> claimsTFunction){
+    public <T> T extractClaim(String token, Function<Claims, T> claimsTFunction){
         final Claims claims = extractAllClaims(token);
         return claimsTFunction.apply(claims);
     }
@@ -72,5 +74,4 @@ public class JwtService {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
     }
-
 }
