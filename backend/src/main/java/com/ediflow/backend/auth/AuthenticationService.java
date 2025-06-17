@@ -37,6 +37,12 @@ public class AuthenticationService {
         if (!VALID_ADMIN_INVITE_CODE.equals(request.getInviteCode())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Código de invitación inválido");
         }
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El nombre de usuario ya está en uso");
+        }
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El email ya está registrado");
+        }
 
         var user = User.builder()
                 .username(request.getUsername())

@@ -18,6 +18,9 @@ module.exports = {
         edigreen: '#4CAF50',        // Éxito
         edired: '#EF4444',          // Error
       },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'], // o 'Poppins', etc.
+      },
     },
   },
   plugins: [

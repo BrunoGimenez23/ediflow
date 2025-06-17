@@ -17,7 +17,7 @@ const DashboardOverview = () => {
     },
     {
       type: 'residentes',
-      number: 2, // esto también lo podés sacar de contexto cuando lo tengas
+      number: 60, // esto también lo podés sacar de contexto cuando lo tengas
       icon: <Users />,
       color: 'text-edicyan',
       link: '/admin/residents'
