@@ -36,6 +36,9 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String username;
 
+    @Column(nullable = false)
+    private String fullName;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
@@ -47,6 +50,7 @@ public class User implements UserDetails {
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonIgnore
     private Resident resident;
+
 
 
     @Override
@@ -61,7 +65,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email;
+        return username;
     }
 
     @Override

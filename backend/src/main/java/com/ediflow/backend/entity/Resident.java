@@ -2,6 +2,7 @@ package com.ediflow.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @Data
 @Entity
+@Builder
 @Table(name = "resident")
 public class Resident {
 

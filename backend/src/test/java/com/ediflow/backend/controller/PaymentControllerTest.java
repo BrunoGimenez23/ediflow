@@ -29,9 +29,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -64,13 +66,12 @@ public class PaymentControllerTest {
         ResidentDTO residentDTO = new ResidentDTO();
         residentDTO.setId(1L);
         residentDTO.setCi(12345678L);
-        residentDTO.setUserDTO(new UserDTO(1L, "resident@email.com", "Resident", "1234", Role.RESIDENT));
+        residentDTO.setUserDTO(new UserDTO(1L, "residentUser", "resident@email.com", "1234", Role.RESIDENT, "Resident Full Name"));
 
         paymentDTO = new PaymentDTO();
         paymentDTO.setId(1L);
         paymentDTO.setAmount(BigDecimal.valueOf(1000));
         paymentDTO.setConcept("Expensas");
-        paymentDTO.setDate(LocalDate.now());
         paymentDTO.setStatus(PaymentStatus.PENDING);
         paymentDTO.setResidentDTO(residentDTO);
     }
@@ -79,13 +80,13 @@ public class PaymentControllerTest {
     @WithMockUser(roles = "ADMIN")
     void createPayment_returnsOk() throws Exception {
         Mockito.when(paymentService.createPayment(any(PaymentDTO.class)))
-                .thenReturn(ResponseEntity.ok("Pago creado"));
+                .thenReturn(ResponseEntity.ok(Map.of("message", "Pago creado")));
 
         mockMvc.perform(post("/payment/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(paymentDTO)))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Pago creado"));
+                .andExpect(jsonPath("$.message").value("Pago creado"));
     }
 
     @Test
@@ -103,12 +104,12 @@ public class PaymentControllerTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void deletePayment_returnsOk() throws Exception {
-        Mockito.when(paymentService.deletePayment(1L))
-                .thenReturn(ResponseEntity.ok("Pago eliminado"));
+        Mockito.when(paymentService.deletePayment(eq(1L)))
+                .thenReturn(ResponseEntity.ok(Map.of("message", "Pago eliminado")));
 
         mockMvc.perform(delete("/payment/delete/1"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Pago eliminado"));
+                .andExpect(jsonPath("$.message").value("Pago eliminado"));
     }
 
     @Test
@@ -126,7 +127,6 @@ public class PaymentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(dto.getId()))
                 .andExpect(jsonPath("$[0].amount").value(dto.getAmount()));
-
     }
 
     @Test
@@ -136,7 +136,6 @@ public class PaymentControllerTest {
         payment.setId(1L);
         payment.setAmount(BigDecimal.valueOf(1000));
         payment.setConcept("Expensas");
-        payment.setDate(LocalDate.now());
         payment.setStatus(PaymentStatus.PAID);
 
         User user = new User();

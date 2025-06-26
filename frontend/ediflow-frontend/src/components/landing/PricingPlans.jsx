@@ -1,67 +1,111 @@
-import React from 'react'
+import React, { useState } from 'react'
+
+const plans = [
+  {
+    name: "Básico",
+    icon: "🔹",
+    description: [
+      "1 edificio",
+      "Hasta 20 residentes",
+      "Pagos y reservas",
+      "Soporte por email",
+    ],
+    monthly: 390,
+    yearly: 3900,
+    oneTime: 10900,
+  },
+  {
+    name: "Pro",
+    icon: "🔷",
+    description: [
+      "Hasta 5 edificios",
+      "Hasta 100 residentes",
+      "Reportes y estadísticas",
+      "Soporte prioritario",
+    ],
+    monthly: 790,
+    yearly: 7900,
+    oneTime: 21900,
+    popular: true,
+  },
+  {
+    name: "Enterprise",
+    icon: "🔵",
+    description: [
+      "Edificios ilimitados",
+      "Residentes ilimitados",
+      "Multiusuario",
+      "Integración API (futuro)",
+      "Soporte premium",
+    ],
+    monthly: 1590,
+    yearly: 15900,
+    oneTime: 39900,
+  },
+];
 
 const PricingPlans = () => {
+  const [billing, setBilling] = useState("monthly");
+
   return (
-    <section className="py-16 bg-edigray">
-  <div className="max-w-7xl mx-auto px-4 text-center">
-    {/* Título */}
-    <h2 className="text-3xl font-bold text-ediblue mb-8">Elige tu plan y suscribite</h2>
+    <section className="py-12 px-4 md:px-12 bg-white">
+      <div className="max-w-6xl mx-auto text-center">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+          Planes de Ediflow
+        </h2>
+        <p className="text-gray-600 mb-8">
+          Elegí el plan que mejor se adapte a tus necesidades.
+        </p>
+        <div className="flex justify-center items-center mb-8 gap-4">
+          <span className="text-gray-700 font-medium">Facturación:</span>
+          <button
+            className={`px-4 py-1 rounded-full border ${billing === "monthly" ? "bg-ediblue text-white" : "bg-white text-ediblue"}`}
+            onClick={() => setBilling("monthly")}
+          >
+            Mensual
+          </button>
+          <button
+            className={`px-4 py-1 rounded-full border ${billing === "yearly" ? "bg-ediblue text-white" : "bg-white text-ediblue"}`}
+            onClick={() => setBilling("yearly")}
+          >
+            Anual <span className="text-sm">(2 meses gratis)</span>
+          </button>
+        </div>
 
-    {/* Contenedor de las cards */}
-    <div className="flex flex-col md:flex-row justify-center gap-8">
-      
-      {/* Card Plan Básico */}
-      <div className="flex flex-col bg-white border rounded-lg shadow-md p-6 w-full md:w-1/3">
-        <h3 className="text-xl font-semibold mb-4">Plan Básico</h3>
-        <p className="text-4xl font-bold text-ediblue mb-4">$10<span className="text-base font-normal">/mes</span></p>
-        <p className="mb-6 text-gray-700">Perfecto para empezar a administrar tu primer edificio sin complicaciones.</p>
-        <ul className="flex-1 space-y-2 text-gray-700">
-          <li>✔ Gestión de un edificio</li>
-          <li>✔ Hasta 20 departamentos</li>
-          <li>✔ Soporte vía email</li>
-        </ul>
-        <button className="bg-ediblue text-white rounded-md py-3 font-semibold hover:bg-ediblueLight transition">
-          Suscribirme al Básico
-        </button>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {plans.map((plan) => (
+            <div
+              key={plan.name}
+              className={`rounded-2xl border p-6 shadow-sm transition hover:shadow-lg ${
+                plan.popular ? "border-ediblue" : "border-gray-200"
+              }`}
+            >
+              <div className="text-3xl mb-2">{plan.icon}</div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                {plan.name}
+              </h3>
+              {plan.popular && (
+                <p className="text-xs text-ediblue font-medium mb-1">
+                  Más popular
+                </p>
+              )}
+              <p className="text-3xl font-bold text-gray-800 mb-4">
+                ${billing === "monthly" ? plan.monthly : plan.yearly} <span className="text-base font-normal text-gray-500">/ {billing === "monthly" ? "mes" : "año"}</span>
+              </p>
+              <ul className="text-gray-600 text-left space-y-2 mb-4">
+                {plan.description.map((item, idx) => (
+                  <li key={idx}>• {item}</li>
+                ))}
+              </ul>
+              <div className="text-sm text-gray-500">
+                o pago único: <span className="font-semibold">${plan.oneTime}</span>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-
-      {/* Card Plan Pro */}
-      <div className="flex flex-col bg-white border rounded-lg shadow-md p-6 w-full md:w-1/3">
-        <h3 className="text-xl font-semibold mb-4">Plan Pro</h3>
-        <p className="text-4xl font-bold text-ediblue mb-4">$30<span className="text-base font-normal">/mes</span></p>
-        <p className="mb-6 text-gray-700">Para quienes necesitan administrar varios edificios y tener más control.</p>
-        <ul className="flex-1 space-y-2 mb-6 text-gray-700">
-          <li>✔ Gestión ilimitada de edificios</li>
-          <li>✔ Hasta 100 departamentos</li>
-          <li>✔ Soporte prioritario</li>
-          <li>✔ Reportes básicos</li>
-        </ul>
-        <button className="bg-ediblue text-white rounded-md py-3 font-semibold hover:bg-ediblueLight transition">
-          Suscribirme al Pro
-        </button>
-      </div>
-
-      {/* Card Plan Enterprise */}
-      <div className="flex flex-col bg-white border rounded-lg shadow-md p-6 w-full md:w-1/3">
-        <h3 className="text-xl font-semibold mb-4">Plan Enterprise</h3>
-        <p className="text-4xl font-bold text-ediblue mb-4">$50<span className="text-base font-normal">/mes</span></p>
-        <p className="mb-6 text-gray-700">Solución completa con soporte dedicado y funciones avanzadas para tu empresa.</p>
-        <ul className="flex-1 space-y-2 mb-6 text-gray-700">
-          <li>✔ Gestión ilimitada</li>
-          <li>✔ Departamentos ilimitados</li>
-          <li>✔ Soporte dedicado 24/7</li>
-          <li>✔ Reportes avanzados</li>
-          <li>✔ Integraciones personalizadas</li>
-        </ul>
-        <button className="bg-ediblue text-white rounded-md py-3 font-semibold hover:bg-ediblueLight transition">
-          Suscribirme al Enterprise
-        </button>
-      </div>
-      
-    </div>
-  </div>
-</section>
-  )
-}
+    </section>
+  );
+};
 
 export default PricingPlans

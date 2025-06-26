@@ -18,7 +18,7 @@ const Navbar = () => {
 
         {/* Acciones */}
         <ul className="flex space-x-4 text-white text-lg font-semibold">
-          <Link to="/auth/login-admin">
+          <Link to="/auth/login">
           <li className="cursor-pointer hover:text-ediblueLight">Iniciar sesión</li>
           </Link>
           <Link to="/auth/register-admin">

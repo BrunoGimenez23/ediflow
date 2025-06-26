@@ -17,6 +17,9 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -37,6 +40,27 @@ public class AdminServiceimpl implements IAdminService {
     public AdminServiceimpl(IAdminRepository adminRepository, IUserRepository userRepository) {
         this.adminRepository = adminRepository;
         this.userRepository = userRepository;
+    }
+
+    public Long getLoggedAdminId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof UserDetails) {
+            String email = ((UserDetails) principal).getUsername();  // es el email
+            System.out.println(">>> Email autenticado: " + email);
+
+            return adminRepository.findByUserEmail(email)
+                    .map(Admin::getId)
+                    .orElse(null);
+        }
+
+        return null;
     }
 
     @Override
@@ -162,14 +186,14 @@ public class AdminServiceimpl implements IAdminService {
 
         for (Admin admin : admins) {
             if (admin.getUser() != null) {
-                UserDTO userDTO = new UserDTO(
-                        admin.getUser().getId(),
-                        admin.getUser().getUsername(),
-                        admin.getUser().getEmail(),
-                        admin.getUser().getRole()
-                );
+                UserDTO userDTO = UserDTO.builder()
+                        .id(admin.getUser().getId())
+                        .username(admin.getUser().getUsername())
+                        .email(admin.getUser().getEmail())
+                        .role(admin.getUser().getRole())
+                        .fullName(admin.getUser().getFullName())
+                        .build();
 
-                // Convertir lista de Building a lista de BuildingSummaryDTO
                 List<BuildingSummaryDTO> buildingSummaries = new ArrayList<>();
                 if (admin.getBuildings() != null) {
                     for (Building building : admin.getBuildings()) {
@@ -185,7 +209,7 @@ public class AdminServiceimpl implements IAdminService {
                 AdminDTO adminDTO = new AdminDTO();
                 adminDTO.setId(admin.getId());
                 adminDTO.setUserDTO(userDTO);
-                adminDTO.setBuildings(buildingSummaries);  // <-- Aquí asignás la lista de BuildingSummaryDTO
+                adminDTO.setBuildings(buildingSummaries);
 
                 adminDTOS.add(adminDTO);
             }

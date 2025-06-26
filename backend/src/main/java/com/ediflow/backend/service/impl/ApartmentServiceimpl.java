@@ -3,10 +3,16 @@ package com.ediflow.backend.service.impl;
 import com.ediflow.backend.dto.apartment.ApartmentDTO;
 import com.ediflow.backend.dto.apartment.ApartmentSummaryDTO;
 import com.ediflow.backend.dto.building.BuildingDTO;
+import com.ediflow.backend.dto.resident.ResidentDTO;
+import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.entity.Building;
+import com.ediflow.backend.entity.Resident;
+import com.ediflow.backend.entity.User;
 import com.ediflow.backend.repository.IBuildingRepository;
+import com.ediflow.backend.repository.IResidentRepository;
 import com.ediflow.backend.service.IApartmentService;
 import com.ediflow.backend.entity.Apartment;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.ediflow.backend.repository.IApartmentRepository;
@@ -16,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 @Service
 public class ApartmentServiceimpl implements IApartmentService {
@@ -24,23 +31,60 @@ public class ApartmentServiceimpl implements IApartmentService {
 
     private IBuildingRepository buildingRepository;
 
+    private final AdminServiceimpl adminService;
+    private final IResidentRepository residentRepository;
+
+
     @Autowired
-    public ApartmentServiceimpl(IApartmentRepository apartmentRepository, IBuildingRepository buildingRepository) {
+    public ApartmentServiceimpl(IApartmentRepository apartmentRepository, IBuildingRepository buildingRepository, AdminServiceimpl adminService, IResidentRepository residentRepository) {
         this.apartmentRepository = apartmentRepository;
         this.buildingRepository = buildingRepository;
+        this.adminService = adminService;
+        this.residentRepository = residentRepository;
+    }
+    @Override
+    public ApartmentDTO findByResidentEmail(String email) {
+        Resident resident = residentRepository.findByUserEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("Residente no encontrado para email: " + email));
+        if (resident == null) return null;
+
+        List<Apartment> apartments = apartmentRepository.findByResident(resident);
+        Apartment apartment = apartments.isEmpty() ? null : apartments.get(0);
+
+        if (apartment == null) return null;
+
+        // Conversión manual
+        ApartmentDTO dto = new ApartmentDTO();
+        dto.setId(apartment.getId());
+        dto.setNumber(apartment.getNumber());
+        dto.setFloor(apartment.getFloor());
+
+        if (apartment.getBuilding() != null) {
+            BuildingDTO buildingDTO = new BuildingDTO();
+            buildingDTO.setId(apartment.getBuilding().getId());
+            buildingDTO.setName(apartment.getBuilding().getName());
+            buildingDTO.setAddress(apartment.getBuilding().getAddress());
+            dto.setBuildingDTO(buildingDTO);
+        }
+
+        return dto;
     }
 
 
     @Override
     @Transactional
-    public ResponseEntity<String> createApartment(ApartmentDTO newApartment) {
-        if (newApartment.getBuildingDTO() == null || newApartment.getBuildingDTO().getId() == null) {
-            return new ResponseEntity<>("Falta ID del edificio", HttpStatus.BAD_REQUEST);
+    public ResponseEntity<Map<String, String>> createApartment(ApartmentDTO newApartment) {
+        if (newApartment.getBuildingId() == null) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Falta ID del edificio"));
         }
 
-        Optional<Building> buildingOpt = buildingRepository.findById(newApartment.getBuildingDTO().getId());
+        Optional<Building> buildingOpt = buildingRepository.findById(newApartment.getBuildingId());
         if (buildingOpt.isEmpty()) {
-            return new ResponseEntity<>("Edificio no encontrado", HttpStatus.NOT_FOUND);
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Edificio no encontrado"));
         }
 
         Building building = buildingOpt.get();
@@ -52,8 +96,11 @@ public class ApartmentServiceimpl implements IApartmentService {
 
         apartmentRepository.save(apartment);
 
-        return new ResponseEntity<>("Apartamento creado con éxito", HttpStatus.CREATED);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(Map.of("message", "Apartamento creado con éxito"));
     }
+
 
     @Override
     public Optional<Apartment> findById(Long id) {
@@ -61,15 +108,19 @@ public class ApartmentServiceimpl implements IApartmentService {
     }
 
     @Override
-    public ResponseEntity<String> updateApartment(Long id, ApartmentDTO apartmentDTO) {
+    public ResponseEntity<Map<String, String>> updateApartment(Long id, ApartmentDTO apartmentDTO) {
         if (apartmentDTO == null) {
-            return new ResponseEntity<>("Datos del apartamento requeridos", HttpStatus.BAD_REQUEST);
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Datos del apartamento requeridos"));
         }
 
         Optional<Apartment> optionalApartment = apartmentRepository.findById(id);
 
         if (optionalApartment.isEmpty()) {
-            return new ResponseEntity<>("Apartamento no encontrado", HttpStatus.BAD_REQUEST);
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Apartamento no encontrado"));
         }
 
         Apartment apartment = optionalApartment.get();
@@ -84,40 +135,78 @@ public class ApartmentServiceimpl implements IApartmentService {
 
         try {
             apartmentRepository.save(apartment);
-            return new ResponseEntity<>("Apartamento actualizado correctamente", HttpStatus.OK);
+            return ResponseEntity
+                    .ok(Map.of("message", "Apartamento actualizado correctamente"));
         } catch (Exception e) {
-            return new ResponseEntity<>("Error al actualizar el apartamento: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error al actualizar el apartamento: " + e.getMessage()));
         }
     }
 
     @Override
-    public ResponseEntity<String> deleteApartment(Long id) {
-        if (!apartmentRepository.existsById(id)){
-            return new ResponseEntity<>("Apartamento no encontrado",HttpStatus.BAD_REQUEST);
+    public ResponseEntity<Map<String, String>> deleteApartment(Long id) {
+        if (!apartmentRepository.existsById(id)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Apartamento no encontrado"));
         }
         apartmentRepository.deleteById(id);
-        return new ResponseEntity<>("Apartamento eliminado correctamente",HttpStatus.OK);
+        return ResponseEntity.ok(Map.of("message", "Apartamento eliminado correctamente"));
     }
 
     @Override
     public List<ApartmentDTO> findAll() {
-        List<Apartment> apartments = apartmentRepository.findAll();
+        Long adminId = adminService.getLoggedAdminId();
+        System.out.println(">>> ADMIN ID desde token: " + adminId);
+
+        if (adminId == null) {
+            System.out.println(">>> Admin ID es null, devolviendo lista vacía");
+            return new ArrayList<>();
+        }
+
+        List<Apartment> apartments = apartmentRepository.findByBuilding_Admin_Id(adminId);
+        System.out.println(">>> Apartamentos encontrados: " + apartments.size());
+
         List<ApartmentDTO> apartmentsDTO = new ArrayList<>();
 
         for (Apartment apartment : apartments) {
+            System.out.println(">>> Apartment ID: " + apartment.getId());
             ApartmentDTO apartmentDTO = new ApartmentDTO();
-
             apartmentDTO.setId(apartment.getId());
             apartmentDTO.setNumber(apartment.getNumber());
             apartmentDTO.setFloor(apartment.getFloor());
 
+            // Setear BuildingDTO completo para que React pueda mostrar el nombre del edificio
             if (apartment.getBuilding() != null) {
+                Building building = apartment.getBuilding();
                 BuildingDTO buildingDTO = new BuildingDTO();
-                buildingDTO.setId(apartment.getBuilding().getId());
-                buildingDTO.setName(apartment.getBuilding().getName());
-                buildingDTO.setAddress(apartment.getBuilding().getAddress());
+                buildingDTO.setId(building.getId());
+                buildingDTO.setName(building.getName());
+                buildingDTO.setAddress(building.getAddress()); // si lo necesitás
 
                 apartmentDTO.setBuildingDTO(buildingDTO);
+                apartmentDTO.setBuildingId(building.getId());
+            }
+
+            // Mapear ResidentDTO igual que venías haciendo
+            if (apartment.getResident() != null) {
+                Resident resident = apartment.getResident();
+                ResidentDTO residentDTO = new ResidentDTO();
+                residentDTO.setId(resident.getId());
+                residentDTO.setCi(resident.getCi());
+
+                // UserDTO del residente
+                User user = resident.getUser();
+                if (user != null) {
+                    UserDTO userDTO = new UserDTO();
+                    userDTO.setId(user.getId());
+                    userDTO.setUsername(user.getUsername());
+                    userDTO.setEmail(user.getEmail());
+                    userDTO.setRole(user.getRole());
+                    userDTO.setFullName(user.getFullName());
+                    residentDTO.setUserDTO(userDTO);
+                }
+                apartmentDTO.setResidentDTO(residentDTO);
             }
 
             apartmentsDTO.add(apartmentDTO);
@@ -125,6 +214,8 @@ public class ApartmentServiceimpl implements IApartmentService {
 
         return apartmentsDTO;
     }
+
+
 
     @Override
     public List<ApartmentSummaryDTO> findByBuildingId(Long id) {

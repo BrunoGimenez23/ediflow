@@ -20,4 +20,8 @@ public interface IPaymentService {
     List<PaymentDTO> findAll();
 
     ResponseEntity<List<PaymentByBuildingDTO>> paymentByBuilding(Long id);
+
+    ResponseEntity<String> updatePayment(Long id, PaymentDTO paymentDTO);
+
+    List<PaymentDTO> findPaymentsByResidentId(Long residentId);
 }

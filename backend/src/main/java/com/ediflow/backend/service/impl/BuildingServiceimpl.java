@@ -1,5 +1,6 @@
 package com.ediflow.backend.service.impl;
 
+import com.ediflow.backend.configuration.JwtService;
 import com.ediflow.backend.dto.apartment.ApartmentDTO;
 import com.ediflow.backend.dto.apartment.ApartmentSummaryDTO;
 import com.ediflow.backend.dto.building.BuildingDTO;
@@ -13,6 +14,8 @@ import com.ediflow.backend.entity.*;
 import com.ediflow.backend.repository.*;
 import com.ediflow.backend.service.IApartmentService;
 import com.ediflow.backend.service.IBuildingService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -30,6 +33,11 @@ public class BuildingServiceimpl implements IBuildingService {
     private final IBuildingRepository buildingRepository;
     private final IApartmentRepository apartmentRepository;
     private final IAdminRepository adminRepository;
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private HttpServletRequest request;
 
 
     public BuildingServiceimpl(IResidentRepository residentRepository, IUserRepository userRepository, IBuildingRepository buildingRepository, IApartmentRepository apartmentRepository, IAdminRepository adminRepository) {
@@ -41,14 +49,16 @@ public class BuildingServiceimpl implements IBuildingService {
     }
 
     @Override
-    public ResponseEntity<String> createBuilding(BuildingDTO newBuilding) {
-        if (newBuilding.getAdminDTO() == null){
-            return new ResponseEntity<>("Falta edificio",HttpStatus.BAD_REQUEST);
+    public ResponseEntity<BuildingDTO> createBuilding(BuildingDTO newBuilding) {
+        if (newBuilding.getAdminId() == null){
+            return ResponseEntity.badRequest().build();
         }
-        Optional<Admin> adminOpt = adminRepository.findById(newBuilding.getAdminDTO().getId());
+
+        Optional<Admin> adminOpt = adminRepository.findById(newBuilding.getAdminId());
         if (!adminOpt.isPresent()) {
-            return new ResponseEntity<>("Admin no encontrado", HttpStatus.NOT_FOUND);
+            return ResponseEntity.notFound().build();
         }
+
         Admin admin = adminOpt.get();
 
         try {
@@ -57,12 +67,19 @@ public class BuildingServiceimpl implements IBuildingService {
             building.setAddress(newBuilding.getAddress());
             building.setAdmin(admin);
 
-            admin.getBuildings().add(building);
+            building = buildingRepository.save(building); // guardar y obtener el ID
 
-            buildingRepository.save(building);
-            return new ResponseEntity<>("Edificio creado con éxito", HttpStatus.CREATED);
+            // Convertimos a DTO para devolverlo
+            BuildingDTO dto = new BuildingDTO();
+            dto.setId(building.getId());
+            dto.setName(building.getName());
+            dto.setAddress(building.getAddress());
+            dto.setAdminId(admin.getId());
+
+            return new ResponseEntity<>(dto, HttpStatus.CREATED);
+
         } catch (Exception e){
-            return new ResponseEntity<>("Error al crear el edificio: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -126,13 +143,19 @@ public class BuildingServiceimpl implements IBuildingService {
         return new ResponseEntity<>(dto, HttpStatus.OK);
     }
 
-    public List<BuildingSummaryDTO> findAllForAdminPanel(Long id) {
-        return buildingRepository.findByAdminId(id)
-                .stream()
-                .map(building -> new BuildingSummaryDTO(
-                        building.getId(),
-                        building.getName(),
-                        building.getAddress()
+    @Override
+    public List<BuildingDTO> findAllForAdminPanel(Long adminId) {
+        List<Building> buildings = buildingRepository.findByAdminId(adminId);
+
+        return buildings.stream()
+                .map(b -> new BuildingDTO(
+                        b.getId(),
+                        b.getName(),
+                        b.getAddress(),
+                        b.getAdmin().getId(),
+                        (int) b.getApartments().stream()
+                                .filter(apartment -> apartment.getResident() != null)
+                                .count()
                 ))
                 .collect(Collectors.toList());
     }
@@ -182,61 +205,51 @@ public class BuildingServiceimpl implements IBuildingService {
 
     @Override
     public List<BuildingDTO> findAllForAdminPanel() {
-        List<Building> buildings = buildingRepository.findAll();
+        Long adminId = getLoggedAdminId();
+        if (adminId == null) {
+            return new ArrayList<>();
+        }
+
+        List<Building> buildings = buildingRepository.findByAdminId(adminId);
         List<BuildingDTO> buildingDTOS = new ArrayList<>();
 
         for (Building building : buildings) {
-            AdminDTO adminDTO = null;
-            if (building.getAdmin() != null && building.getAdmin().getUser() != null) {
-                UserDTO userDTO = new UserDTO(
-                        building.getAdmin().getUser().getId(),
-                        building.getAdmin().getUser().getUsername(),
-                        building.getAdmin().getUser().getEmail(),
-                        building.getAdmin().getUser().getRole()
-                );
-
-                // Create a list of BuildingDTOs for the admin's buildings (without adminDTO to avoid circular reference)
-                List<BuildingSummaryDTO> adminBuildingSummaries = new ArrayList<>();
-                if (building.getAdmin().getBuildings() != null) {
-                    for (Building adminBuilding : building.getAdmin().getBuildings()) {
-                        BuildingSummaryDTO summary = new BuildingSummaryDTO(
-                                adminBuilding.getId(),
-                                adminBuilding.getName(),
-                                adminBuilding.getAddress()
-                        );
-                        adminBuildingSummaries.add(summary);
-                    }
-                }
-
-                System.out.println("Building admin: " + building.getAdmin());
-                if (building.getAdmin() != null) {
-                    System.out.println("Admin ID: " + building.getAdmin().getId());
-                    System.out.println("Admin User: " + building.getAdmin().getUser());
-                    if (building.getAdmin().getUser() != null) {
-                        System.out.println("User ID: " + building.getAdmin().getUser().getId());
-                        System.out.println("User email: " + building.getAdmin().getUser().getEmail());
-                    }
-                }
-
-                adminDTO = new AdminDTO(
-                        building.getAdmin().getId(),
-                        userDTO,
-                        adminBuildingSummaries
-                );
-            } else {
-                System.out.println("Admin o User es null para el edificio ID: " + building.getId());
-            }
-
             BuildingDTO dto = new BuildingDTO();
             dto.setId(building.getId());
             dto.setName(building.getName());
             dto.setAddress(building.getAddress());
-            dto.setAdminDTO(adminDTO);
-            dto.setResidentCount(0);
+            dto.setAdminId(building.getAdmin() != null ? building.getAdmin().getId() : null);
+            // Contar residentes por apartamento que tienen residente
+            int residentCount = (int) building.getApartments().stream()
+                    .filter(apartment -> apartment.getResident() != null)
+                    .count();
+            dto.setResidentCount(residentCount);
 
             buildingDTOS.add(dto);
         }
         return buildingDTOS;
+    }
+
+
+    private Long getLoggedAdminId() {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
+        }
+
+        String jwt = authHeader.substring(7);
+        String username = jwtService.extractUsername(jwt);
+        if (username == null) {
+            return null;
+        }
+
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) {
+            return null;
+        }
+
+        Optional<Admin> adminOpt = adminRepository.findByUserId(userOpt.get().getId());
+        return adminOpt.map(Admin::getId).orElse(null);
     }
 
     @Override

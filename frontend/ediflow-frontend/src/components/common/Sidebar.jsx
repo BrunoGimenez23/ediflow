@@ -1,6 +1,6 @@
 import React from 'react'
 import logo from '../../assets/iconos/logo.png';
-import { Building, Users, DollarSign, HouseIcon } from 'lucide-react'
+import { Building, Users, DollarSign, HouseIcon, Home, CalendarDays } from 'lucide-react'
 import { Link } from 'react-router-dom';
 
 const Sidebar = () => {
@@ -12,6 +12,12 @@ const Sidebar = () => {
 
       <div className="flex-grow flex flex-col justify-center w-full mt-[-200px]">
         <ul className="space-y-4 text-lg font-medium w-full">
+          <li>
+            <Link to="/admin" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
+              <Home className="text-edigray" />
+              Inicio
+            </Link>
+          </li>
           <li>
             <Link to="/admin/buildings" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
               <Building className="text-edigray" />
@@ -25,15 +31,21 @@ const Sidebar = () => {
             </Link>
           </li>
           <li>
-            <Link to="/admin/apartments" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
+            <Link to="/admin/apartment" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
               <HouseIcon className="text-edigray" />
               Apartamentos
             </Link>
           </li>
           <li>
-            <Link to="/admin/payments" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
+            <Link to="/admin/payment/all" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
               <DollarSign className="text-edigray" />
               Pagos
+            </Link>
+          </li>
+          <li>
+            <Link to="/admin/reservas" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
+              <CalendarDays className="text-edigray" />
+              Reservas
             </Link>
           </li>
         </ul>

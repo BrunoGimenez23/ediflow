@@ -19,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -62,13 +63,13 @@ public class ApartmentControllerTest {
     @WithMockUser(roles = "ADMIN")
     void createApartment_whenValidInput_thenReturnsOk() throws Exception {
         Mockito.when(apartmentService.createApartment(any(ApartmentDTO.class)))
-                .thenReturn(ResponseEntity.ok("Apartamento creado"));
+                .thenReturn(ResponseEntity.ok(Map.of("message", "Apartamento creado")));
 
         mockMvc.perform(post("/apartment/create")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(sampleApartmentDTO)))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Apartamento creado"));
+                .andExpect(jsonPath("$.message").value("Apartamento creado"));
     }
 
     @Test
@@ -89,24 +90,24 @@ public class ApartmentControllerTest {
     @WithMockUser(roles = "ADMIN")
     void deleteApartment_whenValidId_thenReturnsOk() throws Exception {
         Mockito.when(apartmentService.deleteApartment(eq(1L)))
-                .thenReturn(ResponseEntity.ok("Apartamento eliminado"));
+                .thenReturn(ResponseEntity.ok(Map.of("message", "Apartamento eliminado")));
 
         mockMvc.perform(delete("/apartment/delete/1"))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Apartamento eliminado"));
+                .andExpect(jsonPath("$.message").value("Apartamento eliminado"));
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void updateApartment_whenValidInput_thenReturnsOk() throws Exception {
         Mockito.when(apartmentService.updateApartment(eq(1L), any(ApartmentDTO.class)))
-                .thenReturn(ResponseEntity.ok("Apartamento actualizado"));
+                .thenReturn(ResponseEntity.ok(Map.of("message", "Apartamento actualizado")));
 
         mockMvc.perform(put("/apartment/update/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(sampleApartmentDTO)))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Apartamento actualizado"));
+                .andExpect(jsonPath("$.message").value("Apartamento actualizado"));
     }
 
     @Test

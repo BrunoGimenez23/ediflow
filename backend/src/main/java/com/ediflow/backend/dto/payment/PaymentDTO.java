@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Date;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -17,9 +17,18 @@ import java.util.Date;
 public class PaymentDTO {
     private Long id;
     private BigDecimal amount;
+
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private LocalDate date;
+    private LocalDate issueDate;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate dueDate;
+
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate paymentDate;
+
     private String concept;
     private PaymentStatus status;
     private ResidentDTO residentDTO;
+    private List<PaymentDTO> payment;
 }

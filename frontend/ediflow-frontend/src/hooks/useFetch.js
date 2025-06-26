@@ -7,12 +7,9 @@ export const useFetch = (endpoint) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Obtener token una sola vez al montar el hook
-  const [token] = useState(() => localStorage.getItem("token"));
-
   useEffect(() => {
-    if (!token) {
-      setError("No token found");
+    const token = localStorage.getItem("token");
+    if (!token || !endpoint) {
       setLoading(false);
       return;
     }
@@ -23,7 +20,7 @@ export const useFetch = (endpoint) => {
     fetch(`${API_URL}${endpoint}`, {
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     })
       .then(async (res) => {
@@ -36,7 +33,7 @@ export const useFetch = (endpoint) => {
       .then(setData)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, [endpoint, token]);
+  }, [endpoint]);
 
   return { data, loading, error };
 };

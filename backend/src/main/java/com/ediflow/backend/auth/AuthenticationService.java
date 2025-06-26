@@ -1,15 +1,10 @@
 package com.ediflow.backend.auth;
 
 import com.ediflow.backend.configuration.JwtService;
-import com.ediflow.backend.entity.Admin;
-import com.ediflow.backend.entity.Apartment;
-import com.ediflow.backend.entity.Resident;
-import com.ediflow.backend.entity.User;
+import com.ediflow.backend.dto.user.UserDTO;
+import com.ediflow.backend.entity.*;
 import com.ediflow.backend.enums.Role;
-import com.ediflow.backend.repository.IAdminRepository;
-import com.ediflow.backend.repository.IApartmentRepository;
-import com.ediflow.backend.repository.IResidentRepository;
-import com.ediflow.backend.repository.IUserRepository;
+import com.ediflow.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,12 +25,16 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final IApartmentRepository apartmentRepository;
     private final IResidentRepository residentRepository;
+    private final InvitationCodeRepository invitationCodeRepository;
 
 
     public AuthenticationResponse registerAdmin(RegisterRequest request) {
 
-        if (!VALID_ADMIN_INVITE_CODE.equals(request.getInviteCode())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Código de invitación inválido");
+        InvitationCode code = invitationCodeRepository.findByCode(request.getInviteCode())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Código de invitación inválido"));
+
+        if (!code.isActive() || code.getUsed() >= code.getMaxUses() || !"ADMIN".equals(code.getRole())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Código no válido o ya usado");
         }
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El nombre de usuario ya está en uso");
@@ -49,6 +48,7 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.ADMIN)
+                .fullName(request.getFullName())
                 .build();
 
         userRepository.save(user);
@@ -57,10 +57,22 @@ public class AuthenticationService {
         admin.setUser(user);
         adminRepository.save(admin);
 
+        code.setUsed(code.getUsed() + 1);
+        invitationCodeRepository.save(code);
+
         var token = jwtService.generateToken(user);
+
+        var userDTO = UserDTO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .fullName(user.getFullName())
+                .build();
 
         return AuthenticationResponse.builder()
                 .token(token)
+                .user(userDTO)
                 .build();
 
     }
@@ -75,6 +87,7 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.RESIDENT)
+                .fullName(request.getFullName())
                 .build();
 
         userRepository.save(user);
@@ -82,6 +95,7 @@ public class AuthenticationService {
         var resident = new Resident();
         resident.setUser(user);
         resident.setApartment(apartment);
+        resident.setCi(request.getCi());
         residentRepository.save(resident);
     }
 
@@ -98,8 +112,17 @@ public class AuthenticationService {
 
         var token = jwtService.generateToken(user);
 
+        var userDTO = UserDTO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .fullName(user.getFullName())
+                .build();
+
         return AuthenticationResponse.builder()
                 .token(token)
+                .user(userDTO)
                 .build();
 
     }

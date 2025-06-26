@@ -5,11 +5,12 @@ import com.ediflow.backend.entity.Resident;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface IResidentService {
 
-    ResponseEntity<String> createResident(ResidentDTO newResident);
+    ResponseEntity<Map<String, String>> createResident(ResidentDTO newResident);
 
     Optional<Resident> findById (Long id);
 
@@ -19,5 +20,6 @@ public interface IResidentService {
     ResponseEntity<String> deleteResident (Long id);
 
     List<ResidentDTO> findAll();
+    ResidentDTO findByUserEmail(String email);
 
 }

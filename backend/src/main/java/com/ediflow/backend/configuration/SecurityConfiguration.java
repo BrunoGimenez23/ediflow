@@ -40,15 +40,15 @@ public class SecurityConfiguration {
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Permitir preflight CORS
-                        .requestMatchers(
-                                "/auth/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
+                        .requestMatchers("/resident/me").hasAnyRole("RESIDENT", "ADMIN")
+                        .requestMatchers("/apartment/me").hasAnyRole("RESIDENT", "ADMIN")  // <-- agregar esto
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/auth/me").authenticated()
+                        .requestMatchers("/payment/by-resident/**").hasRole("RESIDENT")
+                        .requestMatchers("/payment/all").hasRole("ADMIN")
+                        .requestMatchers("/admin/buildings/**").hasRole("ADMIN")
                         .requestMatchers("/buildings/**").permitAll()
-                        .requestMatchers("/admin/buildings/**").hasRole("ADMIN") // Aquí proteges con rol ADMIN// temporal, para probar
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

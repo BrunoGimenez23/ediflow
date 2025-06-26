@@ -15,4 +15,5 @@ public interface IAdminService {
     ResponseEntity<String> deleteAdmin (Long id);
     List<AdminDTO> findAll();
     boolean existsByUserId(Long userId);
+    Long getLoggedAdminId();
 }

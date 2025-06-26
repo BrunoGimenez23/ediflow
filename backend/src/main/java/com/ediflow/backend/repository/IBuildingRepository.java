@@ -12,4 +12,5 @@ import java.util.List;
 public interface IBuildingRepository extends JpaRepository<Building, Long> {
     List<Building> findByAdminId(Long adminId);
 
+
 }

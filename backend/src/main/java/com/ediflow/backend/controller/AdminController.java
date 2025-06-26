@@ -17,6 +17,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/admin")
@@ -67,8 +68,13 @@ public class AdminController {
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}/buildings")
     public ResponseEntity<List<BuildingSummaryDTO>> getBuildingsOfAdmin(@PathVariable Long id) {
-        List<BuildingSummaryDTO> buildings = buildingService.findAllForAdminPanel(id);
-        return ResponseEntity.ok(buildings);
+        List<BuildingDTO> buildingDTOs = buildingService.findAllForAdminPanel(id);
+
+        List<BuildingSummaryDTO> summaries = buildingDTOs.stream()
+                .map(dto -> new BuildingSummaryDTO(dto.getId(), dto.getName(), dto.getAddress()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(summaries);
     }
 
 }

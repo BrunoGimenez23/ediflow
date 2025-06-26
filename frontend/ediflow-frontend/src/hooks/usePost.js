@@ -1,43 +1,48 @@
-import { useState } from 'react'
+import { useState } from "react";
 
-const API_URL = import.meta.env.VITE_API_URL
+const API_URL = import.meta.env.VITE_API_URL;
 
 const usePost = () => {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const post = async (endpoint, body) => {
-    setLoading(true)
-    setError(null)
+  const post = async (endpoint, payload) => {
+    setLoading(true);
+    setError(null);
 
     try {
-      const token = localStorage.getItem('token')
-
-      const res = await fetch(`${API_URL}${endpoint}`, {
-        method: 'POST',
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(body),
-      })
+        body: JSON.stringify(payload),
+      });
 
       if (!res.ok) {
-        const text = await res.text()
-        throw new Error(`Error ${res.status}: ${res.statusText} - ${text}`)
+        const text = await res.text(); // para debugging
+        throw new Error(`Error ${res.status}: ${text}`);
       }
 
-      const data = await res.json()
-      return data
+      const contentType = res.headers.get("Content-Type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await res.json();
+        return data;
+      } else {
+        // No content or plain text
+        return {};
+      }
     } catch (err) {
-      setError(err.message)
-      return null
+      setError(err.message);
+      return null;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  return { post, loading, error }
-}
+  return { post, loading, error };
+};
 
-export default usePost
+export default usePost;

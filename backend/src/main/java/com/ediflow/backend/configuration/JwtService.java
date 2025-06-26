@@ -28,7 +28,22 @@ public class JwtService {
     public String generateToken(User user) {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("roles", List.of("ROLE_" + user.getRole().name()));
+        extraClaims.put("userId", user.getId());
         return buildToken(extraClaims, user.getEmail());
+    }
+
+    public Long extractUserId(String token) {
+        return extractClaim(token, claims -> {
+            Object userIdObj = claims.get("userId");
+            if (userIdObj instanceof Integer) {
+                return ((Integer) userIdObj).longValue();
+            } else if (userIdObj instanceof Long) {
+                return (Long) userIdObj;
+            } else if (userIdObj instanceof String) {
+                return Long.parseLong((String) userIdObj);
+            }
+            return null;
+        });
     }
 
     private String buildToken(Map<String, Object> extractClaims, String subject

@@ -25,7 +25,12 @@ public class Payment {
     private BigDecimal amount;
 
     @Column(nullable = false)
-    private LocalDate date;
+    private LocalDate issueDate;
+
+    @Column(nullable = false)
+    private LocalDate dueDate;
+
+    private LocalDate paymentDate;
 
     @Column(nullable = false)
     private String concept;

@@ -21,7 +21,11 @@ public class ApartmentDTO {
     private Integer number;
 
     @NotNull(message = "El edificio es obligatorio")
-    private BuildingDTO buildingDTO;
+    private Long buildingId;
 
     private ResidentDTO residentDTO;
+
+    private BuildingDTO buildingDTO;
+
+
 }

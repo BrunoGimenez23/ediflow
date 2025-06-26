@@ -12,12 +12,12 @@ import java.util.Optional;
 
 public interface IBuildingService {
 
-    ResponseEntity<String> createBuilding (BuildingDTO newBuilding);
+    ResponseEntity<BuildingDTO> createBuilding(BuildingDTO newBuilding);
     ResponseEntity<BuildingDetailDTO> buildingDetail(Long id);
 
     ResponseEntity<ResidentSummaryDTO> residentSummary(Long id);
 
-    List<BuildingSummaryDTO> findAllForAdminPanel(Long id);
+    List<BuildingDTO> findAllForAdminPanel(Long adminId);
 
     ResponseEntity<String> updateBuilding(Long id, BuildingDTO buildingDTO);
 
