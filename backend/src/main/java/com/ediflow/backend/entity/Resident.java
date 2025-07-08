@@ -29,7 +29,6 @@ public class Resident {
     @Column
     private Long ci;
 
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "apartment_id", unique = true)
     private Apartment apartment;

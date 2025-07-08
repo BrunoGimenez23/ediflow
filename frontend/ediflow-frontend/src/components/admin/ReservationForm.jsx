@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import useFetch from "../../hooks/useFetch"; // para cargar áreas comunes
+import useFetch from "../../hooks/useFetch";
 import usePost from "../../hooks/usePost";
 import { useReservationsByAreaDate } from "../../hooks/useReservationsByAreaDate";
 
-const ReservationForm = () => {
-  // Cargo las áreas comunes
-  const { data: commonAreas, loading: loadingAreas, error: errorAreas } = useFetch("/common-areas/all");
+const ReservationForm = ({ onSuccess }) => {
+  const { data: commonAreas, loading: loadingAreas, error: errorAreas } =
+    useFetch("/common-areas/all");
 
   const [form, setForm] = useState({
     commonAreaId: "",
@@ -15,10 +15,10 @@ const ReservationForm = () => {
   });
 
   const {
-  reservations: existingReservations,
-  loading: loadingExisting,
-  error: errorExisting,
-} = useReservationsByAreaDate(form.commonAreaId, form.date);
+    reservations: existingReservations,
+    loading: loadingExisting,
+    error: errorExisting,
+  } = useReservationsByAreaDate(form.commonAreaId, form.date);
 
   const { post, loading: posting, error: postError } = usePost();
 
@@ -47,7 +47,6 @@ const ReservationForm = () => {
       const conflict = existingReservations.some((res) =>
         isOverlap(form.startTime, form.endTime, res.startTime, res.endTime)
       );
-
       if (conflict) {
         alert("El horario seleccionado se superpone con una reserva existente.");
         return;
@@ -63,8 +62,22 @@ const ReservationForm = () => {
 
     const res = await post("/reservations/create", payload);
     if (res) {
-      alert("Reserva creada con éxito!");
+      const commonArea = commonAreas?.find(
+        (area) => area.id === Number(form.commonAreaId)
+      );
+
+      const fullReservation = {
+        ...res,
+        id: res.id || `temp-${Date.now()}`,
+        commonAreaName: commonArea?.name || "Nombre no disponible",
+        date: form.date,
+        startTime: form.startTime,
+        endTime: form.endTime,
+      };
+
+      if (onSuccess) onSuccess(fullReservation);
       setForm({ commonAreaId: "", date: "", startTime: "", endTime: "" });
+      alert("Reserva creada con éxito!");
     }
   };
 
@@ -77,11 +90,9 @@ const ReservationForm = () => {
         Reservar Área Común
       </h2>
 
+      {/* Área común */}
       <div>
-        <label
-          htmlFor="commonAreaId"
-          className="block mb-1 font-medium text-gray-700"
-        >
+        <label htmlFor="commonAreaId" className="block mb-1 font-medium text-gray-700">
           Área Común
         </label>
         {loadingAreas ? (
@@ -107,10 +118,9 @@ const ReservationForm = () => {
         )}
       </div>
 
+      {/* Fecha */}
       <div>
-        <label htmlFor="date" className="block mb-1 font-medium text-gray-700">
-          Fecha
-        </label>
+        <label htmlFor="date" className="block mb-1 font-medium text-gray-700">Fecha</label>
         <input
           type="date"
           id="date"
@@ -122,14 +132,10 @@ const ReservationForm = () => {
         />
       </div>
 
+      {/* Hora inicio y fin */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label
-            htmlFor="startTime"
-            className="block mb-1 font-medium text-gray-700"
-          >
-            Hora Inicio
-          </label>
+          <label htmlFor="startTime" className="block mb-1 font-medium text-gray-700">Hora Inicio</label>
           <input
             type="time"
             id="startTime"
@@ -142,12 +148,7 @@ const ReservationForm = () => {
         </div>
 
         <div>
-          <label
-            htmlFor="endTime"
-            className="block mb-1 font-medium text-gray-700"
-          >
-            Hora Fin
-          </label>
+          <label htmlFor="endTime" className="block mb-1 font-medium text-gray-700">Hora Fin</label>
           <input
             type="time"
             id="endTime"
@@ -160,35 +161,26 @@ const ReservationForm = () => {
         </div>
       </div>
 
-      {loadingExisting && (
-        <p className="text-gray-500">Cargando reservas existentes...</p>
-      )}
-      {errorExisting && (
-        <p className="text-red-500">Error al cargar reservas: {errorExisting}</p>
-      )}
+      {/* Reservas existentes */}
+      {loadingExisting && <p className="text-gray-500">Cargando reservas existentes...</p>}
+      {errorExisting && <p className="text-red-500">Error al cargar reservas: {errorExisting}</p>}
       {existingReservations && existingReservations.length > 0 && (
         <div className="bg-gray-100 p-3 rounded border border-gray-300">
-          <p className="font-semibold mb-2">
-            Horarios ya reservados en esta fecha:
-          </p>
+          <p className="font-semibold mb-2">Horarios ya reservados en esta fecha:</p>
           <ul className="list-disc list-inside text-gray-700">
             {existingReservations.map((res) => (
-              <li key={res.id}>
-                {res.startTime} - {res.endTime}
-              </li>
+              <li key={res.id}>{res.startTime} - {res.endTime}</li>
             ))}
           </ul>
         </div>
       )}
-      {existingReservations &&
-  existingReservations.length === 0 &&
-  form.commonAreaId &&
-  form.date && (
-    <p className="text-green-600 font-medium">
-      No hay reservas para esta fecha. ¡Podés reservar tranquilo!
-    </p>
-  )}
+      {existingReservations && existingReservations.length === 0 && form.commonAreaId && form.date && (
+        <p className="text-green-600 font-medium">
+          No hay reservas para esta fecha. ¡Podés reservar tranquilo!
+        </p>
+      )}
 
+      {/* Submit */}
       <button
         type="submit"
         disabled={posting}

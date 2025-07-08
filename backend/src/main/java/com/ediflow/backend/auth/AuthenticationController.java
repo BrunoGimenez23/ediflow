@@ -2,22 +2,20 @@ package com.ediflow.backend.auth;
 
 import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.dto.user.UserResponseDTO;
+import com.ediflow.backend.entity.AdminAccount;
 import com.ediflow.backend.entity.User;
 import com.ediflow.backend.enums.Role;
 import com.ediflow.backend.mapper.UserMapper;
 import com.ediflow.backend.repository.IAdminRepository;
 import com.ediflow.backend.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import com.ediflow.backend.entity.Admin;
 
-import java.util.HashMap;
-import java.util.Map;
+
 
 @RestController
 @RequestMapping("/auth")
@@ -42,7 +40,14 @@ public class AuthenticationController {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado después de creación"));
 
-        UserResponseDTO response = UserMapper.toResponseDTO(user);
+
+        UserResponseDTO response = new UserResponseDTO();
+        response.setId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setEmail(user.getEmail());
+        response.setRole(user.getRole());
+        response.setFullName(user.getFullName());
+
 
         return ResponseEntity.ok(response);
     }
@@ -62,15 +67,62 @@ public class AuthenticationController {
         }
 
         String email = authentication.getName();
+        System.out.println("Email desde Authentication: " + email);
 
         var user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
+        System.out.println("=== DEBUG BACKEND ===");
+        System.out.println("Usuario: " + user.getUsername());
+        System.out.println("Role: " + user.getRole());
+        System.out.println("AdminAccount: " + user.getAdminAccount());
+
         Long adminId = null;
+        Integer trialDaysLeft = null;
+        String plan = null;
+
         if (user.getRole() == Role.ADMIN) {
-            adminId = adminRepository.findByUserId(user.getId())
-                    .map(Admin::getId)
-                    .orElse(null);
+            System.out.println("Entrando en bloque ADMIN");
+
+            var adminOpt = adminRepository.findByUserId(user.getId());
+            if (adminOpt.isPresent()) {
+                Admin admin = adminOpt.get();
+                adminId = admin.getId();
+
+                if (admin.getTrialEnd() != null) {
+                    var today = java.time.LocalDate.now();
+                    if (!admin.getTrialEnd().isBefore(today)) {
+                        trialDaysLeft = (int) java.time.temporal.ChronoUnit.DAYS.between(today, admin.getTrialEnd());
+                    } else {
+                        trialDaysLeft = 0;
+                    }
+                }
+                plan = admin.getPlan();
+            }
+        } else {
+
+            if (user.getAdminAccount() != null) {
+                System.out.println("AdminAccount encontrado, obteniendo datos...");
+                AdminAccount adminAccount = user.getAdminAccount();
+                adminId = adminAccount.getId();
+                plan = adminAccount.getPlan();
+                System.out.println("AdminId obtenido: " + adminId);
+                System.out.println("Plan obtenido: " + plan);
+
+
+                if (adminAccount.getSubscriptionEnd() != null) {
+                    var today = java.time.LocalDate.now();
+                    if (!adminAccount.getSubscriptionEnd().isBefore(today)) {
+                        trialDaysLeft = (int) java.time.temporal.ChronoUnit.DAYS.between(today, adminAccount.getSubscriptionEnd());
+                    } else {
+                        System.out.println("ERROR: AdminAccount es null");
+                        trialDaysLeft = 0;
+                    }
+                }
+                System.out.println("AdminId final: " + adminId);
+                System.out.println("Plan final: " + plan);
+                System.out.println("====================");
+            }
         }
 
         UserDTO userDTO = UserDTO.builder()
@@ -80,9 +132,13 @@ public class AuthenticationController {
                 .role(user.getRole())
                 .fullName(user.getFullName())
                 .adminId(adminId)
+                .trialDaysLeft(trialDaysLeft)
+                .plan(plan)
                 .build();
 
         return ResponseEntity.ok(userDTO);
     }
 
 }
+
+

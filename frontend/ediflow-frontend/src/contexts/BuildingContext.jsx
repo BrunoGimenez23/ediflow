@@ -1,15 +1,19 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import { useAuth } from "../contexts/AuthContext"; // ajusta según tu estructura
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useAuth } from "../contexts/AuthContext";
 
 const BuildingContext = createContext();
 
 export const BuildingProvider = ({ children }) => {
-  const { user } = useAuth();
+  const { user, ready } = useAuth();
   const [buildings, setBuildings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchBuildings = async () => {
+  const fetchBuildings = useCallback(async () => {
+    if (!user || !ready) {
+      return;
+    }
+
     const token = localStorage.getItem("token");
     if (!token) {
       setError("No estás autenticado");
@@ -22,16 +26,16 @@ export const BuildingProvider = ({ children }) => {
     setError(null);
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/buildings`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/buildings/by-admin`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (res.status === 403) {
+        const text = await res.text();
         throw new Error("Acceso denegado: no tienes permisos para ver los edificios");
       }
-
       if (!res.ok) {
         throw new Error("Error al cargar los edificios");
       }
@@ -44,19 +48,22 @@ export const BuildingProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, ready]);
 
   useEffect(() => {
-    // Solo fetch si usuario existe y es ADMIN
-    if (user?.role === "ADMIN") {
+    const allowedRoles = ["ADMIN", "EMPLOYEE"];
+    const token = localStorage.getItem("token");
+
+    if (user && ready && token && allowedRoles.includes(user.role) && user.adminId) {
       fetchBuildings();
     } else {
-      // Si no es admin, limpiamos estado y error
-      setBuildings([]);
-      setError(null);
-      setLoading(false);
+      if (buildings.length > 0 || error !== null || loading !== false) {
+        setBuildings([]);
+        setError(null);
+        setLoading(false);
+      }
     }
-  }, [user]);
+  }, [user, ready, fetchBuildings]);
 
   return (
     <BuildingContext.Provider value={{ buildings, loading, error, fetchBuildings }}>

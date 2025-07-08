@@ -1,6 +1,6 @@
 package com.ediflow.backend.configuration;
+
 import com.ediflow.backend.auth.CustomUserDetailsService;
-import com.ediflow.backend.configuration.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,15 +40,43 @@ public class SecurityConfiguration {
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/resident/me").hasAnyRole("RESIDENT", "ADMIN")
-                        .requestMatchers("/apartment/me").hasAnyRole("RESIDENT", "ADMIN")  // <-- agregar esto
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers("/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+
+                        .requestMatchers("/admin/users").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/admin/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+                        .requestMatchers("/users/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+                        .requestMatchers(HttpMethod.POST, "/users").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/payment/all").hasAuthority("ROLE_ADMIN")
+
+
+                        .requestMatchers(HttpMethod.POST, "/residents/register-or-replace").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+                        .requestMatchers("/admin/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+                        .requestMatchers("/admin/residents/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+                        .requestMatchers("/admin/apartment/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+                        .requestMatchers("/apartment/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+                        .requestMatchers(HttpMethod.POST, "/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+                        .requestMatchers(HttpMethod.PUT, "/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+                        .requestMatchers(HttpMethod.DELETE, "/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+
+
+                        .requestMatchers(HttpMethod.GET, "/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_RESIDENT")
+
+
+                        .requestMatchers(HttpMethod.GET, "/reservations/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_SUPPORT", "ROLE_RESIDENT")
+
+
+                        .requestMatchers("/resident/me").hasAnyAuthority("ROLE_RESIDENT", "ROLE_ADMIN")
+                        .requestMatchers("/apartment/me").hasAnyAuthority("ROLE_RESIDENT", "ROLE_ADMIN")
+                        .requestMatchers("/payment/by-resident/**").hasAuthority("ROLE_RESIDENT")
+
+                        .requestMatchers(HttpMethod.PUT, "/residents/fix-assign-admin-account").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+
                         .requestMatchers("/auth/me").authenticated()
-                        .requestMatchers("/payment/by-resident/**").hasRole("RESIDENT")
-                        .requestMatchers("/payment/all").hasRole("ADMIN")
-                        .requestMatchers("/admin/buildings/**").hasRole("ADMIN")
-                        .requestMatchers("/buildings/**").permitAll()
+
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -74,5 +102,4 @@ public class SecurityConfiguration {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
-
 }

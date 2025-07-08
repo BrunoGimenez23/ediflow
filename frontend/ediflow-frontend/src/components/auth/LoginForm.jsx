@@ -7,30 +7,38 @@ const LoginForm = () => {
   const { post, loading: loadingPost, error: errorPost } = usePost();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [trialExpired, setTrialExpired] = useState(false);
   const navigate = useNavigate();
-  const { fetchUser } = useAuth();
+  const { fetchUser, setToken } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const res = await post("/auth/login", { email, password });
+    setTrialExpired(false);
+
+    const { data: res, error: err } = await post("/auth/login", { email, password });
 
     if (res?.token) {
       localStorage.setItem("token", res.token);
+      console.log("Token guardado en localStorage:", localStorage.getItem("token")); // <-- log aquí
+      setToken(res.token);
 
-      // Opcional: actualizar user en contexto si usás context
       await fetchUser();
+      console.log("Login response data:", res);
 
-      // Uso directo del rol recibido en login para redirigir
       const role = res.user?.role;
 
-      if (role === "ADMIN") {
+      if (role === "ADMIN" || role === "EMPLOYEE" || role === "SUPPORT") {
         navigate("/admin");
       } else if (role === "RESIDENT") {
         navigate("/resident");
       } else {
         alert("Rol desconocido");
       }
+    } else if (err && err.toLowerCase().includes("período de prueba")) {
+      setTrialExpired(true);
+    } else if (err) {
+      alert(err);
     }
   };
 
@@ -66,7 +74,13 @@ const LoginForm = () => {
         </button>
       </form>
 
-      {errorPost && (
+      {trialExpired && (
+        <p className="mt-4 text-red-600 text-sm text-center">
+          Tu período de prueba ha expirado. Por favor, contacta al administrador para continuar usando Ediflow.
+        </p>
+      )}
+
+      {!trialExpired && errorPost && (
         <p className="mt-4 text-red-600 text-sm text-center">{errorPost}</p>
       )}
     </div>

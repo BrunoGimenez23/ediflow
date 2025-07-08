@@ -5,28 +5,30 @@ const features = [
   {
     icon: <Building2 className="w-12 h-12 text-ediblue" />,
     title: "Administración de edificios",
-    desc: "Gestioná edificios, departamentos y residentes desde un solo lugar.",
+    desc: "Centralizá toda la información de tus edificios, departamentos y residentes desde un solo lugar.",
   },
   {
     icon: <CreditCard className="w-12 h-12 text-ediblue" />,
     title: "Control de pagos",
-    desc: "Llevá el control de pagos y vencimientos de cada residente de forma organizada.",
+    desc: "Registrá y monitoreá pagos, vencimientos y estados de cuenta de manera clara y ordenada.",
   },
   {
     icon: <Cloud className="w-12 h-12 text-ediblue" />,
     title: "Fácil de usar",
-    desc: "Diseñada para que cualquier administrador gestione sin complicaciones.",
+    desc: "Diseño intuitivo pensado para que empieces a usarlo desde el primer día, sin capacitación.",
   },
 ];
 
-const FeaturesSection = () => {
+const FeaturesSection = ({ id }) => {
   return (
-    <section className="bg-edigray w-full py-20">
-      <div className="max-w-7xl mx-auto px-6">
+    <section id={id} className="bg-edigray w-full py-20 px-6">
+      <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-editext">Funcionalidades principales</h2>
-          <p className="text-gray-600 mt-2 max-w-xl mx-auto">
-            Todo lo que necesitás para administrar edificios en una sola plataforma.
+          <h2 className="text-4xl font-bold text-editext">
+            Todo lo que necesitás para administrar tus edificios sin complicaciones
+          </h2>
+          <p className="text-editext mt-2 max-w-xl mx-auto">
+            Simplificá la gestión de residentes, pagos y reservas con una plataforma ágil, visual y hecha para administradores como vos.
           </p>
         </div>
 
@@ -39,8 +41,8 @@ const FeaturesSection = () => {
               <div className="flex justify-center mb-4">
                 {icon}
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">{title}</h3>
-              <p className="text-gray-600">{desc}</p>
+              <h3 className="text-xl font-semibold text-editext mb-2">{title}</h3>
+              <p className="text-editext">{desc}</p>
             </div>
           ))}
         </div>

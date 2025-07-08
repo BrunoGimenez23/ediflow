@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import usePost from "../../hooks/usePost";
 import usePut from "../../hooks/usePut";
+import { useBuildingsContext } from "../../contexts/BuildingContext";
 
 const CreateCommonAreaForm = ({ onCreated, initialData }) => {
   const { post, loading: loadingPost, error: errorPost } = usePost();
   const { put, loading: loadingPut, error: errorPut } = usePut();
+  const { buildings, loading: loadingBuildings } = useBuildingsContext();
 
   const [form, setForm] = useState({
     name: "",
@@ -13,17 +15,15 @@ const CreateCommonAreaForm = ({ onCreated, initialData }) => {
     buildingId: "",
   });
 
-  // Al recibir initialData, cargarlo en el formulario
   useEffect(() => {
     if (initialData) {
       setForm({
         name: initialData.name || "",
         description: initialData.description || "",
         capacity: initialData.capacity || "",
-        buildingId: initialData.buildingId || "",
+        buildingId: initialData.buildingId?.toString() || "",
       });
     } else {
-      // Si no hay initialData, limpiar formulario
       setForm({
         name: "",
         description: "",
@@ -54,24 +54,21 @@ const CreateCommonAreaForm = ({ onCreated, initialData }) => {
 
     let res;
     if (initialData && initialData.id) {
-      // Actualizar
       res = await put(`/common-areas/update/${initialData.id}`, payload);
     } else {
-      // Crear nuevo
       res = await post("/common-areas/create", payload);
     }
 
     if (res) {
       alert(initialData ? "Área común actualizada con éxito!" : "Área común creada con éxito!");
       onCreated();
-      // Limpiar solo si es creación, en edición el cierre ya lo hace el padre
       if (!initialData) {
         setForm({ name: "", description: "", capacity: "", buildingId: "" });
       }
     }
   };
 
-  const loading = loadingPost || loadingPut;
+  const loading = loadingPost || loadingPut || loadingBuildings;
   const error = errorPost || errorPut;
 
   return (
@@ -119,19 +116,22 @@ const CreateCommonAreaForm = ({ onCreated, initialData }) => {
       </div>
 
       <div>
-        <label className="block mb-1 font-medium">ID del Edificio</label>
-        <input
-          type="number"
+        <label className="block mb-1 font-medium">Edificio</label>
+        <select
           name="buildingId"
           value={form.buildingId}
           onChange={handleChange}
           className="w-full border rounded px-3 py-2"
           required
-          min={1}
-        />
-        <p className="text-xs text-gray-500 mt-1">
-          Ingresá el ID del edificio al que pertenece el área.
-        </p>
+          disabled={loadingBuildings}
+        >
+          <option value="">Selecciona un edificio</option>
+          {buildings.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <button

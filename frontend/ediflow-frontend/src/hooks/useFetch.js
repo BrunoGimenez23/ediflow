@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -7,7 +7,7 @@ export const useFetch = (endpoint) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     const token = localStorage.getItem("token");
     if (!token || !endpoint) {
       setLoading(false);
@@ -35,7 +35,10 @@ export const useFetch = (endpoint) => {
       .finally(() => setLoading(false));
   }, [endpoint]);
 
-  return { data, loading, error };
-};
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, error, refetch: fetchData }; };
 
 export default useFetch;

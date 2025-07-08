@@ -39,7 +39,7 @@ export const ResidentProvider = ({ children }) => {
     if (user) {
       fetchResident();
     } else {
-      // si no hay usuario logueado, limpiamos datos
+      
       setResident(null);
       setError(null);
       setLoading(false);

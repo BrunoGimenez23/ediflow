@@ -1,19 +1,18 @@
-// src/components/admin/AdminReservationsPanel.jsx
 import { useState } from "react";
 import useFetch from "../../hooks/useFetch";
 import { useReservationsByBuildingAndDate } from "../../hooks/useReservationsByBuildingAndDate";
 import { useReservations } from "../../contexts/ReservationsContext";
+import { useAuth } from "../../contexts/AuthContext"; // <-- IMPORTANTE
 
 const AdminReservationsPanel = () => {
   const { deleteReservation, loadingDelete } = useReservations();
+  const { trialExpired } = useAuth(); // <-- OBTENER trialExpired
 
   const [buildingId, setBuildingId] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
 
-  // Cargar edificios
   const { data: buildings, loading: loadingBuildings } = useFetch("/buildings");
 
-  // Cargar reservas por edificio y fecha
   const {
     reservations,
     loading: loadingReservations,
@@ -21,6 +20,10 @@ const AdminReservationsPanel = () => {
   } = useReservationsByBuildingAndDate(buildingId, selectedDate);
 
   const handleDelete = async (id) => {
+    if (trialExpired) {
+      alert("Tu prueba gratuita ha finalizado. Por favor, contrata un plan para continuar.");
+      return;
+    }
     const confirmed = window.confirm("¿Estás seguro de cancelar esta reserva?");
     if (!confirmed) return;
     await deleteReservation(id);
@@ -76,12 +79,18 @@ const AdminReservationsPanel = () => {
                 <p className="text-gray-700">
                   Horario: {res.startTime} - {res.endTime}
                 </p>
-                <p className="text-gray-500 text-sm">Residente: {res.residentFullName || "Sin nombre"}</p>
+                <p className="text-gray-500 text-sm">
+                  Residente: {res.residentFullName || "Sin nombre"}
+                </p>
               </div>
               <button
                 onClick={() => handleDelete(res.id)}
-                disabled={loadingDelete}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow"
+                disabled={loadingDelete || trialExpired}
+                className={`px-4 py-2 rounded shadow text-white transition ${
+                  trialExpired
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-red-600 hover:bg-red-700"
+                }`}
               >
                 {loadingDelete ? "Eliminando..." : "Cancelar"}
               </button>

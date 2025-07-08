@@ -51,7 +51,10 @@ public class User implements UserDetails {
     @JsonIgnore
     private Resident resident;
 
-
+    @ManyToOne
+    @JoinColumn(name = "admin_account_id")
+    @JsonIgnore
+    private AdminAccount adminAccount;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -65,7 +68,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return username;
+        return email;
     }
 
     @Override

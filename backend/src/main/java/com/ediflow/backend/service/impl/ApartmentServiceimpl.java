@@ -8,14 +8,19 @@ import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.entity.Building;
 import com.ediflow.backend.entity.Resident;
 import com.ediflow.backend.entity.User;
+import com.ediflow.backend.enums.Role;
+import com.ediflow.backend.mapper.ApartmentMapper;
 import com.ediflow.backend.repository.IBuildingRepository;
 import com.ediflow.backend.repository.IResidentRepository;
+import com.ediflow.backend.repository.IUserRepository;
 import com.ediflow.backend.service.IApartmentService;
 import com.ediflow.backend.entity.Apartment;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.ediflow.backend.repository.IApartmentRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -33,14 +38,16 @@ public class ApartmentServiceimpl implements IApartmentService {
 
     private final AdminServiceimpl adminService;
     private final IResidentRepository residentRepository;
+    private final IUserRepository userRepository;
 
 
     @Autowired
-    public ApartmentServiceimpl(IApartmentRepository apartmentRepository, IBuildingRepository buildingRepository, AdminServiceimpl adminService, IResidentRepository residentRepository) {
+    public ApartmentServiceimpl(IApartmentRepository apartmentRepository, IBuildingRepository buildingRepository, AdminServiceimpl adminService, IResidentRepository residentRepository, IUserRepository userRepository) {
         this.apartmentRepository = apartmentRepository;
         this.buildingRepository = buildingRepository;
         this.adminService = adminService;
         this.residentRepository = residentRepository;
+        this.userRepository = userRepository;
     }
     @Override
     public ApartmentDTO findByResidentEmail(String email) {
@@ -53,7 +60,7 @@ public class ApartmentServiceimpl implements IApartmentService {
 
         if (apartment == null) return null;
 
-        // Conversión manual
+
         ApartmentDTO dto = new ApartmentDTO();
         dto.setId(apartment.getId());
         dto.setNumber(apartment.getNumber());
@@ -133,6 +140,17 @@ public class ApartmentServiceimpl implements IApartmentService {
             apartment.setFloor(apartmentDTO.getFloor());
         }
 
+
+        if (apartmentDTO.getBuildingId() != null) {
+            Optional<Building> optionalBuilding = buildingRepository.findById(apartmentDTO.getBuildingId());
+            if (optionalBuilding.isEmpty()) {
+                return ResponseEntity
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Edificio no encontrado"));
+            }
+            apartment.setBuilding(optionalBuilding.get());
+        }
+
         try {
             apartmentRepository.save(apartment);
             return ResponseEntity
@@ -156,16 +174,17 @@ public class ApartmentServiceimpl implements IApartmentService {
 
     @Override
     public List<ApartmentDTO> findAll() {
-        Long adminId = adminService.getLoggedAdminId();
-        System.out.println(">>> ADMIN ID desde token: " + adminId);
+        Long adminAccountId = adminService.getLoggedUserAdminAccountId();
+        System.out.println(">>> ADMIN ACCOUNT ID desde token: " + adminAccountId);
 
-        if (adminId == null) {
-            System.out.println(">>> Admin ID es null, devolviendo lista vacía");
+        if (adminAccountId == null) {
+            System.out.println(">>> AdminAccount ID es null, devolviendo lista vacía");
             return new ArrayList<>();
         }
 
-        List<Apartment> apartments = apartmentRepository.findByBuilding_Admin_Id(adminId);
+        List<Apartment> apartments = apartmentRepository.findByAdminAccountIdWithResidentAndBuilding(adminAccountId);
         System.out.println(">>> Apartamentos encontrados: " + apartments.size());
+
 
         List<ApartmentDTO> apartmentsDTO = new ArrayList<>();
 
@@ -176,26 +195,26 @@ public class ApartmentServiceimpl implements IApartmentService {
             apartmentDTO.setNumber(apartment.getNumber());
             apartmentDTO.setFloor(apartment.getFloor());
 
-            // Setear BuildingDTO completo para que React pueda mostrar el nombre del edificio
+
             if (apartment.getBuilding() != null) {
                 Building building = apartment.getBuilding();
                 BuildingDTO buildingDTO = new BuildingDTO();
                 buildingDTO.setId(building.getId());
                 buildingDTO.setName(building.getName());
-                buildingDTO.setAddress(building.getAddress()); // si lo necesitás
+                buildingDTO.setAddress(building.getAddress());
 
                 apartmentDTO.setBuildingDTO(buildingDTO);
                 apartmentDTO.setBuildingId(building.getId());
             }
 
-            // Mapear ResidentDTO igual que venías haciendo
+
             if (apartment.getResident() != null) {
                 Resident resident = apartment.getResident();
                 ResidentDTO residentDTO = new ResidentDTO();
                 residentDTO.setId(resident.getId());
                 residentDTO.setCi(resident.getCi());
 
-                // UserDTO del residente
+
                 User user = resident.getUser();
                 if (user != null) {
                     UserDTO userDTO = new UserDTO();
@@ -233,4 +252,123 @@ public class ApartmentServiceimpl implements IApartmentService {
        }
        return apartamentsDTO;
     }
+
+    @Override
+    public List<ApartmentDTO> findAllByUser(String email, String role) {
+        Long adminAccountId = adminService.getLoggedUserAdminAccountId();
+        if (adminAccountId == null) {
+            System.out.println(">>> AdminAccount ID es null, devolviendo lista vacía");
+            return new ArrayList<>();
+        }
+
+
+        List<Apartment> apartments = apartmentRepository.findByBuilding_Admin_User_AdminAccount_Id(adminAccountId);
+        System.out.println(">>> Apartamentos encontrados: " + apartments.size());
+
+        List<ApartmentDTO> apartmentsDTO = new ArrayList<>();
+
+        for (Apartment apartment : apartments) {
+            ApartmentDTO apartmentDTO = new ApartmentDTO();
+            apartmentDTO.setId(apartment.getId());
+            apartmentDTO.setNumber(apartment.getNumber());
+            apartmentDTO.setFloor(apartment.getFloor());
+
+
+            if (apartment.getBuilding() != null) {
+                Building building = apartment.getBuilding();
+                BuildingDTO buildingDTO = new BuildingDTO();
+                buildingDTO.setId(building.getId());
+                buildingDTO.setName(building.getName());
+                buildingDTO.setAddress(building.getAddress());
+                apartmentDTO.setBuildingDTO(buildingDTO);
+                apartmentDTO.setBuildingId(building.getId());
+            }
+
+
+            if (apartment.getResident() != null) {
+                Resident resident = apartment.getResident();
+                ResidentDTO residentDTO = new ResidentDTO();
+                residentDTO.setId(resident.getId());
+                residentDTO.setCi(resident.getCi());
+
+                User user = resident.getUser();
+                if (user != null) {
+                    UserDTO userDTO = new UserDTO();
+                    userDTO.setId(user.getId());
+                    userDTO.setUsername(user.getUsername());
+                    userDTO.setEmail(user.getEmail());
+                    userDTO.setRole(user.getRole());
+                    userDTO.setFullName(user.getFullName());
+                    residentDTO.setUserDTO(userDTO);
+                }
+
+                apartmentDTO.setResidentDTO(residentDTO);
+            }
+
+            apartmentsDTO.add(apartmentDTO);
+        }
+
+        return apartmentsDTO;
+    }
+
+
+    @Override
+    public Page<ApartmentDTO> findPagedByUserAndFilter(String email, String role, String filter, Pageable pageable) {
+        Long adminAccountId = adminService.getLoggedUserAdminAccountId();
+        if (adminAccountId == null) {
+            return Page.empty();
+        }
+
+        return apartmentRepository.findByAdminAccountIdAndFilter(adminAccountId, filter, pageable)
+                .map(ApartmentMapper::toDTO);
+    }
+    @Override
+    public Page<ApartmentDTO> findPagedByUserAndBuilding(String email, String role, String filter, Long buildingId, Pageable pageable) {
+        Long adminAccountId = adminService.getLoggedUserAdminAccountId();
+        if (adminAccountId == null) {
+            return Page.empty();
+        }
+
+        Page<Apartment> apartments;
+
+        if (buildingId != null) {
+            apartments = apartmentRepository.findByAdminAccountIdAndBuildingIdAndFilter(adminAccountId, buildingId, filter, pageable);
+        } else {
+            apartments = apartmentRepository.findByAdminAccountIdAndFilter(adminAccountId, filter, pageable);
+        }
+
+        return apartments.map(ApartmentMapper::toDTO);
+    }
+    @Override
+    @Transactional
+    public boolean assignResident(Long apartmentId, Long userId) {
+        Optional<Apartment> apartmentOpt = apartmentRepository.findById(apartmentId);
+        Optional<User> userOpt = userRepository.findById(userId);
+
+        if (apartmentOpt.isEmpty() || userOpt.isEmpty()) {
+            return false;
+        }
+
+        Apartment apartment = apartmentOpt.get();
+        User user = userOpt.get();
+
+
+        if (user.getRole() != Role.RESIDENT) {
+            return false;
+        }
+
+
+        if (apartment.getResident() != null) {
+
+            apartment.setResident(null);
+        }
+
+
+        apartment.setResident(user.getResident());
+
+        apartmentRepository.save(apartment);
+
+        return true;
+    }
+
 }

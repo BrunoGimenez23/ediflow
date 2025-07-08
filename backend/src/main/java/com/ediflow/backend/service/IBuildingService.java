@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public interface IBuildingService {
 
-    ResponseEntity<BuildingDTO> createBuilding(BuildingDTO newBuilding);
+    ResponseEntity<BuildingDTO> createBuilding(BuildingDTO newBuilding, Long adminAccountId);
     ResponseEntity<BuildingDetailDTO> buildingDetail(Long id);
 
     ResponseEntity<ResidentSummaryDTO> residentSummary(Long id);
@@ -23,7 +23,9 @@ public interface IBuildingService {
 
     ResponseEntity<String> deleteBuilding (Long id);
 
-    List<BuildingDTO> findAllForAdminPanel();
-
     List<BuildingSummaryDTO> findAllBuildings();
+
+    List<BuildingDTO> findAllByAdminAccount(Long adminAccountId);
+    List<BuildingDTO> findBuildingsByAdminAccountId(Long adminAccountId);
+    Long getAdminAccountIdByUserEmail(String email);
 }

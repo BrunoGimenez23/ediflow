@@ -25,7 +25,7 @@ public class InvitationCode {
 
     private int maxUses;
 
-    private String role; // Puede ser "ADMIN", "RESIDENT", etc.
+    private String role;
 
     private boolean active = true;
 

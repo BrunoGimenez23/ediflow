@@ -4,6 +4,7 @@ import com.ediflow.backend.configuration.JwtService;
 import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.entity.*;
 import com.ediflow.backend.enums.Role;
+import com.ediflow.backend.mapper.UserMapper;
 import com.ediflow.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -55,6 +59,12 @@ public class AuthenticationService {
 
         var admin = new Admin();
         admin.setUser(user);
+
+
+        LocalDate now = LocalDate.now();
+        admin.setTrialStart(now);
+        admin.setTrialEnd(now.plusDays(14));
+
         adminRepository.save(admin);
 
         code.setUsed(code.getUsed() + 1);
@@ -62,19 +72,13 @@ public class AuthenticationService {
 
         var token = jwtService.generateToken(user);
 
-        var userDTO = UserDTO.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .fullName(user.getFullName())
-                .build();
+        var userDTO = UserMapper.toUserDTO(user, admin);
+
 
         return AuthenticationResponse.builder()
                 .token(token)
                 .user(userDTO)
                 .build();
-
     }
 
 
@@ -82,12 +86,25 @@ public class AuthenticationService {
         Apartment apartment = apartmentRepository.findById(request.getApartmentId())
                 .orElseThrow(() -> new RuntimeException("Apartamento no encontrado"));
 
+        // Verificar si ya existe un residente en ese apartamento
+        residentRepository.findByApartment(apartment).ifPresent(existingResident -> {
+            // Podés elegir borrar o lanzar excepción según política
+            residentRepository.delete(existingResident);
+        });
+
+        AdminAccount adminAccount = Optional.ofNullable(apartment.getBuilding())
+                .map(building -> building.getAdmin())
+                .map(admin -> admin.getUser())
+                .map(User::getAdminAccount)
+                .orElseThrow(() -> new RuntimeException("No se pudo determinar el AdminAccount desde el apartamento"));
+
         var user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.RESIDENT)
                 .fullName(request.getFullName())
+                .adminAccount(adminAccount)
                 .build();
 
         userRepository.save(user);
@@ -95,7 +112,9 @@ public class AuthenticationService {
         var resident = new Resident();
         resident.setUser(user);
         resident.setApartment(apartment);
+        resident.setBuilding(apartment.getBuilding());
         resident.setCi(request.getCi());
+
         residentRepository.save(resident);
     }
 
@@ -104,21 +123,26 @@ public class AuthenticationService {
         var user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 
-
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Contraseña incorrecta");
         }
+        Admin admin = null;
 
+
+        if (user.getRole() == Role.ADMIN) {
+            admin = adminRepository.findByUserId(user.getId())
+                    .orElseThrow(() -> new RuntimeException("Administrador no encontrado"));
+
+            LocalDate today = LocalDate.now();
+
+            if (admin.getTrialEnd() != null && today.isAfter(admin.getTrialEnd())) {
+                throw new RuntimeException("El período de prueba ha expirado. Por favor, contacta para renovar tu suscripción.");
+            }
+        }
 
         var token = jwtService.generateToken(user);
 
-        var userDTO = UserDTO.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .fullName(user.getFullName())
-                .build();
+        var userDTO = UserMapper.toUserDTO(user, admin);
 
         return AuthenticationResponse.builder()
                 .token(token)

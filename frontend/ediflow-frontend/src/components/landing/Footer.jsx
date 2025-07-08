@@ -1,37 +1,67 @@
-import React from 'react'
+import React from 'react';
+import { FaFacebookF, FaTwitter, FaInstagram } from 'react-icons/fa';
+import WhatsAppInviteButton from './WhatsAppInviteButton';
 
 const Footer = () => {
   return (
-    <footer className="bg-ediblue text-white py-10 px-6">
+    <footer className="bg-ediblue text-white py-12 px-6">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
         
         {/* Logo / Nombre */}
-        <div className="text-2xl font-bold mb-6 md:mb-0">
+        <div className="text-2xl font-bold mb-6 md:mb-0 select-none cursor-default">
           Ediflow
         </div>
 
         {/* Links de navegación */}
-        <nav className="flex space-x-6 mb-6 md:mb-0">
-          <a href="#planes" className="hover:text-ediblueLight transition">Planes</a>
-          <a href="#features" className="hover:text-ediblueLight transition">Características</a>
-          <a href="#contacto" className="hover:text-ediblueLight transition">Contacto</a>
-          <a href="#faq" className="hover:text-ediblueLight transition">FAQ</a>
+        <nav className="flex space-x-6 mb-6 md:mb-0 text-lg">
+          {['Planes', 'Características', 'Contacto', 'FAQ'].map((item) => (
+            <a
+              key={item}
+              href={`#${item.toLowerCase()}`}
+              className="hover:text-ediblueLight transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ediblueLight rounded"
+            >
+              {item}
+            </a>
+          ))}
         </nav>
 
-        {/* Redes sociales (ejemplo con íconos simples) */}
-        <div className="flex space-x-4">
-          <a href="https://facebook.com" aria-label="Facebook" className="hover:text-ediblueLight transition">📘</a>
-          <a href="https://twitter.com" aria-label="Twitter" className="hover:text-ediblueLight transition">🐦</a>
-          <a href="https://instagram.com" aria-label="Instagram" className="hover:text-ediblueLight transition">📸</a>
+        {/* Redes sociales con íconos */}
+        <div className="flex space-x-6">
+          {[{
+            href: "https://facebook.com",
+            label: "Facebook",
+            icon: <FaFacebookF size={20} />
+          }, {
+            href: "https://twitter.com",
+            label: "Twitter",
+            icon: <FaTwitter size={20} />
+          }, {
+            href: "https://instagram.com",
+            label: "Instagram",
+            icon: <FaInstagram size={20} />
+          }].map(({ href, label, icon }) => (
+            <a
+              key={label}
+              href={href}
+              aria-label={label}
+              className="hover:text-ediblueLight transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ediblueLight rounded transform hover:scale-110"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {icon}
+            </a>
+          ))}
         </div>
       </div>
 
+      <hr className="border-edigray/40 my-8" />
+    
       {/* Texto copyright */}
-      <div className="mt-8 text-center text-edigray text-sm">
+      <div className="text-center text-ediblueLight text-sm select-none">
         &copy; {new Date().getFullYear()} Ediflow. Todos los derechos reservados.
       </div>
     </footer>
-  )
-}
+  );
+};
 
-export default Footer
+export default Footer;

@@ -14,26 +14,27 @@ const PaymentsChart = () => {
   const { data: payments, loading, error } = useFetch("/payment/all");
 
   const chartData = useMemo(() => {
-    if (!payments) return [];
+  if (!payments) return [];
 
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
+  const paymentsArray = payments.content || [];
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
 
-    const grouped = payments.reduce((acc, payment) => {
-      if (!payment.issueDate) return acc;
-      const parts = payment.issueDate.split("-");
-      if (parts.length !== 3) return acc;
-      const [year, month, day] = parts.map(Number);
-      if (year !== currentYear || month !== currentMonth) return acc;
-      acc[day] = (acc[day] || 0) + Number(payment.amount);
-      return acc;
-    }, {});
+  const grouped = paymentsArray.reduce((acc, payment) => {
+    if (!payment.issueDate) return acc;
+    const parts = payment.issueDate.split("-");
+    if (parts.length !== 3) return acc;
+    const [year, month, day] = parts.map(Number);
+    if (year !== currentYear || month !== currentMonth) return acc;
+    acc[day] = (acc[day] || 0) + Number(payment.amount);
+    return acc;
+  }, {});
 
-    return Object.entries(grouped)
-      .map(([day, monto]) => ({ day, monto }))
-      .sort((a, b) => a.day - b.day);
-  }, [payments]);
+  return Object.entries(grouped)
+    .map(([day, monto]) => ({ day, monto }))
+    .sort((a, b) => a.day - b.day);
+}, [payments]);
 
   if (loading)
     return (

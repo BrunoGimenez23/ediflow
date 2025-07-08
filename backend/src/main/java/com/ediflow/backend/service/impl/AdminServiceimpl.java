@@ -6,6 +6,7 @@ import com.ediflow.backend.dto.building.BuildingDetailDTO;
 import com.ediflow.backend.dto.building.BuildingSummaryDTO;
 import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.entity.Admin;
+import com.ediflow.backend.entity.AdminAccount;
 import com.ediflow.backend.entity.Building;
 import com.ediflow.backend.enums.Role;
 import com.ediflow.backend.entity.User;
@@ -23,6 +24,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +45,14 @@ public class AdminServiceimpl implements IAdminService {
         this.userRepository = userRepository;
     }
 
+    private int calculateTrialDaysLeft(Admin admin) {
+        LocalDate today = LocalDate.now();
+        if (admin.getTrialEnd() == null || admin.getTrialEnd().isBefore(today)) {
+            return 0;
+        }
+        return (int) ChronoUnit.DAYS.between(today, admin.getTrialEnd());
+    }
+
     public Long getLoggedAdminId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
@@ -52,12 +63,23 @@ public class AdminServiceimpl implements IAdminService {
         Object principal = authentication.getPrincipal();
 
         if (principal instanceof UserDetails) {
-            String email = ((UserDetails) principal).getUsername();  // es el email
-            System.out.println(">>> Email autenticado: " + email);
+            String email = ((UserDetails) principal).getUsername();
 
             return adminRepository.findByUserEmail(email)
                     .map(Admin::getId)
                     .orElse(null);
+        }
+
+        return null;
+    }
+
+    public String getLoggedUserEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) return null;
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof UserDetails) {
+            return ((UserDetails) principal).getUsername();
         }
 
         return null;
@@ -70,7 +92,7 @@ public class AdminServiceimpl implements IAdminService {
             throw new IllegalArgumentException("Falta información del usuario");
         }
 
-        // Crear y guardar el User
+
         User user = new User();
         user.setUsername(newAdmin.getUserDTO().getUsername());
         user.setPassword("admin123");
@@ -79,12 +101,12 @@ public class AdminServiceimpl implements IAdminService {
 
         user = userRepository.save(user);
 
-        // Crear y guardar el Admin
+
         Admin admin = new Admin();
         admin.setUser(user);
         admin = adminRepository.save(admin);
 
-        // Preparar el AdminDTO de respuesta
+
         UserDTO userDTO = new UserDTO();
         userDTO.setId(user.getId());
         userDTO.setUsername(user.getUsername());
@@ -102,7 +124,7 @@ public class AdminServiceimpl implements IAdminService {
         Admin admin = adminRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found with id: " + id));
 
-        // Convertimos a DTO manualmente
+
         UserDTO userDTO = new UserDTO();
         userDTO.setId(admin.getUser().getId());
         userDTO.setUsername(admin.getUser().getUsername());
@@ -111,6 +133,10 @@ public class AdminServiceimpl implements IAdminService {
         AdminDTO adminDTO = new AdminDTO();
         adminDTO.setId(admin.getId());
         adminDTO.setUserDTO(userDTO);
+
+
+        int trialDaysLeft = calculateTrialDaysLeft(admin);
+        adminDTO.setTrialDaysLeft(trialDaysLeft);
 
         List<BuildingSummaryDTO> buildingSummaryDTO = admin.getBuildings().stream().map(building -> {
             BuildingSummaryDTO dto = new BuildingSummaryDTO();
@@ -129,27 +155,27 @@ public class AdminServiceimpl implements IAdminService {
 
     @Override
     public ResponseEntity<String> updateAdmin(Long id, AdminDTO adminDTO) {
-        // 1. Validar que el DTO no sea nulo
+
         if (adminDTO == null || adminDTO.getUserDTO() == null) {
             return new ResponseEntity<>("Falta información del administrador o usuario", HttpStatus.BAD_REQUEST);
         }
 
-        // 2. Buscar el admin por ID en una sola consulta
+
         Optional<Admin> optionalAdmin = adminRepository.findById(id);
         if (optionalAdmin.isEmpty()) {
             return new ResponseEntity<>("El admin con id: " + id + " no existe", HttpStatus.BAD_REQUEST);
         }
 
-        // 3. Obtener el admin existente
+
         Admin updateAdmin = optionalAdmin.get();
 
-        // 4. Validar y actualizar el usuario asociado
+
         User user = updateAdmin.getUser();
         if (user == null) {
             return new ResponseEntity<>("El admin no tiene un usuario asociado", HttpStatus.BAD_REQUEST);
         }
 
-        // 5. Actualizar campos del usuario si vienen con datos
+
         if (adminDTO.getUserDTO().getUsername() != null) {
             user.setUsername(adminDTO.getUserDTO().getUsername());
         }
@@ -157,7 +183,7 @@ public class AdminServiceimpl implements IAdminService {
             user.setEmail(adminDTO.getUserDTO().getEmail());
         }
 
-        // 6. Guardar cambios
+
         try {
             adminRepository.save(updateAdmin);
             return new ResponseEntity<>("El admin se actualizó correctamente", HttpStatus.OK);
@@ -221,4 +247,24 @@ public class AdminServiceimpl implements IAdminService {
     public boolean existsByUserId(Long userId) {
         return adminRepository.existsByUserId(userId);
     }
+
+    public Long getLoggedUserAdminAccountId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        if (principal instanceof UserDetails) {
+            String email = ((UserDetails) principal).getUsername();
+            User user = userRepository.findByEmail(email).orElse(null);
+            if (user != null && user.getAdminAccount() != null) {
+                return user.getAdminAccount().getId();
+            }
+        }
+        return null;
+    }
+
 }

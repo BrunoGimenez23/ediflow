@@ -15,4 +15,5 @@ public class UserResponseDTO {
     private Role role;
     private String fullName;
     private Long adminId;
+    private String plan;
 }

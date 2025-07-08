@@ -2,12 +2,17 @@ import React from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useResidentContext } from "../../contexts/ResidentContext";
 import { useNavigate } from "react-router-dom";
-import { CreditCard, CalendarDays } from "lucide-react";
+import { CreditCard, CalendarDays, LogOut } from "lucide-react";
 
 const ResidentDashboard = () => {
   const { user, logout } = useAuth();
   const { resident, loading, error } = useResidentContext();
   const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/auth/login"); // Ajusta la ruta si tu login está en otra URL
+  };
 
   if (!user) return <p className="text-center text-gray-600 mt-12">Cargando datos del usuario...</p>;
   if (loading) return <p className="text-center text-gray-600 mt-12">Cargando datos del residente...</p>;
@@ -23,12 +28,11 @@ const ResidentDashboard = () => {
           ¡Hola, <span className="text-blue-600">{user.fullName || user.username}</span>!
         </h1>
         <button
-          onClick={logout}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-5 rounded-md shadow-md"
+          onClick={handleLogout}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-5 rounded-md shadow-md transition"
+          aria-label="Cerrar sesión"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v1" />
-          </svg>
+          <LogOut className="h-5 w-5" />
           Cerrar sesión
         </button>
       </header>

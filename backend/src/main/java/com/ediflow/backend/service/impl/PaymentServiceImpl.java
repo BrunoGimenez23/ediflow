@@ -8,14 +8,18 @@ import com.ediflow.backend.dto.resident.ResidentDTO;
 import com.ediflow.backend.dto.resident.ResidentUsernameDTO;
 import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.entity.*;
+import com.ediflow.backend.enums.PaymentStatus;
 import com.ediflow.backend.repository.IPaymentRepository;
 import com.ediflow.backend.repository.IResidentRepository;
 import com.ediflow.backend.service.IAdminService;
 import com.ediflow.backend.service.IPaymentService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -94,8 +98,12 @@ public class PaymentServiceImpl implements IPaymentService {
         Long adminId = adminService.getLoggedAdminId();
         if (adminId == null) return new ArrayList<>();
 
+        // Cambié el método por el que sí existe en tu repositorio
         List<Payment> payments = paymentRepository.findByResident_Apartment_Building_Admin_Id(adminId);
+
         List<PaymentDTO> paymentsDTOS = new ArrayList<>();
+        System.out.println("Admin ID: " + adminId);
+        System.out.println("Cantidad de pagos encontrados: " + payments.size());
 
         for (Payment payment : payments) {
             PaymentDTO paymentDTO = new PaymentDTO();
@@ -131,7 +139,6 @@ public class PaymentServiceImpl implements IPaymentService {
                     apartmentDTO.setId(apartment.getId());
                     apartmentDTO.setNumber(apartment.getNumber());
                     apartmentDTO.setFloor(apartment.getFloor());
-                    residentDTO.setApartmentDTO(apartmentDTO);
 
                     if (apartment.getBuilding() != null) {
                         Building building = apartment.getBuilding();
@@ -139,8 +146,11 @@ public class PaymentServiceImpl implements IPaymentService {
                         buildingDTO.setId(building.getId());
                         buildingDTO.setName(building.getName());
                         buildingDTO.setAddress(building.getAddress());
-                        residentDTO.setBuildingDTO(buildingDTO);
+
+                        apartmentDTO.setBuildingDTO(buildingDTO);  // Aquí asignamos el edificio dentro del apartamento
                     }
+
+                    residentDTO.setApartmentDTO(apartmentDTO);
                 }
 
                 paymentDTO.setResidentDTO(residentDTO);
@@ -151,6 +161,8 @@ public class PaymentServiceImpl implements IPaymentService {
 
         return paymentsDTOS;
     }
+
+
 
     @Override
     public ResponseEntity<List<PaymentByBuildingDTO>> paymentByBuilding(Long id) {
@@ -218,7 +230,30 @@ public class PaymentServiceImpl implements IPaymentService {
     @Override
     public List<PaymentDTO> findPaymentsByResidentId(Long residentId) {
         List<Payment> payments = paymentRepository.findByResident_Id(residentId);
-        return payments.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return payments.stream()
+                .map(this::convertToDTOWithStatus)
+                .collect(Collectors.toList());
+    }
+
+    private PaymentDTO convertToDTOWithStatus(Payment payment) {
+        PaymentDTO dto = new PaymentDTO();
+        dto.setId(payment.getId());
+        dto.setAmount(payment.getAmount());
+        dto.setConcept(payment.getConcept());
+        dto.setIssueDate(payment.getIssueDate());
+        dto.setDueDate(payment.getDueDate());
+        dto.setPaymentDate(payment.getPaymentDate());
+
+        // Calcula el estado dinámicamente
+        if (payment.getPaymentDate() != null) {
+            dto.setStatus(PaymentStatus.PAID);
+        } else if (payment.getDueDate() != null && payment.getDueDate().isBefore(LocalDate.now())) {
+            dto.setStatus(PaymentStatus.OVERDUE);
+        } else {
+            dto.setStatus(PaymentStatus.PENDING);
+        }
+
+        return dto;
     }
 
     private PaymentDTO convertToDTO(Payment payment) {
@@ -230,7 +265,13 @@ public class PaymentServiceImpl implements IPaymentService {
         dto.setIssueDate(payment.getIssueDate());
         dto.setDueDate(payment.getDueDate());
         dto.setPaymentDate(payment.getPaymentDate());
-        // Completar con otros campos si corresponde
+
         return dto;
+    }
+    public Page<Payment> findPaymentsByFilters(Long adminId, Long buildingId, Pageable pageable) {
+        if (buildingId != null) {
+            return paymentRepository.findByResident_Apartment_Building_Admin_IdAndResident_Apartment_Building_Id(adminId, buildingId, pageable);
+        }
+        return paymentRepository.findByResident_Apartment_Building_Admin_Id(adminId, pageable);
     }
 }

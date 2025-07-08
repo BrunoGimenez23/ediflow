@@ -1,20 +1,32 @@
-
-import { Outlet } from 'react-router-dom'
-import Header from '../components/common/Header'
-import Sidebar from '../components/common/Sidebar'
+import { Outlet } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import TrialExpiredBanner from "../components/common/TrialExpiredBanner";
+import Header from "../components/common/Header";
+import Sidebar from "../components/common/Sidebar";
 
 const Layout = () => {
-    return (
-        <div className="flex h-screen">
-            <Sidebar />
-            <div className="flex flex-col flex-1">
-                <Header />
-                <main className="flex-1 overflow-y-auto p-4">
-                    <Outlet />
-                </main>
-            </div>
-        </div>
-    )
-}
+  const { user } = useAuth();
 
-export default Layout
+  const trialExpired = user?.role === "ADMIN" && (user.trialDaysLeft === 0 || user.trialDaysLeft === null);
+
+  const handleUpgradeClick = () => {
+    window.location.href = "/planes"; // página para activar plan
+  };
+
+  return (
+    <div className="flex h-screen">
+      <Sidebar />
+      <div className="flex flex-col flex-1">
+        <Header />
+
+        {trialExpired && <TrialExpiredBanner onClickUpgrade={handleUpgradeClick} />}
+
+        <main className="flex-1 overflow-auto bg-white p-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default Layout;

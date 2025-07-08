@@ -1,7 +1,5 @@
 import { useState } from "react";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
 const usePost = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -9,36 +7,52 @@ const usePost = () => {
   const post = async (endpoint, payload) => {
     setLoading(true);
     setError(null);
-
     try {
       const token = localStorage.getItem("token");
+      const headers = { "Content-Type": "application/json" };
+
+      if (token && token.includes(".") && token.split(".").length === 3) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const res = await fetch(`${import.meta.env.VITE_API_URL}${endpoint}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        const text = await res.text(); // para debugging
-        throw new Error(`Error ${res.status}: ${text}`);
-      }
+  let errorData;
+  const contentType = res.headers.get("Content-Type");
+  if (contentType && contentType.includes("application/json")) {
+    errorData = await res.json();
+  } else {
+    errorData = { message: await res.text() };
+  }
+
+ 
+  if (res.status === 403) {
+    throw new Error(errorData.message || "Acceso denegado: no tienes permiso para realizar esta acción.");
+  }
+
+  throw new Error(errorData.message || `Error ${res.status}`);
+}
 
       const contentType = res.headers.get("Content-Type");
+      let data;
       if (contentType && contentType.includes("application/json")) {
-        const data = await res.json();
-        return data;
+        data = await res.json();
       } else {
-        // No content or plain text
-        return {};
+        data = {};
       }
+
+      setLoading(false);
+      return { data, error: null };
+
     } catch (err) {
       setError(err.message);
-      return null;
-    } finally {
       setLoading(false);
+      return { data: null, error: err.message };
     }
   };
 

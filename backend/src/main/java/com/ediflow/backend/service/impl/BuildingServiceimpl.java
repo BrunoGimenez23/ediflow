@@ -49,14 +49,14 @@ public class BuildingServiceimpl implements IBuildingService {
     }
 
     @Override
-    public ResponseEntity<BuildingDTO> createBuilding(BuildingDTO newBuilding) {
-        if (newBuilding.getAdminId() == null){
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<BuildingDTO> createBuilding(BuildingDTO newBuilding, Long adminAccountId) {
+        if (adminAccountId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
 
-        Optional<Admin> adminOpt = adminRepository.findById(newBuilding.getAdminId());
-        if (!adminOpt.isPresent()) {
-            return ResponseEntity.notFound().build();
+        Optional<Admin> adminOpt = adminRepository.findByUser_AdminAccount_Id(adminAccountId);
+        if (adminOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
         Admin admin = adminOpt.get();
@@ -67,21 +67,21 @@ public class BuildingServiceimpl implements IBuildingService {
             building.setAddress(newBuilding.getAddress());
             building.setAdmin(admin);
 
-            building = buildingRepository.save(building); // guardar y obtener el ID
+            building = buildingRepository.save(building);
 
-            // Convertimos a DTO para devolverlo
             BuildingDTO dto = new BuildingDTO();
             dto.setId(building.getId());
             dto.setName(building.getName());
             dto.setAddress(building.getAddress());
-            dto.setAdminId(admin.getId());
+            dto.setAdminId(admin.getUser().getAdminAccount().getId());
 
             return new ResponseEntity<>(dto, HttpStatus.CREATED);
 
-        } catch (Exception e){
+        } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
     }
+
 
     @Override
     public ResponseEntity<BuildingDetailDTO> buildingDetail(Long id) {
@@ -93,7 +93,7 @@ public class BuildingServiceimpl implements IBuildingService {
 
         Building building = buildingOpt.get();
 
-        // Convertir lista de Apartment a ApartmentDTO
+
         List<ApartmentSummaryDTO> apartmentSummaries = building.getApartments().stream().map(apartment ->
                 new ApartmentSummaryDTO(
                         apartment.getId(),
@@ -122,17 +122,17 @@ public class BuildingServiceimpl implements IBuildingService {
 
         Resident resident = residentOpt.get();
 
-        // Obtener usuario
+
         User user = resident.getUser();
         UserSummaryDTO userSummaryDTO = new UserSummaryDTO(
                 user.getUsername(),
                 user.getEmail()
         );
 
-        // Obtener número de apartamento (si existe)
+
         int apartmentNumber = resident.getApartment() != null ? resident.getApartment().getNumber() : 0;
 
-        // Crear el DTO
+
         ResidentSummaryDTO dto = new ResidentSummaryDTO(
                 resident.getId(),
                 resident.getCi(),
@@ -203,35 +203,8 @@ public class BuildingServiceimpl implements IBuildingService {
         }
     }
 
-    @Override
-    public List<BuildingDTO> findAllForAdminPanel() {
-        Long adminId = getLoggedAdminId();
-        if (adminId == null) {
-            return new ArrayList<>();
-        }
 
-        List<Building> buildings = buildingRepository.findByAdminId(adminId);
-        List<BuildingDTO> buildingDTOS = new ArrayList<>();
-
-        for (Building building : buildings) {
-            BuildingDTO dto = new BuildingDTO();
-            dto.setId(building.getId());
-            dto.setName(building.getName());
-            dto.setAddress(building.getAddress());
-            dto.setAdminId(building.getAdmin() != null ? building.getAdmin().getId() : null);
-            // Contar residentes por apartamento que tienen residente
-            int residentCount = (int) building.getApartments().stream()
-                    .filter(apartment -> apartment.getResident() != null)
-                    .count();
-            dto.setResidentCount(residentCount);
-
-            buildingDTOS.add(dto);
-        }
-        return buildingDTOS;
-    }
-
-
-    private Long getLoggedAdminId() {
+    private Long getLoggedAdminAccountId() {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return null;
@@ -248,8 +221,12 @@ public class BuildingServiceimpl implements IBuildingService {
             return null;
         }
 
-        Optional<Admin> adminOpt = adminRepository.findByUserId(userOpt.get().getId());
-        return adminOpt.map(Admin::getId).orElse(null);
+        User user = userOpt.get();
+        if (user.getAdminAccount() == null) {
+            return null;
+        }
+
+        return user.getAdminAccount().getId();
     }
 
     @Override
@@ -267,6 +244,50 @@ public class BuildingServiceimpl implements IBuildingService {
         }
 
         return result;
+    }
+
+    @Override
+    public List<BuildingDTO> findAllByAdminAccount(Long adminAccountId) {
+        List<Building> buildings = buildingRepository.findByAdmin_User_AdminAccount_Id(adminAccountId);
+        return buildings.stream()
+                .map(b -> new BuildingDTO(
+                        b.getId(),
+                        b.getName(),
+                        b.getAddress(),
+                        b.getAdmin() != null ? b.getAdmin().getId() : null,
+                        (int) b.getApartments().stream()
+                                .filter(apartment -> apartment.getResident() != null)
+                                .count()
+                ))
+                .collect(Collectors.toList());
+
+    }
+    public List<BuildingDTO> findBuildingsByAdminAccountId(Long adminAccountId) {
+        List<Building> buildings = buildingRepository.findBuildingsByAdminAccountId(adminAccountId);
+        return buildings.stream().map(b -> {
+            BuildingDTO dto = new BuildingDTO();
+            dto.setId(b.getId());
+            dto.setName(b.getName());
+            dto.setAddress(b.getAddress());
+            dto.setAdminId(b.getAdmin() != null ? b.getAdmin().getId() : null);
+
+
+            long residentCount = b.getApartments().stream()
+                    .filter(apartment -> apartment.getResident() != null)
+                    .count();
+
+            dto.setResidentCount((int) residentCount);
+
+            return dto;
+        }).toList();
+    }
+
+
+
+    public Long getAdminAccountIdByUserEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(u -> u.getAdminAccount() != null ? u.getAdminAccount().getId() : null)
+                .orElse(null);
     }
 
 

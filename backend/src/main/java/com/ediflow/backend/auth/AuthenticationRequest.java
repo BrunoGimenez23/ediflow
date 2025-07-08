@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class AuthenticationRequest {
     private String email;
     private String password;
-    private String inviteCode;     // Solo lo usa Admin
+    private String inviteCode;
     private Long apartmentId;
 }

@@ -21,6 +21,7 @@ public class CommonAreaReservationController {
     @Autowired
     private ICommonAreaReservationService reservationService;
 
+
     @PreAuthorize("hasRole('RESIDENT')")
     @PostMapping("/create")
     public ResponseEntity<CommonAreaReservationDTO> createReservation(@Valid @RequestBody CommonAreaReservationDTO dto, Principal principal) {
@@ -29,25 +30,29 @@ public class CommonAreaReservationController {
         return ResponseEntity.ok(created);
     }
 
+
     @PreAuthorize("hasRole('RESIDENT')")
     @GetMapping("/my-reservations")
     public ResponseEntity<List<CommonAreaReservationDTO>> getMyReservations(Principal principal) {
         return ResponseEntity.ok(reservationService.findByResidentEmail(principal.getName()));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE', 'SUPPORT')")
     @GetMapping("/by-building/{buildingId}")
     public ResponseEntity<List<CommonAreaReservationDTO>> getReservationsByBuilding(@PathVariable Long buildingId) {
         return ResponseEntity.ok(reservationService.findByBuildingId(buildingId));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'RESIDENT')")
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESIDENT', 'EMPLOYEE', 'SUPPORT')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteReservation(@PathVariable Long id, Principal principal) {
         return reservationService.deleteReservation(id, principal.getName());
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'RESIDENT')")
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'RESIDENT', 'EMPLOYEE', 'SUPPORT')")
     @GetMapping("/by-area/{commonAreaId}")
     public ResponseEntity<List<CommonAreaReservationDTO>> getReservationsByAreaAndDate(
             @PathVariable Long commonAreaId,

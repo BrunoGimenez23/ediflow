@@ -14,6 +14,7 @@ public interface IAdminRepository extends JpaRepository<Admin, Long> {
     Optional<Admin> findByUserEmail(String email);
 
     Optional<Admin> findByUser_Username(String username);
+    Optional<Admin> findByUser_AdminAccount_Id(Long adminAccountId);
 
 
 

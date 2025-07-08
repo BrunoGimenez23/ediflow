@@ -1,45 +1,64 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { useAuth } from "../contexts/AuthContext"; // Asegurate de tener acceso al rol del usuario
+import { useAuth } from "../contexts/AuthContext";
 
 const PaymentContext = createContext();
 
 export const PaymentProvider = ({ children }) => {
-  const [payments, setPayments] = useState([]);
+  // Estado con info paginada
+  const [paymentsPage, setPaymentsPage] = useState({
+    content: [],
+    totalPages: 1,
+    number: 0, // página actual (0-index)
+    totalElements: 0,
+    size: 10,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const { user, token } = useAuth();
 
-  const fetchPayments = async () => {
-    if (!user || user.role !== "ADMIN") return;
-    
-    if (!token || !token.includes(".")) {
-    console.error("Token inválido:", token);
-    return;
-  }
+  // fetchPayments memoizado para no cambiar de referencia
+  const fetchPayments = useCallback(
+    async (page = 0, size = 10, filters = {}) => {
+      if (!user || user.role !== "ADMIN") return;
+      if (!token || !token.includes(".")) {
+        console.error("Token inválido:", token);
+        return;
+      }
+      setLoading(true);
+      setError(null);
 
-    setLoading(true);
-    setError(null);
-     try {
-    const res = await axios.get("http://localhost:8080/payment/all", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setPayments(res.data);
-  } catch (err) {
-    console.error("Error al cargar los pagos:", err);
-    setError("Error al cargar los pagos");
-  } finally {
-    setLoading(false);
-  }
-};
+      try {
+        const res = await axios.get("http://localhost:8080/payment/all", {
+          headers: { Authorization: `Bearer ${token}` },
+          params: {
+            page,
+            size,
+            ...filters,
+          },
+        });
+       
+        setPaymentsPage(res.data);
+      } catch (err) {
+        console.error("Error al cargar los pagos:", err);
+        setError("Error al cargar los pagos");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user, token]
+  );
 
+  // Llamar fetchPayments solo si user es ADMIN y cuando user cambie
   useEffect(() => {
-    fetchPayments();
-  }, [user]); // Se vuelve a ejecutar si cambia el usuario
+    if (user && user.role === "ADMIN") {
+      fetchPayments(0);
+    }
+  }, [user, fetchPayments]);
 
   return (
-    <PaymentContext.Provider value={{ payments, loading, error, fetchPayments }}>
+    <PaymentContext.Provider value={{ paymentsPage, loading, error, fetchPayments }}>
       {children}
     </PaymentContext.Provider>
   );

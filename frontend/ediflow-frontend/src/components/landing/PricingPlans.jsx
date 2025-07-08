@@ -1,74 +1,108 @@
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 
 const plans = [
   {
-    name: "Básico",
-    icon: "🔹",
+    name: 'Esencial',
+    icon: '💼',
+    pricePerUnit: 40,
+    minimumMonthly: 2000,
+    units: 'Hasta 50',
     description: [
-      "1 edificio",
-      "Hasta 20 residentes",
-      "Pagos y reservas",
-      "Soporte por email",
+      'Gestión de residentes',
+      'Emisión de expensas (pendiente/pagado/vencido)',
+      'Reservas simples',
+      'Portal gratuito para residentes',
     ],
-    monthly: 390,
-    yearly: 3900,
-    oneTime: 10900,
   },
   {
-    name: "Pro",
-    icon: "🔷",
+    name: 'Profesional',
+    icon: '💼',
+    pricePerUnit: 60,
+    minimumMonthly: 3000,
+    units: 'Hasta 150',
     description: [
-      "Hasta 5 edificios",
-      "Hasta 100 residentes",
-      "Reportes y estadísticas",
-      "Soporte prioritario",
+      'Todo lo del plan Esencial',
+      'Gráfico mensual de pagos',
+      'Soporte por email rápido',
     ],
-    monthly: 790,
-    yearly: 7900,
-    oneTime: 21900,
-    popular: true,
+    popular: true, // <-- Marcar como plan popular
   },
   {
-    name: "Enterprise",
-    icon: "🔵",
+    name: 'Premium Plus',
+    icon: '💼',
+    pricePerUnit: 100,
+    minimumMonthly: 10000, // corregido a 10.000 (precio mensual fijo)
+    units: 'Ilimitadas',
     description: [
-      "Edificios ilimitados",
-      "Residentes ilimitados",
-      "Multiusuario",
-      "Integración API (futuro)",
-      "Soporte premium",
+      'Todo lo del Profesional',
+      'Soporte multiusuario para equipos',
+      'Soporte telefónico prioritario',
     ],
-    monthly: 1590,
-    yearly: 15900,
-    oneTime: 39900,
   },
 ];
 
-const PricingPlans = () => {
-  const [billing, setBilling] = useState("monthly");
+const PricingPlans = ({ id }) => {
+  const [billing, setBilling] = useState('monthly');
+
+  const calculatePrice = (plan) => {
+    let price;
+    if (plan.units === 'Ilimitadas') {
+      price = plan.minimumMonthly * (billing === 'monthly' ? 1 : 12);
+      if (billing === 'yearly') price = price * 0.85; // 15% descuento anual
+    } else {
+      price = plan.pricePerUnit * (billing === 'monthly' ? 1 : 12);
+      if (billing === 'yearly') {
+        price = price * 0.85; // 15% descuento anual
+      }
+      if (price < plan.minimumMonthly * (billing === 'monthly' ? 1 : 12)) {
+        price = plan.minimumMonthly * (billing === 'monthly' ? 1 : 12);
+      }
+    }
+    return Math.round(price);
+  };
+
+  const formatPrice = (plan) => {
+    if (plan.units === 'Ilimitadas') {
+      return billing === 'monthly'
+        ? `${plan.minimumMonthly} UYU/mes`
+        : `${calculatePrice(plan)} UYU/año`;
+    }
+    return billing === 'monthly'
+      ? `${plan.pricePerUnit} UYU/unidad (mín. ${plan.minimumMonthly} UYU/mes)`
+      : `${calculatePrice(plan)} UYU/año`;
+  };
+
+  const handleFakeBuy = (planName) => {
+    alert(`Simulando suscripción al plan: ${planName} - Facturación: ${billing}`);
+  };
 
   return (
-    <section className="py-12 px-4 md:px-12 bg-white">
+    <section id={id} className="py-12 px-4 md:px-12 bg-gray-100">
       <div className="max-w-6xl mx-auto text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
-          Planes de Ediflow
+          💼 Planes de Suscripción – Ediflow
         </h2>
         <p className="text-gray-600 mb-8">
-          Elegí el plan que mejor se adapte a tus necesidades.
+          Administre edificios en Uruguay con facilidad. ¡Pruebe 14 días gratis y elija su plan!
         </p>
+
         <div className="flex justify-center items-center mb-8 gap-4">
-          <span className="text-gray-700 font-medium">Facturación:</span>
+          <span className="text-gray-800 font-medium">Facturación:</span>
           <button
-            className={`px-4 py-1 rounded-full border ${billing === "monthly" ? "bg-ediblue text-white" : "bg-white text-ediblue"}`}
-            onClick={() => setBilling("monthly")}
+            className={`px-4 py-1 rounded-full border border-blue-500 shadow-sm transition hover:bg-blue-500 hover:text-white ${
+              billing === 'monthly' ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'
+            }`}
+            onClick={() => setBilling('monthly')}
           >
             Mensual
           </button>
           <button
-            className={`px-4 py-1 rounded-full border ${billing === "yearly" ? "bg-ediblue text-white" : "bg-white text-ediblue"}`}
-            onClick={() => setBilling("yearly")}
+            className={`px-4 py-1 rounded-full border border-blue-500 shadow-sm transition hover:bg-blue-500 hover:text-white ${
+              billing === 'yearly' ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'
+            }`}
+            onClick={() => setBilling('yearly')}
           >
-            Anual <span className="text-sm">(2 meses gratis)</span>
+            Anual <span className="text-sm font-normal">(15% de descuento)</span>
           </button>
         </div>
 
@@ -76,36 +110,55 @@ const PricingPlans = () => {
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`rounded-2xl border p-6 shadow-sm transition hover:shadow-lg ${
-                plan.popular ? "border-ediblue" : "border-gray-200"
+              className={`rounded-2xl border p-6 shadow-sm transition hover:shadow-lg flex flex-col justify-between bg-white text-gray-800 border-gray-200 ${
+                plan.popular ? 'border-blue-600 bg-blue-50 shadow-lg' : ''
               }`}
             >
-              <div className="text-3xl mb-2">{plan.icon}</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                {plan.name}
-              </h3>
-              {plan.popular && (
-                <p className="text-xs text-ediblue font-medium mb-1">
-                  Más popular
-                </p>
-              )}
-              <p className="text-3xl font-bold text-gray-800 mb-4">
-                ${billing === "monthly" ? plan.monthly : plan.yearly} <span className="text-base font-normal text-gray-500">/ {billing === "monthly" ? "mes" : "año"}</span>
-              </p>
-              <ul className="text-gray-600 text-left space-y-2 mb-4">
-                {plan.description.map((item, idx) => (
-                  <li key={idx}>• {item}</li>
-                ))}
-              </ul>
-              <div className="text-sm text-gray-500">
-                o pago único: <span className="font-semibold">${plan.oneTime}</span>
+              <div>
+                <div className="text-4xl mb-3">{plan.icon}</div>
+                <h3 className={`text-xl font-semibold mb-1 ${plan.popular ? 'text-blue-700' : ''}`}>
+                  {plan.name}
+                </h3>
+                {plan.popular && (
+                  <p className="text-sm font-semibold uppercase mb-2 tracking-wide text-blue-600">
+                    Más popular
+                  </p>
+                )}
+                <p className="text-sm mb-2 font-medium text-gray-700">{formatPrice(plan)}</p>
+                <p className="text-sm mb-4 font-medium text-gray-600">Unidades: {plan.units}</p>
+                <ul className="mb-6 space-y-2 text-left text-gray-700">
+                  {plan.description.map((item, idx) => (
+                    <li key={idx} className="flex items-center gap-2">
+                      <span className="text-blue-500 font-bold">✓</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
+
+              <button
+                className={`mt-6 py-3 px-6 rounded-lg font-semibold transition ${
+                  plan.popular
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                }`}
+                onClick={() => handleFakeBuy(plan.name)}
+              >
+                Probar 14 días gratis
+              </button>
             </div>
           ))}
         </div>
+
+        <p className="text-gray-600 mt-8 max-w-3xl mx-auto text-left">
+          <strong>Configuración inicial (opcional):</strong> Carga de datos, edificios, residentes y capacitación por 4,000–12,000 UYU según portafolio.
+        </p>
+        <p className="text-gray-600 mt-2 max-w-3xl mx-auto text-left">
+          <strong>Facturación e impuestos:</strong> Los precios no incluyen IVA. En caso de corresponder en el futuro, se adicionará al momento de facturar.
+        </p>
       </div>
     </section>
   );
 };
 
-export default PricingPlans
+export default PricingPlans;

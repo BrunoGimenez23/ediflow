@@ -25,6 +25,7 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
+
     public String generateToken(User user) {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("roles", List.of("ROLE_" + user.getRole().name()));
@@ -53,7 +54,7 @@ public class JwtService {
                 .setClaims(extractClaims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24))
+                .setExpiration(new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24)) // 1 día
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
