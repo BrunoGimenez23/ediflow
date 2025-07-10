@@ -5,6 +5,7 @@ import com.ediflow.backend.dto.building.BuildingDetailDTO;
 import com.ediflow.backend.dto.building.BuildingSummaryDTO;
 import com.ediflow.backend.dto.resident.ResidentSummaryDTO;
 import com.ediflow.backend.entity.Building;
+import com.ediflow.backend.entity.User;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -12,7 +13,6 @@ import java.util.Optional;
 
 public interface IBuildingService {
 
-    ResponseEntity<BuildingDTO> createBuilding(BuildingDTO newBuilding, Long adminAccountId);
     ResponseEntity<BuildingDetailDTO> buildingDetail(Long id);
 
     ResponseEntity<ResidentSummaryDTO> residentSummary(Long id);
@@ -28,4 +28,6 @@ public interface IBuildingService {
     List<BuildingDTO> findAllByAdminAccount(Long adminAccountId);
     List<BuildingDTO> findBuildingsByAdminAccountId(Long adminAccountId);
     Long getAdminAccountIdByUserEmail(String email);
+    List<BuildingDTO> findBuildingsForUser(User user);
+    ResponseEntity<BuildingDTO> createBuilding(BuildingDTO newBuilding, String userEmail);
 }

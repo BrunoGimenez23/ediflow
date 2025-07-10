@@ -325,16 +325,24 @@ public class ApartmentServiceimpl implements IApartmentService {
     @Override
     public Page<ApartmentDTO> findPagedByUserAndBuilding(String email, String role, String filter, Long buildingId, Pageable pageable) {
         Long adminAccountId = adminService.getLoggedUserAdminAccountId();
-        if (adminAccountId == null) {
-            return Page.empty();
-        }
+        Long adminId = adminService.getLoggedAdminId();
 
         Page<Apartment> apartments;
 
-        if (buildingId != null) {
-            apartments = apartmentRepository.findByAdminAccountIdAndBuildingIdAndFilter(adminAccountId, buildingId, filter, pageable);
+        if (adminAccountId != null) {
+
+            if (buildingId != null) {
+                apartments = apartmentRepository.findByAdminAccountIdAndBuildingIdAndFilter(adminAccountId, buildingId, filter, pageable);
+            } else {
+                apartments = apartmentRepository.findByAdminAccountIdAndFilter(adminAccountId, filter, pageable);
+            }
         } else {
-            apartments = apartmentRepository.findByAdminAccountIdAndFilter(adminAccountId, filter, pageable);
+
+            if (buildingId != null) {
+                apartments = apartmentRepository.findByAdminIdAndBuildingIdAndFilter(adminId, buildingId, filter, pageable);
+            } else {
+                apartments = apartmentRepository.findByAdminIdAndFilter(adminId, filter, pageable);
+            }
         }
 
         return apartments.map(ApartmentMapper::toDTO);

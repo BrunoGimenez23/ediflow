@@ -7,7 +7,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem("token") || "");
   const [trialExpired, setTrialExpired] = useState(false);
-  const [ready, setReady] = useState(false); // Nuevo flag para controlar carga completa
+  const [ready, setReady] = useState(false); // Flag para controlar carga completa
 
   const fetchUser = async () => {
     if (!token) {
@@ -32,13 +32,8 @@ export const AuthProvider = ({ children }) => {
 
       setTrialExpired(res.data.trialDaysLeft !== null && res.data.trialDaysLeft <= 0);
 
-      setUser((prevUser) => {
-        // Solo actualiza si el usuario cambió realmente
-        if (JSON.stringify(prevUser) === JSON.stringify(newUser)) {
-          return prevUser;
-        }
-        return newUser;
-      });
+      // ✅ Actualiza siempre que llega nueva info, incluso si solo cambió trialDaysLeft
+      setUser(newUser);
     } catch (err) {
       console.error("No se pudo obtener el usuario logueado", err);
 

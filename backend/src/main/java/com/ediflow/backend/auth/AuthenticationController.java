@@ -97,10 +97,15 @@ public class AuthenticationController {
                         trialDaysLeft = 0;
                     }
                 }
-                plan = admin.getPlan();
+
+                // Si está en periodo de prueba y no tiene plan, asignar "PROFESIONAL" temporalmente
+                if (admin.getPlan() == null && trialDaysLeft != null && trialDaysLeft > 0) {
+                    plan = "PROFESIONAL";
+                } else {
+                    plan = admin.getPlan();
+                }
             }
         } else {
-
             if (user.getAdminAccount() != null) {
                 System.out.println("AdminAccount encontrado, obteniendo datos...");
                 AdminAccount adminAccount = user.getAdminAccount();
@@ -108,7 +113,6 @@ public class AuthenticationController {
                 plan = adminAccount.getPlan();
                 System.out.println("AdminId obtenido: " + adminId);
                 System.out.println("Plan obtenido: " + plan);
-
 
                 if (adminAccount.getSubscriptionEnd() != null) {
                     var today = java.time.LocalDate.now();
@@ -138,7 +142,4 @@ public class AuthenticationController {
 
         return ResponseEntity.ok(userDTO);
     }
-
 }
-
-

@@ -11,6 +11,7 @@ import com.ediflow.backend.entity.Building;
 import com.ediflow.backend.enums.Role;
 import com.ediflow.backend.entity.User;
 import com.ediflow.backend.exception.ResourceNotFoundException;
+import com.ediflow.backend.repository.IAdminAccountRepository;
 import com.ediflow.backend.repository.IAdminRepository;
 import com.ediflow.backend.repository.IUserRepository;
 import com.ediflow.backend.service.IAdminService;
@@ -33,16 +34,19 @@ import java.util.stream.Collectors;
 
 @Service
 public class AdminServiceimpl implements IAdminService {
-    @Autowired
-    private IAdminRepository adminRepository;
-    @Autowired
-    private IUserRepository userRepository;
+
+    private final IAdminRepository adminRepository;
+
+    private final IUserRepository userRepository;
+
+    private final IAdminAccountRepository adminAccountRepository;
 
 
     @Autowired
-    public AdminServiceimpl(IAdminRepository adminRepository, IUserRepository userRepository) {
+    public AdminServiceimpl(IAdminRepository adminRepository, IUserRepository userRepository, IAdminAccountRepository adminAccountRepository) {
         this.adminRepository = adminRepository;
         this.userRepository = userRepository;
+        this.adminAccountRepository = adminAccountRepository;
     }
 
     private int calculateTrialDaysLeft(Admin admin) {
@@ -285,13 +289,39 @@ public class AdminServiceimpl implements IAdminService {
         }
 
         Admin admin = adminOpt.get();
+        User user = admin.getUser();
 
         admin.setPlan(planName.toUpperCase());
         admin.setPlanDuration(duration.toLowerCase());
+
+        if (planName.equalsIgnoreCase("PREMIUM_PLUS") && user.getAdminAccount() == null) {
+            AdminAccount newAccount = new AdminAccount();
+            newAccount.setActive(true);
+            newAccount.setPlan("PREMIUM_PLUS");
+            newAccount.setCompanyName(user.getFullName());
+            LocalDate now = LocalDate.now();
+            newAccount.setSubscriptionStart(now);
+
+
+            if (duration.equalsIgnoreCase("monthly")) {
+                newAccount.setSubscriptionEnd(now.plusMonths(1));
+            } else if (duration.equalsIgnoreCase("yearly")) {
+                newAccount.setSubscriptionEnd(now.plusYears(1));
+            } else {
+                return ResponseEntity.badRequest().body("Duración inválida. Usa 'monthly' o 'yearly'.");
+            }
+
+            adminAccountRepository.save(newAccount);
+            user.setAdminAccount(newAccount);
+            userRepository.save(user);
+        }
+
         adminRepository.save(admin);
 
         return ResponseEntity.ok("Plan y duración asignados correctamente.");
     }
+
+
 
 
 }

@@ -5,6 +5,7 @@ import com.ediflow.backend.dto.building.BuildingDetailDTO;
 import com.ediflow.backend.dto.building.BuildingSummaryDTO;
 import com.ediflow.backend.dto.resident.ResidentSummaryDTO;
 import com.ediflow.backend.entity.User;
+import com.ediflow.backend.repository.IUserRepository;
 import com.ediflow.backend.service.IBuildingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/buildings")
@@ -23,14 +25,16 @@ import java.util.List;
 public class BuildingController {
 
     private final IBuildingService buildingService;
+    private final IUserRepository userRepository;
 
     @PostMapping("/building")
     @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
     public ResponseEntity<BuildingDTO> createBuilding(@RequestBody BuildingDTO newBuilding,
-                                                      @AuthenticationPrincipal User user) {
-        Long adminAccountId = (user != null && user.getAdminAccount() != null) ? user.getAdminAccount().getId() : null;
-        return buildingService.createBuilding(newBuilding, adminAccountId);
+                                                      Authentication authentication) {
+        String email = authentication.getName();
+        return buildingService.createBuilding(newBuilding, email);
     }
+
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
@@ -76,9 +80,22 @@ public class BuildingController {
     @GetMapping("/by-admin")
     public ResponseEntity<List<BuildingDTO>> getBuildingsByAdmin(Authentication authentication) {
         String email = authentication.getName();
-        Long adminAccountId = buildingService.getAdminAccountIdByUserEmail(email);
-        if (adminAccountId == null) return ResponseEntity.ok(List.of());
-        List<BuildingDTO> buildings = buildingService.findBuildingsByAdminAccountId(adminAccountId);
+
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) return ResponseEntity.ok(List.of());
+
+        User user = userOpt.get();
+        List<BuildingDTO> buildings = buildingService.findBuildingsForUser(user);
+        return ResponseEntity.ok(buildings);
+    }
+    @GetMapping("/for-user")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
+    public ResponseEntity<List<BuildingDTO>> findBuildingsForUser(@AuthenticationPrincipal User user) {
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(List.of());
+        }
+
+        List<BuildingDTO> buildings = buildingService.findBuildingsForUser(user);
         return ResponseEntity.ok(buildings);
     }
 

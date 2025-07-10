@@ -15,11 +15,13 @@ import java.util.List;
 @Repository
 public interface IApartmentRepository extends JpaRepository<Apartment, Long> {
     List<Apartment> findByBuildingId(Long id);
+
     List<Apartment> findByBuilding_Admin_Id(Long adminId);
 
     List<Apartment> findByResident(Resident resident);
 
     List<Apartment> findByResident_User_Email(String email);
+
     List<Apartment> findByBuilding_Admin_User_AdminAccount_Id(Long adminAccountId);
 
     @Query("SELECT a FROM Apartment a " +
@@ -28,6 +30,7 @@ public interface IApartmentRepository extends JpaRepository<Apartment, Long> {
             "JOIN ad.user u " +
             "WHERE u.adminAccount.id = :adminAccountId")
     List<Apartment> findByAdminAccountId(@Param("adminAccountId") Long adminAccountId);
+
     @Query(value = "SELECT DISTINCT a FROM Apartment a " +
             "LEFT JOIN FETCH a.resident r " +
             "LEFT JOIN FETCH r.user ru " +
@@ -97,4 +100,44 @@ public interface IApartmentRepository extends JpaRepository<Apartment, Long> {
             @Param("filter") String filter,
             Pageable pageable
     );
+
+    @Query(value = "SELECT DISTINCT a FROM Apartment a " +
+            "LEFT JOIN FETCH a.resident r " +
+            "LEFT JOIN FETCH r.user ru " +
+            "LEFT JOIN FETCH a.building b " +
+            "JOIN b.admin ad " +
+            "WHERE ad.id = :adminId " +
+            "AND (CAST(a.number AS string) LIKE %:filter% OR " +
+            "CAST(a.floor AS string) LIKE %:filter%)",
+            countQuery = "SELECT COUNT(a) FROM Apartment a " +
+                    "JOIN a.building b " +
+                    "JOIN b.admin ad " +
+                    "WHERE ad.id = :adminId " +
+                    "AND (CAST(a.number AS string) LIKE %:filter% OR " +
+                    "CAST(a.floor AS string) LIKE %:filter%)")
+    Page<Apartment> findByAdminIdAndFilter(@Param("adminId") Long adminId,
+                                           @Param("filter") String filter,
+                                           Pageable pageable);
+
+    @Query(value = "SELECT DISTINCT a FROM Apartment a " +
+            "LEFT JOIN FETCH a.resident r " +
+            "LEFT JOIN FETCH r.user ru " +
+            "LEFT JOIN FETCH a.building b " +
+            "JOIN b.admin ad " +
+            "WHERE ad.id = :adminId " +
+            "AND b.id = :buildingId " +
+            "AND (CAST(a.number AS string) LIKE %:filter% OR " +
+            "CAST(a.floor AS string) LIKE %:filter%)",
+            countQuery = "SELECT COUNT(a) FROM Apartment a " +
+                    "JOIN a.building b " +
+                    "JOIN b.admin ad " +
+                    "WHERE ad.id = :adminId " +
+                    "AND b.id = :buildingId " +
+                    "AND (CAST(a.number AS string) LIKE %:filter% OR " +
+                    "CAST(a.floor AS string) LIKE %:filter%)")
+    Page<Apartment> findByAdminIdAndBuildingIdAndFilter(@Param("adminId") Long adminId,
+                                                        @Param("buildingId") Long buildingId,
+                                                        @Param("filter") String filter,
+                                                        Pageable pageable);
+
 }

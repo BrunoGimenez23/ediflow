@@ -19,9 +19,12 @@ const statusStyles = {
 };
 
 const Payments = () => {
-  const { trialExpired } = useAuth();
+  const { trialExpired, user } = useAuth();
   const { paymentsPage, loading, fetchPayments } = usePaymentContext();
   const token = localStorage.getItem("token");
+
+  // Id del admin logueado
+  const adminId = user?.id || null;
 
   const [showForm, setShowForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
@@ -44,6 +47,7 @@ const Payments = () => {
     buildingId: "",
     fromDate: "",
     toDate: "",
+    adminId: adminId, // filtro por admin actual
   });
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,21 +63,23 @@ const Payments = () => {
     return { ...payment, computedStatus: status };
   });
 
+  // Traer pagos filtrados por adminId y demás filtros
   useEffect(() => {
     const cleanedFilters = {};
     if (filters.status) cleanedFilters.status = filters.status;
     if (filters.buildingId) cleanedFilters.buildingId = filters.buildingId;
     if (filters.fromDate) cleanedFilters.fromDate = filters.fromDate;
     if (filters.toDate) cleanedFilters.toDate = filters.toDate;
-    
+    if (filters.adminId) cleanedFilters.adminId = filters.adminId;
 
     fetchPayments(currentPage - 1, itemsPerPage, cleanedFilters);
   }, [filters, currentPage, fetchPayments]);
 
+  // Traer residentes SOLO de los edificios de este admin
   useEffect(() => {
     setLoadingResidents(true);
     axios
-      .get("http://localhost:8080/residents/all", {
+      .get(`http://localhost:8080/residents/by-admin/${adminId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -81,13 +87,14 @@ const Payments = () => {
         setResidents(resContent);
       })
       .finally(() => setLoadingResidents(false));
-  }, [token]);
+  }, [adminId, token]);
 
+  // Extraer edificios únicos de los residentes del admin para filtro edificio
   useEffect(() => {
     if (residents.length > 0) {
       const uniqueBuildings = residents
         .map((r) => r.buildingDTO)
-  .filter((b, idx, arr) => b && arr.findIndex((x) => x.id === b.id) === idx);
+        .filter((b, idx, arr) => b && arr.findIndex((x) => x.id === b.id) === idx);
       setBuildings(uniqueBuildings);
     }
   }, [residents]);
@@ -195,14 +202,13 @@ const Payments = () => {
           <option value="OVERDUE">Vencido</option>
         </select>
         <select
-  value={filters.buildingId}
-  onChange={(e) => {
-    
-    setFilters((f) => ({ ...f, buildingId: e.target.value }));
-    setCurrentPage(1); // resetea la página al cambiar filtro
-  }}
-  className="p-2 border rounded"
->
+          value={filters.buildingId}
+          onChange={(e) => {
+            setFilters((f) => ({ ...f, buildingId: e.target.value }));
+            setCurrentPage(1);
+          }}
+          className="p-2 border rounded"
+        >
           <option value="">Todos los edificios</option>
           {buildings.map((b) => (
             <option key={b.id} value={b.id}>

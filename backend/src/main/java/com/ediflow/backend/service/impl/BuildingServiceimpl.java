@@ -49,14 +49,31 @@ public class BuildingServiceimpl implements IBuildingService {
     }
 
     @Override
-    public ResponseEntity<BuildingDTO> createBuilding(BuildingDTO newBuilding, Long adminAccountId) {
-        if (adminAccountId == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+    public ResponseEntity<BuildingDTO> createBuilding(BuildingDTO newBuilding, String userEmail) {
+        if (userEmail == null || userEmail.isBlank()) {
+            System.out.println("userEmail es null o vacío, no se puede crear edificio");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        Optional<Admin> adminOpt = adminRepository.findByUser_AdminAccount_Id(adminAccountId);
+        Optional<User> userOpt = userRepository.findByEmail(userEmail);
+        if (userOpt.isEmpty()) {
+            System.out.println("Usuario no encontrado con email: " + userEmail);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        User user = userOpt.get();
+
+        Optional<Admin> adminOpt;
+
+        if (user.getAdminAccount() != null) {
+            adminOpt = adminRepository.findByUserIdAndUser_AdminAccount_Id(user.getId(), user.getAdminAccount().getId());
+        } else {
+            adminOpt = adminRepository.findByUserId(user.getId());
+        }
+
         if (adminOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+            System.out.println("No se encontró Admin para userId: " + user.getId() + " con adminAccountId: " + (user.getAdminAccount() != null ? user.getAdminAccount().getId() : "null"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
         Admin admin = adminOpt.get();
@@ -73,14 +90,18 @@ public class BuildingServiceimpl implements IBuildingService {
             dto.setId(building.getId());
             dto.setName(building.getName());
             dto.setAddress(building.getAddress());
-            dto.setAdminId(admin.getUser().getAdminAccount().getId());
+            dto.setAdminId(admin.getId());
 
             return new ResponseEntity<>(dto, HttpStatus.CREATED);
 
         } catch (Exception e) {
+            System.out.println("Error creando edificio: " + e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
+
+
+
 
 
     @Override
@@ -282,12 +303,26 @@ public class BuildingServiceimpl implements IBuildingService {
         }).toList();
     }
 
-
-
     public Long getAdminAccountIdByUserEmail(String email) {
         return userRepository.findByEmail(email)
                 .map(u -> u.getAdminAccount() != null ? u.getAdminAccount().getId() : null)
                 .orElse(null);
+    }
+    public List<BuildingDTO> findBuildingsForUser(User user) {
+        if (user == null) return List.of();
+
+        Optional<Admin> adminOpt = adminRepository.findByUserId(user.getId());
+        if (adminOpt.isEmpty()) return List.of();
+
+        Admin admin = adminOpt.get();
+
+        if ("PREMIUM_PLUS".equalsIgnoreCase(admin.getPlan()) && user.getAdminAccount() != null) {
+
+            return findAllByAdminAccount(user.getAdminAccount().getId());
+        } else {
+
+            return findAllForAdminPanel(admin.getId());
+        }
     }
 
 

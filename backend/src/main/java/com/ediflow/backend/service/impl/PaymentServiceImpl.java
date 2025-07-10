@@ -166,7 +166,12 @@ public class PaymentServiceImpl implements IPaymentService {
 
     @Override
     public ResponseEntity<List<PaymentByBuildingDTO>> paymentByBuilding(Long id) {
-        List<Payment> payments = paymentRepository.findAll().stream()
+        Long adminId = adminService.getLoggedAdminId();
+        if (adminId == null) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
+        List<Payment> payments = paymentRepository.findByResident_Apartment_Building_Admin_Id(adminId).stream()
                 .filter(payment -> payment.getResident() != null &&
                         payment.getResident().getApartment() != null &&
                         payment.getResident().getApartment().getBuilding() != null &&

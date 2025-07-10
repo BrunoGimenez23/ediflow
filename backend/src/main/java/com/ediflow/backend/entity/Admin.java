@@ -29,7 +29,7 @@ public class Admin {
     @Column(name = "trial_end")
     private LocalDate trialEnd;
 
-    @Column(nullable = false)
+    @Column
     private String plan;
 
     @Column(name = "plan_duration")

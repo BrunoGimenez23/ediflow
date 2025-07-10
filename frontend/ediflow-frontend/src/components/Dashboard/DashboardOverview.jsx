@@ -30,11 +30,14 @@ const planFeatures = {
 }
 
 const can = (userPlan, feature) => {
-  if (!userPlan) return false
-  const normalizedPlan = userPlan.toUpperCase().replace(/\s+/g, '_')
-  const plan = planFeatures[normalizedPlan]
-  return plan ? plan[feature] === true : false
+  if (!userPlan || userPlan.trim() === "") {
+    userPlan = "PROFESIONAL";
+  }
+  const normalizedPlan = userPlan.toUpperCase().replace(/\s+/g, '_');
+  const plan = planFeatures[normalizedPlan];
+  return plan ? plan[feature] === true : false;
 }
+
 
 const DashboardOverview = () => {
   const { user, token } = useAuth()

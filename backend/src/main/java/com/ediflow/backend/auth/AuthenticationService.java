@@ -20,9 +20,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AuthenticationService {
 
-
-    private static final String VALID_ADMIN_INVITE_CODE = "EDIFLOW-ADMIN-2025";
-
     private final IUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final IAdminRepository adminRepository;
@@ -126,30 +123,80 @@ public class AuthenticationService {
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new RuntimeException("Contraseña incorrecta");
         }
-        Admin admin = null;
 
+        Long adminId = null;
+        Integer trialDaysLeft = null;
+        String plan = null;
 
         if (user.getRole() == Role.ADMIN) {
-            admin = adminRepository.findByUserId(user.getId())
-                    .orElseThrow(() -> new RuntimeException("Administrador no encontrado"));
+
+            var adminOpt = adminRepository.findByUserId(user.getId());
+            if (adminOpt.isEmpty()) {
+                throw new RuntimeException("Administrador no encontrado");
+            }
+
+            Admin admin = adminOpt.get();
 
             LocalDate today = LocalDate.now();
 
             if (admin.getTrialEnd() != null && today.isAfter(admin.getTrialEnd())) {
                 throw new RuntimeException("El período de prueba ha expirado. Por favor, contacta para renovar tu suscripción.");
             }
+
+            adminId = admin.getId();
+
+            if (admin.getTrialEnd() != null) {
+                if (!admin.getTrialEnd().isBefore(today)) {
+                    trialDaysLeft = (int) java.time.temporal.ChronoUnit.DAYS.between(today, admin.getTrialEnd());
+                } else {
+                    trialDaysLeft = 0;
+                }
+            }
+
+            // Si está en periodo de prueba y no tiene plan, asignar "PROFESIONAL" temporalmente
+            if (admin.getPlan() == null && trialDaysLeft != null && trialDaysLeft > 0) {
+                plan = "PROFESIONAL";
+            } else {
+                plan = admin.getPlan();
+            }
+
+        } else {
+            // Usuarios secundarios (empleados, soporte, etc) o residentes con adminAccount
+            if (user.getAdminAccount() != null) {
+                AdminAccount adminAccount = user.getAdminAccount();
+                adminId = adminAccount.getId();
+                plan = adminAccount.getPlan();
+
+                if (adminAccount.getSubscriptionEnd() != null) {
+                    LocalDate today = LocalDate.now();
+                    if (!adminAccount.getSubscriptionEnd().isBefore(today)) {
+                        trialDaysLeft = (int) java.time.temporal.ChronoUnit.DAYS.between(today, adminAccount.getSubscriptionEnd());
+                    } else {
+                        trialDaysLeft = 0;
+                    }
+                }
+            }
         }
 
-        var token = jwtService.generateToken(user);
+        UserDTO userDTO = UserDTO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .fullName(user.getFullName())
+                .adminId(adminId)
+                .trialDaysLeft(trialDaysLeft)
+                .plan(plan)
+                .build();
 
-        var userDTO = UserMapper.toUserDTO(user, admin);
+        var token = jwtService.generateToken(user);
 
         return AuthenticationResponse.builder()
                 .token(token)
                 .user(userDTO)
                 .build();
-
     }
+
 
 
 

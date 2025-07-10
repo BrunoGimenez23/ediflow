@@ -17,7 +17,7 @@ const Buildings = () => {
   const [address, setAddress] = useState("");
   const [editingBuilding, setEditingBuilding] = useState(null);
 
-  // 🔐 Esperar hasta que user esté disponible antes de fetchBuildings
+
   useEffect(() => {
     if (user?.adminId) {
       fetchBuildings();

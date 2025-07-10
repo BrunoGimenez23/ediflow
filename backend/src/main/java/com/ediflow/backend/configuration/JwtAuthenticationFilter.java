@@ -38,7 +38,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
 
-
         if (path.equals("/auth/login") || path.equals("/auth/register-admin") || path.equals("/auth/register-resident")) {
             filterChain.doFilter(request, response);
             return;
@@ -49,19 +48,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String username;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("[JWT Filter] ❌ No se encontró el header Authorization o no empieza con 'Bearer '");
             filterChain.doFilter(request, response);
             return;
         }
 
         jwt = authHeader.substring(7);
         username = jwtService.extractUsername(jwt);
+        System.out.println("[JWT Filter] ✅ Header Authorization recibido");
+        System.out.println("[JWT Filter] 📧 Username extraído del token: " + username);
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+            boolean isValid = jwtService.isTokenValid(jwt, userDetails);
+            System.out.println("[JWT Filter] 🔐 Token válido: " + isValid);
+            System.out.println("[JWT Filter] 👤 userDetails.username: " + userDetails.getUsername());
 
-            if (jwtService.isTokenValid(jwt, userDetails)) {
+            if (isValid) {
                 Claims claims = jwtService.extractAllClaims(jwt);
                 Object rawRoles = claims.get("roles");
+                System.out.println("[JWT Filter] 🧾 Claims.roles: " + rawRoles);
+
                 List<SimpleGrantedAuthority> authorities = Collections.emptyList();
 
                 if (rawRoles instanceof List<?>) {
@@ -75,7 +82,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     .map(Object::toString)
                                     .map(SimpleGrantedAuthority::new)
                                     .collect(Collectors.toList());
-
                         } else if (first instanceof Map) {
                             authorities = rawList.stream()
                                     .map(r -> (Map<?, ?>) r)
@@ -87,10 +93,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
                 }
 
+                System.out.println("[JWT Filter] ✅ Authorities extraídas: " + authorities);
+
                 UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
                 authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+                System.out.println("[JWT Filter] ✅ SecurityContextHolder seteado correctamente.");
             }
         }
 
