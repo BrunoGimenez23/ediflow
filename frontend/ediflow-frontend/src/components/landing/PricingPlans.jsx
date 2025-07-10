@@ -8,10 +8,9 @@ const plans = [
     minimumMonthly: 2000,
     units: 'Hasta 50',
     description: [
-      'Gestión de residentes',
-      'Emisión de expensas (pendiente/pagado/vencido)',
-      'Reservas simples',
-      'Portal gratuito para residentes',
+      'Gestión completa de edificios, apartamentos y residentes',
+      'Panel gratuito para residentes con acceso a su información',
+      'Ideal para comunidades pequeñas y gestión básica',
     ],
   },
   {
@@ -21,22 +20,25 @@ const plans = [
     minimumMonthly: 3000,
     units: 'Hasta 150',
     description: [
-      'Todo lo del plan Esencial',
-      'Gráfico mensual de pagos',
-      'Soporte por email rápido',
+      'Todas las funcionalidades del plan Esencial',
+      'Gestión avanzada de pagos y emisión de expensas (pendiente, pagado, vencido)',
+      'Reservas y administración de espacios comunes',
+      'Gráficos y reportes mensuales de pagos',
+      'Soporte rápido por email',
     ],
-    popular: true, // <-- Marcar como plan popular
+    popular: true,
   },
   {
     name: 'Premium Plus',
     icon: '💼',
     pricePerUnit: 100,
-    minimumMonthly: 10000, // corregido a 10.000 (precio mensual fijo)
+    minimumMonthly: 10000,
     units: 'Ilimitadas',
     description: [
-      'Todo lo del Profesional',
-      'Soporte multiusuario para equipos',
-      'Soporte telefónico prioritario',
+      'Todas las funcionalidades del plan Profesional',
+      'Soporte multiusuario para equipos de trabajo',
+      'Atención telefónica prioritaria',
+      'Funciones exclusivas y personalización avanzada',
     ],
   },
 ];

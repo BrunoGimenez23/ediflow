@@ -16,6 +16,7 @@ import MyPayments from './pages/resident/MyPayments'
 import MyReservations from './pages/resident/MyReservations'
 import AdminReservationsPanel from './components/admin/AdminReservationsPanel'
 import UserManagement from './components/admin/UserManagement'
+import AssignPlanPage from './pages/admin/AssignPlanPage'
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
         <Route path="apartment" element={<Apartments />} />
         <Route path="payment/all" element={<Payments />} />
         <Route path="users" element={<UserManagement />} />
+        <Route path="assign-plan" element={<AssignPlanPage />} />
       </Route>
 
       {/* Rutas de residente */}

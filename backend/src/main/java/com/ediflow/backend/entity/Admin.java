@@ -32,6 +32,9 @@ public class Admin {
     @Column(nullable = false)
     private String plan;
 
+    @Column(name = "plan_duration")
+    private String planDuration;
+
     @OneToMany(mappedBy = "admin", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     @ToString.Exclude

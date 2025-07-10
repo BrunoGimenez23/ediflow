@@ -10,6 +10,9 @@ const Sidebar = () => {
   const isEmployee = user?.role === "EMPLOYEE";
   const isSupport = user?.role === "SUPPORT";
 
+  
+  const plan = user?.plan || "";
+
   return (
     <nav className="w-64 h-screen bg-ediblue text-white flex flex-col items-center p-4">
       <div className="mb-8">
@@ -50,8 +53,8 @@ const Sidebar = () => {
             </>
           )}
 
-          {/* Solo ADMIN ve Pagos */}
-          {isAdmin && (
+          {/* Solo ADMIN ve Pagos si tiene plan Profesional o superior */}
+          {isAdmin && (plan === "PROFESIONAL" || plan === "PREMIUM_PLUS" || plan === "ENTERPRISE") && (
             <li>
               <Link to="/admin/payment/all" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
                 <DollarSign className="text-edigray" />
@@ -60,8 +63,8 @@ const Sidebar = () => {
             </li>
           )}
 
-          {/* ADMIN y SUPPORT ven Reservas */}
-          {(isAdmin || isSupport) && (
+          {/* ADMIN y SUPPORT ven Reservas si tienen plan Profesional o superior */}
+          {(isAdmin || isSupport) && (plan === "PROFESIONAL" || plan === "PREMIUM_PLUS" || plan === "ENTERPRISE") && (
             <li>
               <Link to="/admin/reservas" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
                 <CalendarDays className="text-edigray" />
@@ -71,7 +74,7 @@ const Sidebar = () => {
           )}
 
           {/* Solo ADMIN con plan ENTERPRISE ve Gestión de Usuarios */}
-          {isAdmin && user?.plan === "ENTERPRISE" && (
+          {isAdmin && plan === "PREMIUM_PLUS" && (
             <li>
               <Link to="/admin/users" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
                 <Users className="text-edigray" />

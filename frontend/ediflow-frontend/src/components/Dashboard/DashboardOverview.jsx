@@ -8,10 +8,38 @@ import axios from 'axios'
 import { usePaymentContext } from '../../contexts/PaymentContext'
 import { useAuth } from '../../contexts/AuthContext'
 
+const planFeatures = {
+  ESENCIAL: {
+    canSeePayments: false,
+    canManageResidents: true,
+    canViewBuildings: true,
+    canViewCommonAreas: false,
+  },
+  PROFESIONAL: {
+    canSeePayments: true,
+    canManageResidents: true,
+    canViewBuildings: true,
+    canViewCommonAreas: true,
+  },
+  PREMIUM_PLUS: {
+    canSeePayments: true,
+    canManageResidents: true,
+    canViewBuildings: true,
+    canViewCommonAreas: true,
+  },
+}
+
+const can = (userPlan, feature) => {
+  if (!userPlan) return false
+  const normalizedPlan = userPlan.toUpperCase().replace(/\s+/g, '_')
+  const plan = planFeatures[normalizedPlan]
+  return plan ? plan[feature] === true : false
+}
+
 const DashboardOverview = () => {
   const { user, token } = useAuth()
-  const { buildings = [] } = useBuildingsContext()  // valor por defecto []
-  const { paymentsPage } = usePaymentContext();    // valor por defecto []
+  const { buildings = [] } = useBuildingsContext()
+  const { paymentsPage } = usePaymentContext()
 
   const [residentCount, setResidentCount] = useState(0)
   const [commonAreasCount, setCommonAreasCount] = useState(0)
@@ -61,6 +89,7 @@ const DashboardOverview = () => {
       icon: <Building />,
       color: 'text-ediblue',
       link: '/admin/buildings',
+      feature: 'canViewBuildings',
     },
     {
       type: 'Residentes',
@@ -68,6 +97,7 @@ const DashboardOverview = () => {
       icon: <Users />,
       color: 'text-edicyan',
       link: '/admin/residents',
+      feature: 'canManageResidents',
     },
     {
       type: 'Pagos',
@@ -75,6 +105,7 @@ const DashboardOverview = () => {
       icon: <DollarSign />,
       color: 'text-edigreen',
       link: '/admin/payment/all',
+      feature: 'canSeePayments',
     },
     {
       type: 'Áreas Comunes',
@@ -82,23 +113,34 @@ const DashboardOverview = () => {
       icon: <MapPin />,
       color: 'text-ediorange',
       link: '/admin/common-areas/all',
+      feature: 'canViewCommonAreas',
     },
   ]
 
+  // Filtrado con lógica corregida para roles sin plan
   const filteredStats = stats.filter(stat => {
     if (!user) return false
 
-    switch(user.role) {
-      case "ADMIN":
-        return true
-      case "EMPLOYEE":
-        return stat.type !== "Pagos"
-      case "SUPPORT":
-        return ["Residentes", "Áreas Comunes"].includes(stat.type)
-      default:
-        return false
+    const role = user.role?.toUpperCase()
+
+    if (role === "ADMIN") {
+      // Para admin, chequea también permisos según plan
+      if (!can(user.plan, stat.feature)) return false
+      return true
     }
+
+    // Para employee y support, ignora plan, filtra sólo por rol
+    if (role === "EMPLOYEE") {
+      return stat.type !== "Pagos" // ejemplo: empleados no ven pagos
+    }
+    if (role === "SUPPORT") {
+      return ["Residentes", "Áreas Comunes"].includes(stat.type)
+    }
+
+    return false
   })
+
+  const showPaymentsChart = user?.role?.toUpperCase() === "ADMIN" && can(user.plan, "canSeePayments")
 
   if (loading) return <p className="text-center py-8">Cargando datos del dashboard...</p>
   if (error) return <p className="text-center py-8 text-red-600">{error}</p>
@@ -118,8 +160,7 @@ const DashboardOverview = () => {
         ))}
       </div>
 
-      {/* Mostrar resumen de pagos solo para ADMIN */}
-      {user?.role === "ADMIN" && (
+      {showPaymentsChart && (
         <>
           <h2 className="text-2xl font-semibold mb-6">Resumen de pagos</h2>
           <div className="bg-white rounded shadow p-6">

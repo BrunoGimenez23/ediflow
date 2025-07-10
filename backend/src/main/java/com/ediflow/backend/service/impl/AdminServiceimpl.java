@@ -266,5 +266,32 @@ public class AdminServiceimpl implements IAdminService {
         }
         return null;
     }
+    @Override
+    @Transactional
+    public ResponseEntity<String> assignPlan(String email, String planName, String duration) {
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body("El email es requerido.");
+        }
+        if (planName == null || planName.isBlank()) {
+            return ResponseEntity.badRequest().body("El nombre del plan es requerido.");
+        }
+        if (duration == null || duration.isBlank()) {
+            return ResponseEntity.badRequest().body("La duración del plan es requerida.");
+        }
+
+        Optional<Admin> adminOpt = adminRepository.findByUserEmail(email);
+        if (adminOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("No se encontró un admin con ese email.");
+        }
+
+        Admin admin = adminOpt.get();
+
+        admin.setPlan(planName.toUpperCase());
+        admin.setPlanDuration(duration.toLowerCase());
+        adminRepository.save(admin);
+
+        return ResponseEntity.ok("Plan y duración asignados correctamente.");
+    }
+
 
 }

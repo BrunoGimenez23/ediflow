@@ -18,5 +18,7 @@ public interface IAdminService {
     boolean existsByUserId(Long userId);
     Long getLoggedAdminId();
     String getLoggedUserEmail();
+    ResponseEntity<String> assignPlan(String email, String planName, String duration);
+
 
 }

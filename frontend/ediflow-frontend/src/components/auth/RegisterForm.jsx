@@ -7,6 +7,7 @@ const RegisterForm = () => {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('') // nuevo estado para fullName
   const [adminCode, setAdminCode] = useState('')
   const [success, setSuccess] = useState(false)
 
@@ -18,12 +19,13 @@ const RegisterForm = () => {
       username,
       email,
       password,
+      fullName,         
       inviteCode: adminCode,
     })
 
     if (res) {
       setSuccess(true)
-      setTimeout(() => navigate('/auth/login-admin'), 2000)
+      setTimeout(() => navigate('/auth/login'), 2000)
     }
   }
 
@@ -56,6 +58,14 @@ const RegisterForm = () => {
           onChange={(e) => setUsername(e.target.value)}
           type="text"
           placeholder="Nombre de usuario"
+          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ediblue"
+          required
+        />
+        <input
+          value={fullName}   
+          onChange={(e) => setFullName(e.target.value)}
+          type="text"
+          placeholder="Nombre completo"
           className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-ediblue"
           required
         />

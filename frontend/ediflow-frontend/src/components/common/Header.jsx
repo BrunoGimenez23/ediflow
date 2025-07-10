@@ -10,6 +10,11 @@ const Header = () => {
     navigate("/auth/login");
   };
 
+  // Nuevo handler para ir a asignar plan
+  const handleAssignPlan = () => {
+    navigate("/admin/assign-plan");
+  };
+
   return (
     <header className="h-20 bg-edigray flex justify-between items-center px-12 md:px-20 lg:px-40 shadow-md">
       <div>
@@ -32,14 +37,28 @@ const Header = () => {
         )}
       </div>
 
-      <button
-        onClick={handleLogout}
-        className="bg-ediblue hover:bg-ediblueLight text-white font-semibold py-2 px-5 rounded-md shadow-md transition-colors"
-        aria-label="Cerrar sesión"
-        title="Cerrar sesión"
-      >
-        Salir
-      </button>
+      <div className="flex items-center gap-4">
+        {/* Botón que aparece solo para bruno@ediflow.com */}
+        {user?.email === "bruno@ediflow.com" && (
+          <button
+            onClick={handleAssignPlan}
+            className="bg-edigreen hover:bg-edigreenLight text-white font-semibold py-2 px-5 rounded-md shadow-md transition-colors"
+            aria-label="Asignar plan manual"
+            title="Asignar plan manual"
+          >
+            Asignar Plan
+          </button>
+        )}
+
+        <button
+          onClick={handleLogout}
+          className="bg-ediblue hover:bg-ediblueLight text-white font-semibold py-2 px-5 rounded-md shadow-md transition-colors"
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+        >
+          Salir
+        </button>
+      </div>
     </header>
   );
 };
