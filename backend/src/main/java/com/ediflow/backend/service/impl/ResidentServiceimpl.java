@@ -501,10 +501,6 @@ public class ResidentServiceimpl implements IResidentService {
         return new PageImpl<>(dtoList, pageable, residentIdsPage.getTotalElements());
     }
 
-
-
-
-
     private Long getAdminAccountIdOfLoggedUser() {
 
         String email = adminService.getLoggedUserEmail();

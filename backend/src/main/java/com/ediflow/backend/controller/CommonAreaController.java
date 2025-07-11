@@ -23,13 +23,17 @@ public class CommonAreaController {
         CommonAreaDTO created = commonAreaService.create(commonAreaDTO);
         return ResponseEntity.ok(created);
     }
-    
+
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/all")
-    public ResponseEntity<List<CommonAreaDTO>> getAllCommonAreas() {
-        List<CommonAreaDTO> areas = commonAreaService.findAll();
+    public ResponseEntity<List<CommonAreaDTO>> getAllCommonAreas(
+            @RequestParam(required = false) Long adminAccountId,
+            @RequestParam(required = false) Long adminId
+    ) {
+        List<CommonAreaDTO> areas = commonAreaService.findAllFiltered();
         return ResponseEntity.ok(areas);
     }
+
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/{id}")

@@ -2,23 +2,34 @@ package com.ediflow.backend.service.impl;
 import com.ediflow.backend.dto.commonarea.CommonAreaDTO;
 import com.ediflow.backend.entity.Building;
 import com.ediflow.backend.entity.CommonArea;
+import com.ediflow.backend.entity.User;
+import com.ediflow.backend.repository.IAdminRepository;
 import com.ediflow.backend.repository.IBuildingRepository;
 import com.ediflow.backend.repository.ICommonAreaRepository;
+import com.ediflow.backend.service.IAdminService;
 import com.ediflow.backend.service.ICommonAreaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 public class CommonAreaServiceImpl implements ICommonAreaService {
 
-    @Autowired
-    private ICommonAreaRepository commonAreaRepo;
+    private final  ICommonAreaRepository commonAreaRepo;
 
-    @Autowired
-    private IBuildingRepository buildingRepo;
+    private final IBuildingRepository buildingRepo;
+    private final IAdminService adminService;
+
+
+    public CommonAreaServiceImpl(ICommonAreaRepository commonAreaRepo, IBuildingRepository buildingRepo, ICommonAreaRepository commonAreaRepository, IAdminRepository adminRepository, IAdminService adminService) {
+        this.commonAreaRepo = commonAreaRepo;
+        this.buildingRepo = buildingRepo;
+
+        this.adminService = adminService;
+    }
 
     @Override
     public CommonAreaDTO create(CommonAreaDTO dto) {
@@ -71,7 +82,7 @@ public class CommonAreaServiceImpl implements ICommonAreaService {
         dto.setName(commonArea.getName());
         dto.setDescription(commonArea.getDescription());
         dto.setCapacity(commonArea.getCapacity());
-        dto.setBuildingId(commonArea.getBuilding().getId()); // agregalo si querés
+        dto.setBuildingId(commonArea.getBuilding().getId());
         return dto;
     }
 
@@ -96,4 +107,24 @@ public class CommonAreaServiceImpl implements ICommonAreaService {
 
         return mapToDTO(existing);
     }
+    @Override
+    public List<CommonAreaDTO> findAllFiltered() {
+        User user = adminService.getLoggedUser();
+        List<CommonArea> areas;
+
+        if (user.getAdminAccount() != null) {
+            areas = commonAreaRepo.findByBuilding_Admin_User_AdminAccount_Id(user.getAdminAccount().getId());
+        } else {
+            Long adminId = adminService.getLoggedAdminId();
+            areas = commonAreaRepo.findByBuilding_Admin_Id(adminId);
+        }
+
+        return areas.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+
+
+
 }

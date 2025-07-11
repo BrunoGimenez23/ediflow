@@ -10,4 +10,5 @@ public interface ICommonAreaService {
     List<CommonAreaDTO> findAll();
     void delete(Long id);
     List<CommonAreaDTO> findAllByBuilding(Long buildingId);
+    List<CommonAreaDTO> findAllFiltered();
 }
