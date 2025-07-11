@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const plans = [
   {
@@ -45,6 +46,8 @@ const plans = [
 
 const PricingPlans = ({ id }) => {
   const [billing, setBilling] = useState('monthly');
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const calculatePrice = (plan) => {
     let price;
@@ -74,9 +77,19 @@ const PricingPlans = ({ id }) => {
       : `${calculatePrice(plan)} UYU/año`;
   };
 
-  const handleFakeBuy = (planName) => {
-    alert(`Simulando suscripción al plan: ${planName} - Facturación: ${billing}`);
+  const handleButtonClick = () => {
+    if (location.pathname === '/') {
+      navigate('/auth/register-admin');
+    } else if (location.pathname === '/planes') {
+      // Aquí podés poner otra lógica si querés, o dejar sin acción
+    } else {
+      navigate('/planes');
+    }
   };
+
+  // Texto dinámico según ruta
+  const buttonText =
+    location.pathname === '/' ? 'Probar 14 días gratis' : 'Actualizar plan';
 
   return (
     <section id={id} className="py-12 px-4 md:px-12 bg-gray-100">
@@ -144,9 +157,9 @@ const PricingPlans = ({ id }) => {
                     ? 'bg-blue-600 text-white hover:bg-blue-700'
                     : 'bg-blue-500 text-white hover:bg-blue-600'
                 }`}
-                onClick={() => handleFakeBuy(plan.name)}
+                onClick={handleButtonClick}
               >
-                Probar 14 días gratis
+                {buttonText}
               </button>
             </div>
           ))}

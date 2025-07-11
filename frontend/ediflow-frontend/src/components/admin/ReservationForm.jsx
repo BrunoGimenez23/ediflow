@@ -5,7 +5,7 @@ import { useReservationsByAreaDate } from "../../hooks/useReservationsByAreaDate
 
 const ReservationForm = ({ onSuccess }) => {
   const { data: commonAreas, loading: loadingAreas, error: errorAreas } =
-    useFetch("/common-areas/all");
+    useFetch("/reservations/common-areas/user");
 
   const [form, setForm] = useState({
     commonAreaId: "",

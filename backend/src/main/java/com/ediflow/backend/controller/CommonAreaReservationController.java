@@ -1,12 +1,16 @@
 package com.ediflow.backend.controller;
 
+import com.ediflow.backend.dto.commonarea.CommonAreaDTO;
 import com.ediflow.backend.dto.commonarea.CommonAreaReservationDTO;
+import com.ediflow.backend.entity.User;
 import com.ediflow.backend.service.ICommonAreaReservationService;
+import com.ediflow.backend.service.ICommonAreaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -18,8 +22,15 @@ import java.util.List;
 @RequestMapping("/reservations")
 public class CommonAreaReservationController {
 
-    @Autowired
-    private ICommonAreaReservationService reservationService;
+
+    private final ICommonAreaReservationService reservationService;
+
+    private final ICommonAreaService commonAreaService;
+
+    public CommonAreaReservationController(ICommonAreaReservationService reservationService, ICommonAreaService commonAreaService) {
+        this.reservationService = reservationService;
+        this.commonAreaService = commonAreaService;
+    }
 
 
     @PreAuthorize("hasRole('RESIDENT')")
@@ -51,6 +62,14 @@ public class CommonAreaReservationController {
         return reservationService.deleteReservation(id, principal.getName());
     }
 
+    @GetMapping("/common-areas/user")
+    public ResponseEntity<List<CommonAreaDTO>> findCommonAreasForUser() {
+        System.out.println("[TRACE] Controlador: findCommonAreasForUser() llamado");
+        var areas = reservationService.findAllFiltered();
+        System.out.println("[TRACE] Áreas obtenidas: " + areas.size());
+        return ResponseEntity.ok(areas);
+    }
+
 
     @PreAuthorize("hasAnyRole('ADMIN', 'RESIDENT', 'EMPLOYEE', 'SUPPORT')")
     @GetMapping("/by-area/{commonAreaId}")
@@ -65,4 +84,7 @@ public class CommonAreaReservationController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+
+
 }

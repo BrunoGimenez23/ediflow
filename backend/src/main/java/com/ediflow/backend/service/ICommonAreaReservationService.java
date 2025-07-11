@@ -1,5 +1,6 @@
 package com.ediflow.backend.service;
 
+import com.ediflow.backend.dto.commonarea.CommonAreaDTO;
 import com.ediflow.backend.dto.commonarea.CommonAreaReservationDTO;
 import org.springframework.http.ResponseEntity;
 
@@ -13,4 +14,6 @@ public interface ICommonAreaReservationService {
     List<CommonAreaReservationDTO> findByBuildingId(Long buildingId);
     ResponseEntity<String> deleteReservation(Long id, String email);
     List<CommonAreaReservationDTO> findByAreaAndDate(Long commonAreaId, LocalDate date);
+    List<CommonAreaDTO> findAllFiltered(Long adminAccountId, Long adminId);
+    List<CommonAreaDTO> findAllFiltered();
 }

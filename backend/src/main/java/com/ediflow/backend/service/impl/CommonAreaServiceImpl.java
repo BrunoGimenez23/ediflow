@@ -110,13 +110,22 @@ public class CommonAreaServiceImpl implements ICommonAreaService {
     @Override
     public List<CommonAreaDTO> findAllFiltered() {
         User user = adminService.getLoggedUser();
+
+        if (user == null) {
+            return Collections.emptyList();
+        }
+
+        Long adminAccountId = user.getAdminAccount() != null ? user.getAdminAccount().getId() : null;
+        Long adminId = user.getAdmin() != null ? user.getAdmin().getId() : null;
+
         List<CommonArea> areas;
 
-        if (user.getAdminAccount() != null) {
-            areas = commonAreaRepo.findByBuilding_Admin_User_AdminAccount_Id(user.getAdminAccount().getId());
-        } else {
-            Long adminId = adminService.getLoggedAdminId();
+        if (adminAccountId != null) {
+            areas = commonAreaRepo.findByBuilding_Admin_User_AdminAccount_Id(adminAccountId);
+        } else if (adminId != null) {
             areas = commonAreaRepo.findByBuilding_Admin_Id(adminId);
+        } else {
+            return Collections.emptyList();
         }
 
         return areas.stream()

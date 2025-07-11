@@ -21,20 +21,27 @@ const useDelete = () => {
         },
       });
 
+     
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Error ${res.status}: ${res.statusText} - ${text}`);
+        let errorMessage = `Error ${res.status}`;
+        try {
+          const errorData = await res.json(); 
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          
+        }
+        throw new Error(errorMessage);
       }
 
-      // Si devuelve JSON:
+    
       const contentType = res.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         return await res.json();
       }
 
-      return true; // en caso de no devolver contenido JSON
+      return true;
     } catch (err) {
-      setError(err.message);
+      setError(err.message || "Ocurrió un error al eliminar");
       return null;
     } finally {
       setLoading(false);

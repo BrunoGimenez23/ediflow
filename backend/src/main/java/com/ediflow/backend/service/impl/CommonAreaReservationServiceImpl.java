@@ -1,5 +1,6 @@
 package com.ediflow.backend.service.impl;
 
+import com.ediflow.backend.dto.commonarea.CommonAreaDTO;
 import com.ediflow.backend.dto.commonarea.CommonAreaReservationDTO;
 import com.ediflow.backend.entity.CommonArea;
 import com.ediflow.backend.entity.CommonAreaReservation;
@@ -8,6 +9,7 @@ import com.ediflow.backend.repository.ICommonAreaRepository;
 import com.ediflow.backend.repository.ICommonAreaReservationRepository;
 import com.ediflow.backend.repository.IResidentRepository;
 import com.ediflow.backend.repository.IUserRepository;
+import com.ediflow.backend.service.IAdminService;
 import com.ediflow.backend.service.ICommonAreaReservationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,6 +36,9 @@ public class CommonAreaReservationServiceImpl implements ICommonAreaReservationS
 
     @Autowired
     private IUserRepository userRepo;
+    @Autowired
+    private IAdminService adminService;
+
 
     @Override
     public CommonAreaReservationDTO create(CommonAreaReservationDTO dto) {
@@ -147,5 +153,79 @@ public class CommonAreaReservationServiceImpl implements ICommonAreaReservationS
         dto.setResidentId(resident.getId());
 
         return create(dto);
+    }
+
+    @Override
+    public List<CommonAreaDTO> findAllFiltered() {
+        System.out.println("[DEBUG] findAllFiltered() llamado");
+        var user = adminService.getLoggedUser();
+
+        System.out.println("[DEBUG] Usuario logueado: " + user.getEmail() + ", rol: " + user.getRole().name());
+
+        if (user.getRole().name().equals("RESIDENT")) {
+            var resident = residentRepo.findByUserId(user.getId())
+                    .orElseThrow(() -> new RuntimeException("Residente no encontrado"));
+
+            Long buildingId = resident.getApartment().getBuilding().getId();
+            System.out.println("[DEBUG] Resident vive en edificio con ID: " + buildingId);
+
+            List<CommonArea> areas = areaRepo.findByBuildingId(buildingId);
+
+            System.out.println("[DEBUG] Áreas comunes encontradas para edificio: " + areas.size());
+            areas.forEach(a -> System.out.println(" - Área común: " + a.getName() + " (ID " + a.getId() + ")"));
+
+            return areas.stream()
+                    .map(this::mapCommonAreaToDTO)
+                    .collect(Collectors.toList());
+        }
+
+        Long adminAccountId = user.getAdminAccount() != null ? user.getAdminAccount().getId() : null;
+        Long adminId = user.getAdmin() != null ? user.getAdmin().getId() : null;
+
+        List<CommonArea> areas;
+
+        if (adminAccountId != null) {
+            areas = areaRepo.findByBuilding_Admin_User_AdminAccount_Id(adminAccountId);
+        } else if (adminId != null) {
+            areas = areaRepo.findByBuilding_Admin_Id(adminId);
+        } else {
+            areas = Collections.emptyList();
+        }
+
+        System.out.println("[DEBUG] Áreas comunes encontradas para admin/adminAccount: " + areas.size());
+
+        return areas.stream()
+                .map(this::mapCommonAreaToDTO)
+                .collect(Collectors.toList());
+    }
+
+
+    @Override
+    public List<CommonAreaDTO> findAllFiltered(Long adminAccountId, Long adminId) {
+        List<CommonArea> areas;
+
+        if (adminAccountId != null) {
+
+            areas = areaRepo.findByBuilding_Admin_User_AdminAccount_Id(adminAccountId);
+        } else if (adminId != null) {
+
+            areas = areaRepo.findByBuilding_Admin_Id(adminId);
+        } else {
+
+            return Collections.emptyList();
+        }
+
+        return areas.stream()
+                .map(this::mapCommonAreaToDTO)
+                .collect(Collectors.toList());
+    }
+    private CommonAreaDTO mapCommonAreaToDTO(CommonArea area) {
+        CommonAreaDTO dto = new CommonAreaDTO();
+        dto.setId(area.getId());
+        dto.setName(area.getName());
+        dto.setDescription(area.getDescription());
+        dto.setCapacity(area.getCapacity());
+        dto.setBuildingId(area.getBuilding().getId());
+        return dto;
     }
 }

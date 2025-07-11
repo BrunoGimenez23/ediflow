@@ -11,6 +11,7 @@ import com.ediflow.backend.dto.resident.ResidentSummaryDTO;
 import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.dto.user.UserSummaryDTO;
 import com.ediflow.backend.entity.*;
+import com.ediflow.backend.enums.Role;
 import com.ediflow.backend.repository.*;
 import com.ediflow.backend.service.IApartmentService;
 import com.ediflow.backend.service.IBuildingService;
@@ -62,17 +63,20 @@ public class BuildingServiceimpl implements IBuildingService {
         }
 
         User user = userOpt.get();
-
         Optional<Admin> adminOpt;
 
         if (user.getAdminAccount() != null) {
-            adminOpt = adminRepository.findByUserIdAndUser_AdminAccount_Id(user.getId(), user.getAdminAccount().getId());
+            adminOpt = adminRepository.findByUser_AdminAccount_IdAndUser_Role(
+                    user.getAdminAccount().getId(),
+                    Role.ADMIN
+            );
         } else {
             adminOpt = adminRepository.findByUserId(user.getId());
         }
 
         if (adminOpt.isEmpty()) {
-            System.out.println("No se encontró Admin para userId: " + user.getId() + " con adminAccountId: " + (user.getAdminAccount() != null ? user.getAdminAccount().getId() : "null"));
+            System.out.println("No se encontró Admin para userId: " + user.getId() +
+                    " con adminAccountId: " + (user.getAdminAccount() != null ? user.getAdminAccount().getId() : "null"));
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
@@ -99,8 +103,6 @@ public class BuildingServiceimpl implements IBuildingService {
             return ResponseEntity.internalServerError().build();
         }
     }
-
-
 
 
 
@@ -312,18 +314,27 @@ public class BuildingServiceimpl implements IBuildingService {
         if (user == null) return List.of();
 
         Optional<Admin> adminOpt = adminRepository.findByUserId(user.getId());
-        if (adminOpt.isEmpty()) return List.of();
 
-        Admin admin = adminOpt.get();
+        if (adminOpt.isPresent()) {
+            Admin admin = adminOpt.get();
 
-        if ("PREMIUM_PLUS".equalsIgnoreCase(admin.getPlan()) && user.getAdminAccount() != null) {
+            if ("PREMIUM_PLUS".equalsIgnoreCase(admin.getPlan()) && user.getAdminAccount() != null) {
 
-            return findAllByAdminAccount(user.getAdminAccount().getId());
-        } else {
+                return findAllByAdminAccount(user.getAdminAccount().getId());
+            } else {
 
-            return findAllForAdminPanel(admin.getId());
+                return findAllForAdminPanel(admin.getId());
+            }
         }
+
+
+        if (user.getAdminAccount() != null) {
+            return findAllByAdminAccount(user.getAdminAccount().getId());
+        }
+
+        return List.of();
     }
+
 
 
 }

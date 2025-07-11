@@ -18,7 +18,7 @@ const CommonAreaList = () => {
     const success = await remove(`/common-areas/${id}`);
     if (success) {
       alert("Área común eliminada");
-      window.location.reload(); // o usar refetch si tenés
+      window.location.reload(); 
     }
   };
 

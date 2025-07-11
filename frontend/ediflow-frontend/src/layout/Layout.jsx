@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import {  Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import TrialExpiredBanner from "../components/common/TrialExpiredBanner";
 import Header from "../components/common/Header";
@@ -6,11 +6,12 @@ import Sidebar from "../components/common/Sidebar";
 
 const Layout = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const trialExpired = user?.role === "ADMIN" && (user.trialDaysLeft === 0 || user.trialDaysLeft === null);
 
   const handleUpgradeClick = () => {
-    window.location.href = "/planes"; // página para activar plan
+      navigate('/admin/planes'); 
   };
 
   return (

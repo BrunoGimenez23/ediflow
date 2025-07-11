@@ -11,7 +11,7 @@ const AdminReservationsPanel = () => {
   const [buildingId, setBuildingId] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
 
-  const { data: buildings, loading: loadingBuildings } = useFetch("/buildings");
+  const { data: buildings, loading: loadingBuildings } = useFetch("/buildings/for-user");
 
   const {
     reservations,
