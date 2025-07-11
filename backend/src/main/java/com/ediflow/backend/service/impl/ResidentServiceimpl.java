@@ -438,24 +438,26 @@ public class ResidentServiceimpl implements IResidentService {
     }
 
     @Override
-    public Page<ResidentDTO> findAllPaginated(Long adminAccountId, Long buildingId, Pageable pageable) {
-        logger.debug("findAllPaginated llamado con adminAccountId={}, buildingId={}, pageable={}", adminAccountId, buildingId, pageable);
+    public Page<ResidentDTO> findAllPaginated(Long buildingId, Pageable pageable) {
+        logger.debug("findAllPaginated llamado con buildingId={}, pageable={}", buildingId, pageable);
 
+        User loggedUser = adminService.getLoggedUser();
 
-        Page<Long> residentIdsPage = residentRepository.findIdsByAdminAccountIdAndBuildingIdAndRoleResident(adminAccountId, buildingId, pageable);
+        Page<Long> residentIdsPage;
 
-        logger.debug("Cantidad de IDs de residentes encontrados en DB: {}", residentIdsPage.getTotalElements());
+        if (loggedUser.getAdminAccount() != null) {
+            Long accountId = loggedUser.getAdminAccount().getId();
+            residentIdsPage = residentRepository.findIdsByAdminAccountIdAndBuildingIdAndRoleResident(accountId, buildingId, pageable);
+        } else {
+            Long adminId = adminService.getLoggedAdminId();
+            residentIdsPage = residentRepository.findIdsByAdminIdAndBuildingIdAndRoleResident(adminId, buildingId, pageable);
+        }
 
         if (residentIdsPage.isEmpty()) {
-            logger.debug("No se encontraron residentes para los parámetros dados.");
             return new PageImpl<>(List.of(), pageable, 0);
         }
 
-
         List<Resident> residents = residentRepository.findByIdsWithApartmentBuildingUser(residentIdsPage.getContent());
-
-        logger.debug("Cantidad de Residentes cargados con fetch joins: {}", residents.size());
-
 
         List<ResidentDTO> dtoList = residents.stream().map(resident -> {
             ResidentDTO dto = new ResidentDTO();
@@ -489,17 +491,17 @@ public class ResidentServiceimpl implements IResidentService {
                     dto.setBuildingDTO(buildingDTO);
                     dto.setBuildingId(buildingDTO.getId());
                 }
+
                 dto.setApartmentId(apartmentDTO.getId());
             }
 
             return dto;
         }).collect(Collectors.toList());
 
-        logger.debug("Cantidad de ResidentDTO creados: {}", dtoList.size());
-
-
         return new PageImpl<>(dtoList, pageable, residentIdsPage.getTotalElements());
     }
+
+
 
 
 
@@ -647,15 +649,16 @@ public class ResidentServiceimpl implements IResidentService {
         Apartment apartment = apartmentRepository.findById(request.getApartmentId())
                 .orElseThrow(() -> new RuntimeException("Apartamento no encontrado"));
 
-        AdminAccount adminAccount = Optional.ofNullable(apartment.getBuilding())
-                .map(building -> building.getAdmin())
-                .map(admin -> admin.getUser())
-                .map(User::getAdminAccount)
-                .orElseThrow(() -> new RuntimeException("No se pudo determinar el AdminAccount desde el apartamento"));
+        Admin admin = Optional.ofNullable(apartment.getBuilding())
+                .map(Building::getAdmin)
+                .orElseThrow(() -> new RuntimeException("No se pudo determinar el Admin desde el apartamento"));
 
-        Optional<User> existingUserOpt = userRepository.findByEmail(request.getEmail());
+        User adminUser = Optional.ofNullable(admin.getUser())
+                .orElseThrow(() -> new RuntimeException("No se pudo determinar el usuario del admin"));
+
         User user;
 
+        Optional<User> existingUserOpt = userRepository.findByEmail(request.getEmail());
         if (existingUserOpt.isPresent()) {
             user = existingUserOpt.get();
 
@@ -672,7 +675,7 @@ public class ResidentServiceimpl implements IResidentService {
                     .password(passwordEncoder.encode(request.getPassword()))
                     .role(Role.RESIDENT)
                     .fullName(request.getFullName())
-                    .adminAccount(adminAccount)
+                    .adminAccount(adminUser.getAdminAccount())
                     .build();
 
             userRepository.save(user);

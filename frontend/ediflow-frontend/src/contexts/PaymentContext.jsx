@@ -18,37 +18,42 @@ export const PaymentProvider = ({ children }) => {
 
   const { user, token } = useAuth();
 
-  // fetchPayments memoizado para no cambiar de referencia
+  
   const fetchPayments = useCallback(
-    async (page = 0, size = 10, filters = {}) => {
-      if (!user || user.role !== "ADMIN") return;
-      if (!token || !token.includes(".")) {
-        console.error("Token inválido:", token);
-        return;
-      }
-      setLoading(true);
-      setError(null);
+  async (page = 0, size = 10, filters = {}) => {
+    if (size <= 0) {
+      size = 10; // tamaño mínimo seguro
+    }
+    if (!user || user.role !== "ADMIN") return;
+    if (!token || !token.includes(".")) {
+      console.error("Token inválido:", token);
+      return;
+    }
+    setLoading(true);
+    setError(null);
 
-      try {
-        const res = await axios.get("http://localhost:8080/payment/all", {
-          headers: { Authorization: `Bearer ${token}` },
-          params: {
-            page,
-            size,
-            ...filters,
-          },
-        });
-       
-        setPaymentsPage(res.data);
-      } catch (err) {
-        console.error("Error al cargar los pagos:", err);
-        setError("Error al cargar los pagos");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [user, token]
-  );
+    try {
+      const res = await axios.get("http://localhost:8080/payment/all", {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          page,
+          size,
+          ...filters,
+        },
+      });
+      console.log("Datos pagos recibidos:", res.data);
+
+      setPaymentsPage(res.data);
+    } catch (err) {
+      console.error("Error al cargar los pagos:", err);
+      setError("Error al cargar los pagos");
+    } finally {
+      setLoading(false);
+    }
+  },
+  [user, token]
+);
+
 
   // Llamar fetchPayments solo si user es ADMIN y cuando user cambie
   useEffect(() => {

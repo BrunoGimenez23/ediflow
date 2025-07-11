@@ -90,6 +90,26 @@ public class AdminServiceimpl implements IAdminService {
     }
 
     @Override
+    public User getLoggedUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String email;
+        if (principal instanceof UserDetails) {
+            email = ((UserDetails) principal).getUsername(); // acá está el email
+        } else {
+            email = principal.toString();
+        }
+
+        System.out.println("[AdminService] 📧 Buscando usuario por email: " + email);
+
+        return userRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    System.out.println("[AdminService] ⚠️ Usuario no encontrado para email: " + email);
+                    return null;
+                });
+    }
+
+    @Override
     @Transactional
     public AdminDTO createAdmin(AdminDTO newAdmin) {
         if (newAdmin.getUserDTO() == null) {

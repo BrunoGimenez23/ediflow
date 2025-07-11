@@ -23,9 +23,6 @@ const Payments = () => {
   const { paymentsPage, loading, fetchPayments } = usePaymentContext();
   const token = localStorage.getItem("token");
 
-  // Id del admin logueado
-  const adminId = user?.id || null;
-
   const [showForm, setShowForm] = useState(false);
   const [editingPayment, setEditingPayment] = useState(null);
   const [formData, setFormData] = useState({
@@ -47,7 +44,6 @@ const Payments = () => {
     buildingId: "",
     fromDate: "",
     toDate: "",
-    adminId: adminId, // filtro por admin actual
   });
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -63,39 +59,49 @@ const Payments = () => {
     return { ...payment, computedStatus: status };
   });
 
-  // Traer pagos filtrados por adminId y demás filtros
+  // Traer pagos filtrados y paginados
   useEffect(() => {
     const cleanedFilters = {};
     if (filters.status) cleanedFilters.status = filters.status;
     if (filters.buildingId) cleanedFilters.buildingId = filters.buildingId;
     if (filters.fromDate) cleanedFilters.fromDate = filters.fromDate;
     if (filters.toDate) cleanedFilters.toDate = filters.toDate;
-    if (filters.adminId) cleanedFilters.adminId = filters.adminId;
 
     fetchPayments(currentPage - 1, itemsPerPage, cleanedFilters);
   }, [filters, currentPage, fetchPayments]);
 
-  // Traer residentes SOLO de los edificios de este admin
+  // Traer residentes solo de edificios filtrados
   useEffect(() => {
     setLoadingResidents(true);
     axios
-      .get(`http://localhost:8080/residents/by-admin/${adminId}`, {
+      .get("http://localhost:8080/residents/all", {
         headers: { Authorization: `Bearer ${token}` },
+        params: {
+          page: 0,
+          size: 100,
+          buildingId: filters.buildingId || undefined,
+        },
       })
       .then((res) => {
         const resContent = res.data.content || [];
         setResidents(resContent);
       })
+      .catch((err) => {
+        console.error("Error al cargar residentes:", err);
+        setResidents([]);
+      })
       .finally(() => setLoadingResidents(false));
-  }, [adminId, token]);
+  }, [token, filters.buildingId]);
 
-  // Extraer edificios únicos de los residentes del admin para filtro edificio
+  // Extraer edificios únicos de residentes para filtro
   useEffect(() => {
     if (residents.length > 0) {
       const uniqueBuildings = residents
         .map((r) => r.buildingDTO)
         .filter((b, idx, arr) => b && arr.findIndex((x) => x.id === b.id) === idx);
       setBuildings(uniqueBuildings);
+    } else {
+      setBuildings([]);
     }
   }, [residents]);
 
@@ -192,7 +198,10 @@ const Payments = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <select
           value={filters.status}
-          onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}
+          onChange={(e) => {
+            setFilters((f) => ({ ...f, status: e.target.value }));
+            setCurrentPage(1);
+          }}
           className="p-2 border rounded"
         >
           <option value="">Todos los estados</option>
@@ -219,13 +228,19 @@ const Payments = () => {
         <input
           type="date"
           value={filters.fromDate}
-          onChange={(e) => setFilters((f) => ({ ...f, fromDate: e.target.value }))}
+          onChange={(e) => {
+            setFilters((f) => ({ ...f, fromDate: e.target.value }));
+            setCurrentPage(1);
+          }}
           className="p-2 border rounded"
         />
         <input
           type="date"
           value={filters.toDate}
-          onChange={(e) => setFilters((f) => ({ ...f, toDate: e.target.value }))}
+          onChange={(e) => {
+            setFilters((f) => ({ ...f, toDate: e.target.value }));
+            setCurrentPage(1);
+          }}
           className="p-2 border rounded"
         />
       </div>
@@ -408,7 +423,9 @@ const Payments = () => {
           Página {currentPage} de {paymentsPage.totalPages || 1}
         </span>
         <button
-          onClick={() => setCurrentPage((p) => Math.min(p + 1, paymentsPage.totalPages))}
+          onClick={() =>
+            setCurrentPage((p) => Math.min(p + 1, paymentsPage.totalPages || 1))
+          }
           disabled={currentPage === paymentsPage.totalPages || paymentsPage.totalPages === 0}
           className="px-4 py-2 rounded disabled:opacity-50 text-white bg-ediblue hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-500"
         >

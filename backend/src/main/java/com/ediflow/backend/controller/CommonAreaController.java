@@ -23,8 +23,7 @@ public class CommonAreaController {
         CommonAreaDTO created = commonAreaService.create(commonAreaDTO);
         return ResponseEntity.ok(created);
     }
-
-
+    
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/all")
     public ResponseEntity<List<CommonAreaDTO>> getAllCommonAreas() {

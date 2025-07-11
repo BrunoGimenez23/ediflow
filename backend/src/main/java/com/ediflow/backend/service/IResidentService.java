@@ -29,7 +29,8 @@ public interface IResidentService {
     Long getAdminAccountIdByUserEmail(String email);
     Page<ResidentDTO> findByBuildingId(Long buildingId, Pageable pageable);
     ResponseEntity<String> assignAdminAccountToExistingResidents();
-    Page<ResidentDTO> findAllPaginated(Long adminAccountId, Long buildingId, Pageable pageable);
+    Page<ResidentDTO> findAllPaginated(Long buildingId, Pageable pageable);
+
     ResidentDTO createOrReplaceResident(ResidentDTO residentDTO);
     public void replaceResident(Long apartmentId, Long userId);
     Resident registerOrReplaceResident(RegisterOrReplaceResidentRequest request);

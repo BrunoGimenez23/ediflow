@@ -3,6 +3,7 @@ package com.ediflow.backend.service;
 import com.ediflow.backend.dto.admin.AdminDTO;
 import com.ediflow.backend.entity.Admin;
 import com.ediflow.backend.entity.AdminAccount;
+import com.ediflow.backend.entity.User;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -20,5 +21,6 @@ public interface IAdminService {
     String getLoggedUserEmail();
     ResponseEntity<String> assignPlan(String email, String planName, String duration);
 
+    User getLoggedUser();
 
 }

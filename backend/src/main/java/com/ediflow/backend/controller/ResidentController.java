@@ -34,24 +34,17 @@ public class ResidentController {
     }
     @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE', 'SUPPORT')")
     @GetMapping("/all")
-    public ResponseEntity<Page<ResidentDTO>> findAll(
-            Authentication authentication,
+    public ResponseEntity<Page<ResidentDTO>> findAllPaginated(
             @RequestParam(value = "buildingId", required = false) Long buildingId,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size) {
 
-        String email = authentication.getName();
-        Long adminAccountId = residentService.getAdminAccountIdByUserEmail(email);
-
-        if (adminAccountId == null) {
-            return new ResponseEntity<>(Page.empty(), HttpStatus.OK);
-        }
-
         Pageable pageable = PageRequest.of(page, size);
-        Page<ResidentDTO> residentsPage = residentService.findAllPaginated(adminAccountId, buildingId, pageable);
+        Page<ResidentDTO> residentsPage = residentService.findAllPaginated(buildingId, pageable);
 
         return new ResponseEntity<>(residentsPage, HttpStatus.OK);
     }
+
     @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
     @PutMapping("/update/{id}")
     public ResponseEntity<String> updateResident(@PathVariable Long id, @RequestBody @Valid ResidentDTO residentDTO){
@@ -66,8 +59,8 @@ public class ResidentController {
     @GetMapping("/me")
     @PreAuthorize("hasRole('RESIDENT') or hasRole('ADMIN')")
     public ResponseEntity<ResidentDTO> getCurrentResident(Authentication authentication) {
-        String email = authentication.getName(); // usuario autenticado
-        ResidentDTO residentDTO = residentService.findByUserEmail(email); // implementá este método
+        String email = authentication.getName();
+        ResidentDTO residentDTO = residentService.findByUserEmail(email);
         return ResponseEntity.ok(residentDTO);
     }
 

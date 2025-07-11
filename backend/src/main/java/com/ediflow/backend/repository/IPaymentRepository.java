@@ -31,4 +31,9 @@ public interface IPaymentRepository extends JpaRepository<Payment, Long>, JpaSpe
     Page<Payment> findByResident_Apartment_Building_Admin_Id(Long adminId, Pageable pageable);
     Page<Payment> findByResident_Apartment_Building_Admin_IdAndResident_Apartment_Building_Id(
             Long adminId, Long buildingId, Pageable pageable);
+
+    List<Payment> findByResident_User_AdminAccount_Id(Long adminAccountId);
+
+
+
 }

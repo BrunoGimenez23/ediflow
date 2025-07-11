@@ -57,4 +57,16 @@ public interface IResidentRepository extends JpaRepository<Resident, Long> {
 
     Optional<Resident> findByApartment(Apartment apartment);
 
+    @Query("SELECT r.id FROM Resident r " +
+            "WHERE r.apartment.building.admin.id = :adminId " +
+            "AND (:buildingId IS NULL OR r.apartment.building.id = :buildingId) " +
+            "AND r.user.role = 'RESIDENT'")
+    Page<Long> findIdsByAdminIdAndBuildingIdAndRoleResident(
+            @Param("adminId") Long adminId,
+            @Param("buildingId") Long buildingId,
+            Pageable pageable);
+
+
+
+
 }

@@ -17,11 +17,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -47,10 +49,13 @@ public class PaymentController {
     @Autowired
     private PaymentMapper paymentMapper;
 
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create")
-    public ResponseEntity<String> createPayment(@RequestBody PaymentDTO newPayment) {
-        return paymentService.createPayment(newPayment);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> createPayment(
+            @RequestBody PaymentDTO newPayment,
+            @AuthenticationPrincipal(expression = "username") String username) {
+
+        return paymentService.createPayment(newPayment, username);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -66,44 +71,20 @@ public class PaymentController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long buildingId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(defaultValue = "issueDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction
     ) {
-        Specification<Payment> spec = Specification.where(null);
-
-        LocalDate today = LocalDate.now();
-
-        if ("OVERDUE".equalsIgnoreCase(status)) {
-            spec = spec.and((root, query, cb) -> cb.and(
-                    cb.lessThan(root.get("dueDate"), today),
-                    cb.notEqual(root.get("status"), PaymentStatus.PAID),
-                    cb.notEqual(root.get("status"), PaymentStatus.CANCELLED)
-            ));
-        } else if ("PENDING".equalsIgnoreCase(status)) {
-            spec = spec.and((root, query, cb) -> cb.and(
-                    cb.equal(root.get("status"), PaymentStatus.PENDING),
-                    cb.or(
-                            cb.greaterThanOrEqualTo(root.get("dueDate"), today),
-                            cb.isNull(root.get("dueDate"))
-                    )
-            ));
-        } else if (status != null && !status.isEmpty()) {
-            spec = spec.and(PaymentSpecifications.hasStatus(status));
+        if (size <= 0) {
+            size = 10;
         }
-        if (buildingId != null) {
-            spec = spec.and(PaymentSpecifications.hasBuildingId(buildingId));
-        }
-        if (fromDate != null || toDate != null) {
-            spec = spec.and(PaymentSpecifications.issueDateBetween(fromDate, toDate));
-        }
+        Sort sort = direction.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Payment> pagePayments = paymentRepository.findAll(spec, pageable);
-
-
-        Page<PaymentDTO> dtoPage = pagePayments.map(paymentMapper::toDTO);
-
-        return ResponseEntity.ok(dtoPage);
+        Page<PaymentDTO> payments = paymentService.findAllPaginated(buildingId, status, fromDate, toDate, pageable);
+        return ResponseEntity.ok(payments);
     }
+
 
     @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE','SUPPORT')")
     @GetMapping("/by-building/{id}")
@@ -155,4 +136,5 @@ public class PaymentController {
         List<PaymentDTO> payments = paymentService.findPaymentsByResidentId(residentId);
         return ResponseEntity.ok(payments);
     }
+
 }

@@ -57,7 +57,7 @@ const Residents = () => {
 
   const fetchBuildings = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/buildings", {
+      const res = await axios.get("http://localhost:8080/buildings/for-user", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBuildings(Array.isArray(res.data) ? res.data : []);

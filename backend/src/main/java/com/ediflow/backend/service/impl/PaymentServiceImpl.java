@@ -11,10 +11,12 @@ import com.ediflow.backend.entity.*;
 import com.ediflow.backend.enums.PaymentStatus;
 import com.ediflow.backend.repository.IPaymentRepository;
 import com.ediflow.backend.repository.IResidentRepository;
+import com.ediflow.backend.repository.IUserRepository;
 import com.ediflow.backend.service.IAdminService;
 import com.ediflow.backend.service.IPaymentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -31,16 +33,19 @@ public class PaymentServiceImpl implements IPaymentService {
     private final IResidentRepository residentRepository;
     private final IAdminService adminService;
 
+    private final IUserRepository userRepository;
+
     public PaymentServiceImpl(IPaymentRepository paymentRepository,
                               IResidentRepository residentRepository,
-                              IAdminService adminService) {
+                              IAdminService adminService, IUserRepository userRepository) {
         this.paymentRepository = paymentRepository;
         this.residentRepository = residentRepository;
         this.adminService = adminService;
+        this.userRepository = userRepository;
     }
 
     @Override
-    public ResponseEntity<String> createPayment(PaymentDTO newPayment) {
+    public ResponseEntity<String> createPayment(PaymentDTO newPayment, String username) {
         if (newPayment.getResidentDTO() == null || newPayment.getResidentDTO().getId() == null) {
             return new ResponseEntity<>("Residente no encontrado", HttpStatus.BAD_REQUEST);
         }
@@ -51,6 +56,32 @@ public class PaymentServiceImpl implements IPaymentService {
         }
 
         Resident resident = residentOpt.get();
+
+        User loggedUser = userRepository.findByEmail(username).orElse(null);
+        if (loggedUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
+        }
+
+
+        if (loggedUser.getAdminAccount() != null) {
+
+            Long adminAccountId = loggedUser.getAdminAccount().getId();
+            if (resident.getUser() == null || resident.getUser().getAdminAccount() == null
+                    || !resident.getUser().getAdminAccount().getId().equals(adminAccountId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permiso para crear pago para este residente");
+            }
+        } else {
+
+            Long adminId = loggedUser.getAdmin() != null ? loggedUser.getAdmin().getId() : null;
+            if (adminId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
+            }
+            if (resident.getApartment() == null || resident.getApartment().getBuilding() == null
+                    || resident.getApartment().getBuilding().getAdmin() == null
+                    || !resident.getApartment().getBuilding().getAdmin().getId().equals(adminId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permiso para crear pago para este residente");
+            }
+        }
 
         try {
             Payment payment = new Payment();
@@ -70,6 +101,8 @@ public class PaymentServiceImpl implements IPaymentService {
             return new ResponseEntity<>("Error al crear el pago: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
     @Override
     public Optional<Payment> findById(Long id) {
@@ -95,31 +128,45 @@ public class PaymentServiceImpl implements IPaymentService {
 
     @Override
     public List<PaymentDTO> findAll() {
-        Long adminId = adminService.getLoggedAdminId();
-        if (adminId == null) return new ArrayList<>();
+        User loggedUser = adminService.getLoggedUser();
+        if (loggedUser == null) return new ArrayList<>();
 
-        // Cambié el método por el que sí existe en tu repositorio
-        List<Payment> payments = paymentRepository.findByResident_Apartment_Building_Admin_Id(adminId);
+        List<Payment> payments;
 
-        List<PaymentDTO> paymentsDTOS = new ArrayList<>();
-        System.out.println("Admin ID: " + adminId);
-        System.out.println("Cantidad de pagos encontrados: " + payments.size());
+        if (loggedUser.getAdminAccount() != null) {
+            // Admin con plan Premium Plus (filtrar por AdminAccount)
+            Long adminAccountId = loggedUser.getAdminAccount().getId();
+            payments = paymentRepository.findByResident_User_AdminAccount_Id(adminAccountId);
+        } else {
+            // Admin sin AdminAccount (filtrar por adminId)
+            Long adminId = adminService.getLoggedAdminId();
+            if (adminId == null) return new ArrayList<>();
+            payments = paymentRepository.findByResident_Apartment_Building_Admin_Id(adminId);
+        }
 
-        for (Payment payment : payments) {
-            PaymentDTO paymentDTO = new PaymentDTO();
+        return payments.stream()
+                .map(this::convertToDTOWithResident)
+                .collect(Collectors.toList());
+    }
 
-            paymentDTO.setId(payment.getId());
-            paymentDTO.setAmount(payment.getAmount());
-            paymentDTO.setIssueDate(payment.getIssueDate());
-            paymentDTO.setDueDate(payment.getDueDate());
-            paymentDTO.setPaymentDate(payment.getPaymentDate());
-            paymentDTO.setConcept(payment.getConcept());
-            paymentDTO.setStatus(payment.getStatus());
+    private PaymentDTO convertToDTOWithResident(Payment payment) {
+        PaymentDTO dto = new PaymentDTO();
+        dto.setId(payment.getId());
+        dto.setAmount(payment.getAmount());
+        dto.setIssueDate(payment.getIssueDate());
+        dto.setDueDate(payment.getDueDate());
+        dto.setPaymentDate(payment.getPaymentDate());
+        dto.setConcept(payment.getConcept());
+        dto.setStatus(payment.getStatus());
 
-            if (payment.getResident() != null && payment.getResident().getUser() != null) {
-                Resident resident = payment.getResident();
+        if (payment.getResident() != null) {
+            Resident resident = payment.getResident();
+            ResidentDTO residentDTO = new ResidentDTO();
+            residentDTO.setId(resident.getId());
+            residentDTO.setCi(resident.getCi());
+
+            if (resident.getUser() != null) {
                 User user = resident.getUser();
-
                 UserDTO userDTO = UserDTO.builder()
                         .id(user.getId())
                         .username(user.getUsername())
@@ -127,39 +174,32 @@ public class PaymentServiceImpl implements IPaymentService {
                         .role(user.getRole())
                         .fullName(user.getFullName())
                         .build();
-
-                ResidentDTO residentDTO = new ResidentDTO();
-                residentDTO.setId(resident.getId());
-                residentDTO.setCi(resident.getCi());
                 residentDTO.setUserDTO(userDTO);
-
-                if (resident.getApartment() != null) {
-                    Apartment apartment = resident.getApartment();
-                    ApartmentDTO apartmentDTO = new ApartmentDTO();
-                    apartmentDTO.setId(apartment.getId());
-                    apartmentDTO.setNumber(apartment.getNumber());
-                    apartmentDTO.setFloor(apartment.getFloor());
-
-                    if (apartment.getBuilding() != null) {
-                        Building building = apartment.getBuilding();
-                        BuildingDTO buildingDTO = new BuildingDTO();
-                        buildingDTO.setId(building.getId());
-                        buildingDTO.setName(building.getName());
-                        buildingDTO.setAddress(building.getAddress());
-
-                        apartmentDTO.setBuildingDTO(buildingDTO);  // Aquí asignamos el edificio dentro del apartamento
-                    }
-
-                    residentDTO.setApartmentDTO(apartmentDTO);
-                }
-
-                paymentDTO.setResidentDTO(residentDTO);
             }
 
-            paymentsDTOS.add(paymentDTO);
+            if (resident.getApartment() != null) {
+                Apartment apartment = resident.getApartment();
+                ApartmentDTO apartmentDTO = new ApartmentDTO();
+                apartmentDTO.setId(apartment.getId());
+                apartmentDTO.setNumber(apartment.getNumber());
+                apartmentDTO.setFloor(apartment.getFloor());
+
+                if (apartment.getBuilding() != null) {
+                    Building building = apartment.getBuilding();
+                    BuildingDTO buildingDTO = new BuildingDTO();
+                    buildingDTO.setId(building.getId());
+                    buildingDTO.setName(building.getName());
+                    buildingDTO.setAddress(building.getAddress());
+                    apartmentDTO.setBuildingDTO(buildingDTO);
+                }
+
+                residentDTO.setApartmentDTO(apartmentDTO);
+            }
+
+            dto.setResidentDTO(residentDTO);
         }
 
-        return paymentsDTOS;
+        return dto;
     }
 
 
@@ -278,5 +318,114 @@ public class PaymentServiceImpl implements IPaymentService {
             return paymentRepository.findByResident_Apartment_Building_Admin_IdAndResident_Apartment_Building_Id(adminId, buildingId, pageable);
         }
         return paymentRepository.findByResident_Apartment_Building_Admin_Id(adminId, pageable);
+    }
+
+    @Override
+    public Page<PaymentDTO> findAllPaginated(Long buildingId, String status, LocalDate fromDate, LocalDate toDate, Pageable pageable) {
+        System.out.println("=== findAllPaginated ===");
+
+        User user = adminService.getLoggedUser();
+        if (user == null) {
+            System.out.println("No hay usuario logueado. Retornando página vacía.");
+            return Page.empty();
+        }
+
+        System.out.println("Usuario logueado: " + user.getUsername());
+        System.out.println("AdminAccountId: " + (user.getAdminAccount() != null ? user.getAdminAccount().getId() : "null"));
+        System.out.println("Role: " + user.getRole());
+        System.out.println("Filtros -> buildingId: " + buildingId + ", status: " + status + ", fromDate: " + fromDate + ", toDate: " + toDate);
+        System.out.println("Pageable -> page: " + pageable.getPageNumber() + ", size: " + pageable.getPageSize() + ", sort: " + pageable.getSort());
+
+        Specification<Payment> spec = Specification.where(null);
+
+        if (user.getAdminAccount() != null) {
+            Long adminAccountId = user.getAdminAccount().getId();
+            System.out.println("Filtrando por AdminAccountId: " + adminAccountId);
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("resident").get("user").get("adminAccount").get("id"), adminAccountId)
+            );
+        } else {
+            Long adminId = adminService.getLoggedAdminId();
+            System.out.println("Filtrando por AdminId: " + adminId);
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("resident").get("apartment").get("building").get("admin").get("id"), adminId)
+            );
+        }
+
+        if (buildingId != null) {
+            System.out.println("Aplicando filtro de buildingId: " + buildingId);
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("resident").get("apartment").get("building").get("id"), buildingId)
+            );
+        }
+
+        if (status != null && !status.isBlank()) {
+            System.out.println("Aplicando filtro de estado: " + status);
+            switch (status.toUpperCase()) {
+                case "OVERDUE":
+                    LocalDate today = LocalDate.now();
+                    spec = spec.and((root, query, cb) -> cb.and(
+                            cb.lessThan(root.get("dueDate"), today),
+                            cb.notEqual(root.get("status"), PaymentStatus.PAID),
+                            cb.notEqual(root.get("status"), PaymentStatus.CANCELLED)
+                    ));
+                    break;
+                case "PENDING":
+                    today = LocalDate.now();
+                    spec = spec.and((root, query, cb) -> cb.and(
+                            cb.equal(root.get("status"), PaymentStatus.PENDING),
+                            cb.or(
+                                    cb.greaterThanOrEqualTo(root.get("dueDate"), today),
+                                    cb.isNull(root.get("dueDate"))
+                            )
+                    ));
+                    break;
+                default:
+                    spec = spec.and((root, query, cb) ->
+                            cb.equal(root.get("status"), PaymentStatus.valueOf(status.toUpperCase()))
+                    );
+                    break;
+            }
+        } else {
+            System.out.println("No se aplicó filtro de estado por estar vacío o nulo");
+        }
+
+        if (fromDate != null && toDate != null) {
+            System.out.println("Aplicando filtro entre fechas: " + fromDate + " y " + toDate);
+            spec = spec.and((root, query, cb) ->
+                    cb.between(root.get("issueDate"), fromDate, toDate)
+            );
+        } else if (fromDate != null) {
+            System.out.println("Aplicando filtro desde fecha: " + fromDate);
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("issueDate"), fromDate)
+            );
+        } else if (toDate != null) {
+            System.out.println("Aplicando filtro hasta fecha: " + toDate);
+            spec = spec.and((root, query, cb) ->
+                    cb.lessThanOrEqualTo(root.get("issueDate"), toDate)
+            );
+        }
+
+        Page<Payment> page = paymentRepository.findAll(spec, pageable);
+
+        System.out.println("Pagos encontrados: " + page.getTotalElements());
+        System.out.println("Total páginas: " + page.getTotalPages());
+
+        return page.map(this::convertToDTOWithResident);
+    }
+
+
+
+    private PaymentDTO mapToDTO(Payment payment) {
+        PaymentDTO dto = new PaymentDTO();
+        dto.setId(payment.getId());
+        dto.setAmount(payment.getAmount());
+        dto.setConcept(payment.getConcept());
+        dto.setIssueDate(payment.getIssueDate());
+        dto.setDueDate(payment.getDueDate());
+        dto.setPaymentDate(payment.getPaymentDate());
+        dto.setStatus(payment.getStatus());
+        return dto;
     }
 }
