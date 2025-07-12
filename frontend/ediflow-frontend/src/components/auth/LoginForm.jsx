@@ -20,11 +20,9 @@ const LoginForm = () => {
 
     if (res?.token) {
       localStorage.setItem("token", res.token);
-      console.log("Token guardado en localStorage:", localStorage.getItem("token")); // <-- log aquí
       setToken(res.token);
 
       await fetchUser();
-      console.log("Login response data:", res);
 
       const role = res.user?.role;
 
@@ -35,7 +33,7 @@ const LoginForm = () => {
       } else {
         alert("Rol desconocido");
       }
-    } else if (err && err.toLowerCase().includes("período de prueba")) {
+    } else if (err && typeof err === "string" && err.toLowerCase().includes("período de prueba")) {
       setTrialExpired(true);
     } else if (err) {
       alert(err);
@@ -75,9 +73,17 @@ const LoginForm = () => {
       </form>
 
       {trialExpired && (
-        <p className="mt-4 text-red-600 text-sm text-center">
-          Tu período de prueba ha expirado. Por favor, contacta al administrador para continuar usando Ediflow.
-        </p>
+        <div className="mt-4 text-center">
+          <p className="text-red-600 text-sm mb-2">
+            Tu período de prueba ha expirado. Por favor, contacta al administrador para continuar usando Ediflow.
+          </p>
+          <button
+            onClick={() => navigate('/admin/planes')}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Actualizar plan
+          </button>
+        </div>
       )}
 
       {!trialExpired && errorPost && (

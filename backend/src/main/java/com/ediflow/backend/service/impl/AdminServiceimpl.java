@@ -314,32 +314,59 @@ public class AdminServiceimpl implements IAdminService {
         admin.setPlan(planName.toUpperCase());
         admin.setPlanDuration(duration.toLowerCase());
 
-        if (planName.equalsIgnoreCase("PREMIUM_PLUS") && user.getAdminAccount() == null) {
-            AdminAccount newAccount = new AdminAccount();
-            newAccount.setActive(true);
-            newAccount.setPlan("PREMIUM_PLUS");
-            newAccount.setCompanyName(user.getFullName());
-            LocalDate now = LocalDate.now();
-            newAccount.setSubscriptionStart(now);
 
+        admin.setTrialStart(null);
+        admin.setTrialEnd(null);
 
-            if (duration.equalsIgnoreCase("monthly")) {
-                newAccount.setSubscriptionEnd(now.plusMonths(1));
-            } else if (duration.equalsIgnoreCase("yearly")) {
-                newAccount.setSubscriptionEnd(now.plusYears(1));
+        LocalDate now = LocalDate.now();
+        LocalDate subscriptionEnd;
+
+        if (duration.equalsIgnoreCase("monthly")) {
+            subscriptionEnd = now.plusMonths(1);
+        } else if (duration.equalsIgnoreCase("yearly")) {
+            subscriptionEnd = now.plusYears(1);
+        } else {
+            return ResponseEntity.badRequest().body("Duración inválida. Usa 'monthly' o 'yearly'.");
+        }
+
+        if (planName.equalsIgnoreCase("PREMIUM_PLUS")) {
+            AdminAccount adminAccount = user.getAdminAccount();
+            if (adminAccount == null) {
+
+                adminAccount = new AdminAccount();
+                adminAccount.setActive(true);
+                adminAccount.setPlan("PREMIUM_PLUS");
+                adminAccount.setCompanyName(user.getFullName());
+                adminAccount.setSubscriptionStart(now);
+                adminAccount.setSubscriptionEnd(subscriptionEnd);
+
+                adminAccountRepository.save(adminAccount);
+
+                user.setAdminAccount(adminAccount);
+                userRepository.save(user);
             } else {
-                return ResponseEntity.badRequest().body("Duración inválida. Usa 'monthly' o 'yearly'.");
-            }
 
-            adminAccountRepository.save(newAccount);
-            user.setAdminAccount(newAccount);
-            userRepository.save(user);
+                adminAccount.setSubscriptionStart(now);
+                adminAccount.setSubscriptionEnd(subscriptionEnd);
+                adminAccount.setPlan("PREMIUM_PLUS");
+                adminAccountRepository.save(adminAccount);
+            }
+        } else {
+
+            if (user.getAdminAccount() != null) {
+                AdminAccount oldAccount = user.getAdminAccount();
+                user.setAdminAccount(null);
+                userRepository.save(user);
+                adminAccountRepository.delete(oldAccount);
+            }
         }
 
         adminRepository.save(admin);
 
         return ResponseEntity.ok("Plan y duración asignados correctamente.");
     }
+
+
 
 
 

@@ -128,6 +128,9 @@ public class AuthenticationService {
         Integer trialDaysLeft = null;
         String plan = null;
 
+        // Control para mensaje de prueba expirada
+        boolean trialExpired = false;
+
         if (user.getRole() == Role.ADMIN) {
 
             var adminOpt = adminRepository.findByUserId(user.getId());
@@ -140,7 +143,7 @@ public class AuthenticationService {
             LocalDate today = LocalDate.now();
 
             if (admin.getTrialEnd() != null && today.isAfter(admin.getTrialEnd())) {
-                throw new RuntimeException("El período de prueba ha expirado. Por favor, contacta para renovar tu suscripción.");
+                trialExpired = true;
             }
 
             adminId = admin.getId();
@@ -161,7 +164,7 @@ public class AuthenticationService {
             }
 
         } else {
-            // Usuarios secundarios (empleados, soporte, etc) o residentes con adminAccount
+            // Usuarios secundarios o residentes
             if (user.getAdminAccount() != null) {
                 AdminAccount adminAccount = user.getAdminAccount();
                 adminId = adminAccount.getId();
@@ -176,6 +179,10 @@ public class AuthenticationService {
                     }
                 }
             }
+        }
+
+        if (trialExpired) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El período de prueba ha expirado. Por favor, contacta para renovar tu suscripción.");
         }
 
         UserDTO userDTO = UserDTO.builder()
@@ -196,6 +203,7 @@ public class AuthenticationService {
                 .user(userDTO)
                 .build();
     }
+
 
 
 

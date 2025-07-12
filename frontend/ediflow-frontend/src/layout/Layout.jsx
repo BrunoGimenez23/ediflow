@@ -1,4 +1,4 @@
-import {  Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import TrialExpiredBanner from "../components/common/TrialExpiredBanner";
 import Header from "../components/common/Header";
@@ -8,10 +8,11 @@ const Layout = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  // Mostrar banner solo si es ADMIN y la prueba expiró (días de prueba = 0 o null)
   const trialExpired = user?.role === "ADMIN" && (user.trialDaysLeft === 0 || user.trialDaysLeft === null);
 
   const handleUpgradeClick = () => {
-      navigate('/admin/planes'); 
+    navigate('/admin/planes');
   };
 
   return (
