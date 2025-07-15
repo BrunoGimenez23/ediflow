@@ -83,9 +83,9 @@ public class AuthenticationService {
         Apartment apartment = apartmentRepository.findById(request.getApartmentId())
                 .orElseThrow(() -> new RuntimeException("Apartamento no encontrado"));
 
-        // Verificar si ya existe un residente en ese apartamento
+
         residentRepository.findByApartment(apartment).ifPresent(existingResident -> {
-            // Podés elegir borrar o lanzar excepción según política
+
             residentRepository.delete(existingResident);
         });
 
@@ -128,7 +128,7 @@ public class AuthenticationService {
         Integer trialDaysLeft = null;
         String plan = null;
 
-        // Control para mensaje de prueba expirada
+
         boolean trialExpired = false;
 
         if (user.getRole() == Role.ADMIN) {
@@ -156,7 +156,7 @@ public class AuthenticationService {
                 }
             }
 
-            // Si está en periodo de prueba y no tiene plan, asignar "PROFESIONAL" temporalmente
+
             if (admin.getPlan() == null && trialDaysLeft != null && trialDaysLeft > 0) {
                 plan = "PROFESIONAL";
             } else {

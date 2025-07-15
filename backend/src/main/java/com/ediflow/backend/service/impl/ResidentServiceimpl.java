@@ -442,15 +442,25 @@ public class ResidentServiceimpl implements IResidentService {
         logger.debug("findAllPaginated llamado con buildingId={}, pageable={}", buildingId, pageable);
 
         User loggedUser = adminService.getLoggedUser();
-
         Page<Long> residentIdsPage;
 
         if (loggedUser.getAdminAccount() != null) {
             Long accountId = loggedUser.getAdminAccount().getId();
-            residentIdsPage = residentRepository.findIdsByAdminAccountIdAndBuildingIdAndRoleResident(accountId, buildingId, pageable);
+
+            if (buildingId != null) {
+                residentIdsPage = residentRepository.findIdsByAdminAccountIdAndBuildingIdAndRoleResident(accountId, buildingId, pageable);
+            } else {
+                residentIdsPage = residentRepository.findIdsByAdminAccountIdAndRoleResident(accountId, pageable);
+            }
+
         } else {
             Long adminId = adminService.getLoggedAdminId();
-            residentIdsPage = residentRepository.findIdsByAdminIdAndBuildingIdAndRoleResident(adminId, buildingId, pageable);
+
+            if (buildingId != null) {
+                residentIdsPage = residentRepository.findIdsByAdminIdAndBuildingIdAndRoleResident(adminId, buildingId, pageable);
+            } else {
+                residentIdsPage = residentRepository.findIdsByAdminIdAndRoleResident(adminId, pageable);
+            }
         }
 
         if (residentIdsPage.isEmpty()) {

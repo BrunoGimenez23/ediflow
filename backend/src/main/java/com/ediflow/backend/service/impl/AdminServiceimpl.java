@@ -49,11 +49,17 @@ public class AdminServiceimpl implements IAdminService {
         this.adminAccountRepository = adminAccountRepository;
     }
 
-    private int calculateTrialDaysLeft(Admin admin) {
+    private Integer calculateTrialDaysLeft(Admin admin) {
         LocalDate today = LocalDate.now();
-        if (admin.getTrialEnd() == null || admin.getTrialEnd().isBefore(today)) {
+
+        if (admin.getTrialEnd() == null) {
+            return null;
+        }
+
+        if (admin.getTrialEnd().isBefore(today)) {
             return 0;
         }
+
         return (int) ChronoUnit.DAYS.between(today, admin.getTrialEnd());
     }
 
@@ -159,7 +165,7 @@ public class AdminServiceimpl implements IAdminService {
         adminDTO.setUserDTO(userDTO);
 
 
-        int trialDaysLeft = calculateTrialDaysLeft(admin);
+        Integer trialDaysLeft = calculateTrialDaysLeft(admin);
         adminDTO.setTrialDaysLeft(trialDaysLeft);
 
         List<BuildingSummaryDTO> buildingSummaryDTO = admin.getBuildings().stream().map(building -> {
