@@ -5,16 +5,13 @@ import com.ediflow.backend.dto.apartment.ApartmentSummaryDTO;
 import com.ediflow.backend.dto.building.BuildingDTO;
 import com.ediflow.backend.dto.resident.ResidentDTO;
 import com.ediflow.backend.dto.user.UserDTO;
-import com.ediflow.backend.entity.Building;
-import com.ediflow.backend.entity.Resident;
-import com.ediflow.backend.entity.User;
+import com.ediflow.backend.entity.*;
 import com.ediflow.backend.enums.Role;
 import com.ediflow.backend.mapper.ApartmentMapper;
 import com.ediflow.backend.repository.IBuildingRepository;
 import com.ediflow.backend.repository.IResidentRepository;
 import com.ediflow.backend.repository.IUserRepository;
 import com.ediflow.backend.service.IApartmentService;
-import com.ediflow.backend.entity.Apartment;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,6 +92,20 @@ public class ApartmentServiceimpl implements IApartmentService {
         }
 
         Building building = buildingOpt.get();
+        Admin admin = building.getAdmin();
+
+        // Verificar límite de apartamentos solo si no es Premium Plus
+        if (!"PREMIUM_PLUS".equalsIgnoreCase(admin.getPlan())) {
+            int unitsPaid = admin.getUnitsPaid() != null ? admin.getUnitsPaid() : 0;
+
+            int apartmentsCount = apartmentRepository.countByAdmin(admin);
+
+            if (apartmentsCount >= unitsPaid) {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Has alcanzado el límite de apartamentos contratados."));
+            }
+        }
 
         Apartment apartment = new Apartment();
         apartment.setNumber(newApartment.getNumber());
