@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }) => {
 
     try {
       console.log("Token enviado en fetchUser:", token);
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

@@ -33,7 +33,7 @@ export const PaymentProvider = ({ children }) => {
     setError(null);
 
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/payment/all`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/payment/all`, {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           page,
