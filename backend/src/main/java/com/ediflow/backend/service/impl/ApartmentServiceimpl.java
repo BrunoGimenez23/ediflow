@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -95,9 +96,11 @@ public class ApartmentServiceimpl implements IApartmentService {
         Admin admin = building.getAdmin();
 
         // Verificar límite de apartamentos solo si no es Premium Plus
-        if (!"PREMIUM_PLUS".equalsIgnoreCase(admin.getPlan())) {
-            int unitsPaid = admin.getUnitsPaid() != null ? admin.getUnitsPaid() : 0;
+        boolean isPremiumPlus = "PREMIUM_PLUS".equalsIgnoreCase(admin.getPlan());
+        boolean isTrial = isTrialActive(admin);
 
+        if (!isPremiumPlus && !isTrial) {
+            int unitsPaid = admin.getUnitsPaid() != null ? admin.getUnitsPaid() : 0;
             int apartmentsCount = apartmentRepository.countByAdmin(admin);
 
             if (apartmentsCount >= unitsPaid) {
@@ -117,6 +120,14 @@ public class ApartmentServiceimpl implements IApartmentService {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(Map.of("message", "Apartamento creado con éxito"));
+    }
+
+    private boolean isTrialActive(Admin admin) {
+        if (admin.getTrialStart() == null || admin.getTrialEnd() == null) return false;
+
+        LocalDate today = LocalDate.now();
+        return (today.isEqual(admin.getTrialStart()) || today.isAfter(admin.getTrialStart()))
+                && today.isBefore(admin.getTrialEnd());
     }
 
 
