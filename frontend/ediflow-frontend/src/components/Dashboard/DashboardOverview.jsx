@@ -120,7 +120,7 @@ const DashboardOverview = () => {
     },
   ]
 
-  // Filtrado con lógica corregida para roles sin plan
+  
   const filteredStats = stats.filter(stat => {
     if (!user) return false
 
