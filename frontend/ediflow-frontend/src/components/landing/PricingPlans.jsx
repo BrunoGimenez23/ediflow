@@ -55,21 +55,21 @@ const PricingPlans = ({ id }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Calcula el precio según unidades y facturación
+  
   const calculatePrice = (plan, units) => {
     const safeUnits = Math.max(1, Math.min(Number(units), plan.maxUnits || Infinity));
     let price;
 
     if (plan.maxUnits === Infinity) {
-      // Plan ilimitado (Premium Plus)
+      
       price = plan.minimumMonthly * (billing === 'monthly' ? 1 : 12);
       if (billing === 'yearly') price *= 0.85; // 15% descuento anual
     } else {
-      // Plan con límite (Esencial y Profesional)
+      
       price = plan.pricePerUnit * safeUnits * (billing === 'monthly' ? 1 : 12);
       if (billing === 'yearly') price *= 0.85;
 
-      // Mínimos distintos según plan
+      
       const minPrice =
         plan.name === 'Esencial'
           ? 1000 * (billing === 'monthly' ? 1 : 12)
@@ -81,7 +81,7 @@ const PricingPlans = ({ id }) => {
     return Math.round(price);
   };
 
-  // Formatea el precio para mostrar en UI
+  
   const formatPrice = (plan, unitsRaw) => {
     const units = Number(unitsRaw) || 1;
     const price = calculatePrice(plan, units);
@@ -105,7 +105,7 @@ const PricingPlans = ({ id }) => {
       navigate('/auth/register-admin');
     } else {
       const normalized = normalizePlanName(planName);
-      const units = unitsByPlan[planName] || 1; // <-- PASO UNIDADES EN LA URL
+      const units = unitsByPlan[planName] || 1; 
       navigate(`/planes/confirmacion/${normalized}?billing=${billing}&units=${units}`);
     }
   };

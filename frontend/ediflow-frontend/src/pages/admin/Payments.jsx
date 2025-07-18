@@ -73,8 +73,7 @@ const Payments = () => {
   // Traer residentes solo de edificios filtrados
   useEffect(() => {
     setLoadingResidents(true);
-    axios
-      .get("http://localhost:8080/residents/all", {
+    axios.get(`${import.meta.env.VITE_API_URL}/residents/all`, {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           page: 0,
@@ -93,7 +92,7 @@ const Payments = () => {
       .finally(() => setLoadingResidents(false));
   }, [token, filters.buildingId]);
 
-  // Extraer edificios únicos de residentes para filtro
+  
   useEffect(() => {
     if (residents.length > 0) {
       const uniqueBuildings = residents
@@ -151,12 +150,11 @@ const Payments = () => {
     try {
       if (editingPayment) {
         await axios.put(
-          `http://localhost:8080/payment/update/${editingPayment.id}`,
-          payload,
+          `${import.meta.env.VITE_API_URL}/payment/update/${editingPayment.id}`, payload,
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
-        await axios.post("http://localhost:8080/payment/create", payload, {
+        await axios.post(`${import.meta.env.VITE_API_URL}/payment/create`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
@@ -170,7 +168,7 @@ const Payments = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("¿Eliminar este pago?")) return;
     try {
-      await axios.delete(`http://localhost:8080/payment/delete/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/payment/delete/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchPayments(currentPage - 1, itemsPerPage, filters);

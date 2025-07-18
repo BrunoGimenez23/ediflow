@@ -61,10 +61,10 @@ const DashboardOverview = () => {
       setError(null)
       try {
         const [resResidents, resCommonAreas] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_BASE_URL}/residents/all`, {
+          axios.get(`${import.meta.env.VITE_API_URL}/residents/all`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get(`${import.meta.env.VITE_API_BASE_URL}/common-areas/all`, {
+          axios.get(`${import.meta.env.VITE_API_URL}/common-areas/all`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ])

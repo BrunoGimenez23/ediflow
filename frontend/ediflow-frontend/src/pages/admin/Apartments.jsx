@@ -45,7 +45,7 @@ const Apartments = () => {
   const [assignError, setAssignError] = useState("");
   const [errors, setErrors] = useState({});
 
-  // NUEVO estado para error en creación de apartamento
+  
   const [createError, setCreateError] = useState("");
 
   const formRef = useRef(null);
