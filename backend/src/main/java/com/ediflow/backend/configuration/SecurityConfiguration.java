@@ -36,6 +36,7 @@ public class SecurityConfiguration {
                     corsConfig.setAllowedOrigins(java.util.List.of("http://localhost:5173", "https://ediflow23.vercel.app"));
                     corsConfig.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     corsConfig.setAllowedHeaders(java.util.List.of("*"));
+                    corsConfig.setAllowCredentials(true);
                     return corsConfig;
                 }))
                 .csrf(AbstractHttpConfigurer::disable)
