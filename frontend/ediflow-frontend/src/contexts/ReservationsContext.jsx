@@ -9,7 +9,7 @@ const ReservationsContext = createContext();
 export const ReservationsProvider = ({ children }) => {
   const { user } = useAuth();
 
-  // Defino endpoint según rol
+ 
   const endpoint = user?.role === "ADMIN" ? "/reservations/all" : user ? "/reservations/my-reservations" : null;
 
   const { data, loading, error } = useFetch(endpoint);

@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext"; // ajusta la ruta según tu e
 export const ResidentContext = createContext();
 
 export const ResidentProvider = ({ children }) => {
-  const { user } = useAuth(); // para saber si hay usuario logueado
+  const { user } = useAuth(); 
   const [resident, setResident] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

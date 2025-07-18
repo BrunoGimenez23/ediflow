@@ -33,7 +33,7 @@ export const PaymentProvider = ({ children }) => {
     setError(null);
 
     try {
-      const res = await axios.get("http://localhost:8080/payment/all", {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/payment/all`, {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           page,
@@ -55,7 +55,7 @@ export const PaymentProvider = ({ children }) => {
 );
 
 
-  // Llamar fetchPayments solo si user es ADMIN y cuando user cambie
+  
   useEffect(() => {
     if (user && user.role === "ADMIN") {
       fetchPayments(0);
