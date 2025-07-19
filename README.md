@@ -1,80 +1,52 @@
-🏢 Ediflow
-Ediflow es una aplicación web para la administración de consorcios y edificios. Este MVP (Producto Mínimo Viable) está diseñado para facilitar la gestión de unidades, propietarios, expensas y reclamos, ofreciendo una interfaz moderna y fácil de usar.
+# 🏢 Ediflow
 
-🚀 Características principales del MVP
-📋 Gestión de unidades y propietarios
+**Ediflow** es una plataforma web para la gestión integral de edificios, diseñada para administradores, empleados y residentes. Permite gestionar edificios, apartamentos, residentes, pagos de expensas y reservas de áreas comunes, con soporte multiusuario según el plan contratado.
 
-💸 Carga y visualización de expensas
+---
 
-🛠️ Registro de reclamos por parte de los propietarios
+## 🚀 Tecnologías
 
-👤 Panel administrativo para administradores
+- **Frontend:** React + Vite + Tailwind CSS
+- **Backend:** Spring Boot (Java)
+- **Base de datos:** MySQL
+- **Autenticación:** JWT
+- **Deploy Frontend:** Vercel (`https://ediflow.uy`)
+- **Deploy Backend:** Railway (o el que estés usando)
 
-📬 Notificaciones básicas de estado de reclamos
+---
 
-🧱 Tecnologías utilizadas
-Frontend
-React + Vite
+## ✨ Funcionalidades principales
 
-Tailwind CSS para estilos responsivos y modernos
+### 🔐 Autenticación
+- Registro y login de usuarios (Administrador y Residente)
+- Autenticación con JWT
+- Prueba gratuita de 14 días para nuevos administradores
 
-React Router para navegación
+### 🏢 Administración de edificios
+- Crear edificios y departamentos
+- Asignar residentes a departamentos
 
-Backend
-Spring Boot
+### 👥 Multiusuario (Plan Premium Plus)
+- Asociar empleados y soporte a una cuenta de administrador
+- Roles personalizados: `ADMIN`, `EMPLOYEE`, `SUPPORT`
 
-Spring Security (configuración básica)
+### 💸 Pagos de expensas
+- Emisión, asignación y visualización de pagos
+- Filtros por estado, edificio, fechas, etc.
+- Vista personalizada para residentes con historial de pagos
 
-JPA / Hibernate para persistencia
+### 📅 Reservas de áreas comunes
+- Crear, listar y gestionar reservas por residente
+- Administración de disponibilidad
 
-MySQL como base de datos
+---
 
-📦 Estructura del proyecto
-
-ediflow/
-├── backend/
-│   └── src/
-│       └── main/
-│           ├── java/com/ediflow/
-│           └── resources/
-├── frontend/
-│   ├── public/
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       └── App.jsx
-🛠️ Instalación y ejecución
-Backend
-Configurá tu archivo application.properties con tus credenciales de MySQL.
-
-Desde la raíz del backend:
-
-bash
-Copiar
-Editar
-./mvnw spring-boot:run
-Frontend
-Desde la carpeta frontend:
-
-bash
-Copiar
-Editar
-npm install
-npm run dev
-⚠️ Es necesario tener Node.js y Java 17 o superior instalados.
-
-🎯 Roadmap (futuro)
-📱 Versión responsive 100%
-
-✉️ Notificaciones por correo
-
-📊 Dashboard con estadísticas
-
-🔐 Gestión de permisos más granular
-
-🤝 Contribuciones
-Las contribuciones están abiertas. Si querés colaborar, podés abrir un issue o hacer un pull request. ¡Toda ayuda es bienvenida!
+## 🧪 Pruebas
+- Pruebas unitarias y de integración con Spring Boot y MockMvc
+- Mock de JWT para control de acceso en endpoints protegidos
 
 📄 Licencia
-Este proyecto está bajo la Licencia MIT.
+MIT License
 
+🙌 Autor
+Desarrollado por Bruno Giménez
