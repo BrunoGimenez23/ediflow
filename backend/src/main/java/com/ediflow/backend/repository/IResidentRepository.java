@@ -38,16 +38,6 @@ public interface IResidentRepository extends JpaRepository<Resident, Long> {
     List<Resident> findByUser_AdminAccount_IdWithApartmentAndBuilding(@Param("adminAccountId") Long adminAccountId);
     Page<Resident> findByUser_AdminAccount_IdAndApartment_Building_Id(Long adminAccountId, Long buildingId, Pageable pageable);
 
-    @Query("SELECT r.id FROM Resident r " +
-            "WHERE r.user.adminAccount.id = :adminAccountId " +
-            "AND (:buildingId IS NULL OR r.apartment.building.id = :buildingId) " +
-            "AND r.user.role = 'RESIDENT'")
-    Page<Long> findIdsByAdminAccountIdAndBuildingIdAndRoleResident(
-            @Param("adminAccountId") Long adminAccountId,
-            @Param("buildingId") Long buildingId,
-            Pageable pageable);
-
-
     @Query("SELECT r FROM Resident r " +
             "JOIN FETCH r.apartment a " +
             "JOIN FETCH a.building b " +
@@ -58,15 +48,35 @@ public interface IResidentRepository extends JpaRepository<Resident, Long> {
     Optional<Resident> findByApartment(Apartment apartment);
 
     @Query("SELECT r.id FROM Resident r " +
+            "WHERE r.user.adminAccount.id = :adminAccountId " +
+            "AND r.apartment.building.id = :buildingId " +
+            "AND r.user.role = 'RESIDENT'")
+    Page<Long> findIdsByAdminAccountIdAndBuildingIdAndRoleResident(
+            @Param("adminAccountId") Long adminAccountId,
+            @Param("buildingId") Long buildingId,
+            Pageable pageable);
+
+    @Query("SELECT r.id FROM Resident r " +
+            "WHERE r.user.adminAccount.id = :adminAccountId " +
+            "AND r.user.role = 'RESIDENT'")
+    Page<Long> findIdsByAdminAccountIdAndRoleResident(
+            @Param("adminAccountId") Long adminAccountId,
+            Pageable pageable);
+
+    @Query("SELECT r.id FROM Resident r " +
             "WHERE r.apartment.building.admin.id = :adminId " +
-            "AND (:buildingId IS NULL OR r.apartment.building.id = :buildingId) " +
+            "AND r.user.role = 'RESIDENT'")
+    Page<Long> findIdsByAdminIdAndRoleResident(
+            @Param("adminId") Long adminId,
+            Pageable pageable);
+
+    @Query("SELECT r.id FROM Resident r " +
+            "WHERE r.apartment.building.admin.id = :adminId " +
+            "AND r.apartment.building.id = :buildingId " +
             "AND r.user.role = 'RESIDENT'")
     Page<Long> findIdsByAdminIdAndBuildingIdAndRoleResident(
             @Param("adminId") Long adminId,
             @Param("buildingId") Long buildingId,
             Pageable pageable);
-
-
-
 
 }

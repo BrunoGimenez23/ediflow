@@ -16,5 +16,5 @@ public class AdminDTO {
     private Long id;
     private UserDTO userDTO;
     private List<BuildingSummaryDTO> buildings;
-    private int trialDaysLeft;
+    private Integer trialDaysLeft;
 }

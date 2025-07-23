@@ -28,8 +28,13 @@ public class AdminSubscriptionController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No autorizado");
         }
 
-        // Retorná directamente la respuesta que devuelve el servicio
-        return adminService.assignPlan(request.getEmail(), request.getPlanName(), request.getDuration());
+
+        return adminService.assignPlan(
+                request.getEmail(),
+                request.getPlanName(),
+                request.getDuration(),
+                request.getUnitsPaid()
+        );
     }
 
 }

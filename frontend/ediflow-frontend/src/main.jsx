@@ -10,6 +10,7 @@ import { PaymentProvider } from './contexts/PaymentContext.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import { ResidentProvider } from './contexts/ResidentContext.jsx'
 import { ReservationsProvider } from './contexts/ReservationsContext.jsx'
+import { Analytics } from '@vercel/analytics/react';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')).render(
               <ApartmentProvider>
                 <PaymentProvider>
                   <App />
+                  <Analytics />
                 </PaymentProvider>
               </ApartmentProvider>
             </BuildingProvider>

@@ -5,16 +5,13 @@ import com.ediflow.backend.dto.apartment.ApartmentSummaryDTO;
 import com.ediflow.backend.dto.building.BuildingDTO;
 import com.ediflow.backend.dto.resident.ResidentDTO;
 import com.ediflow.backend.dto.user.UserDTO;
-import com.ediflow.backend.entity.Building;
-import com.ediflow.backend.entity.Resident;
-import com.ediflow.backend.entity.User;
+import com.ediflow.backend.entity.*;
 import com.ediflow.backend.enums.Role;
 import com.ediflow.backend.mapper.ApartmentMapper;
 import com.ediflow.backend.repository.IBuildingRepository;
 import com.ediflow.backend.repository.IResidentRepository;
 import com.ediflow.backend.repository.IUserRepository;
 import com.ediflow.backend.service.IApartmentService;
-import com.ediflow.backend.entity.Apartment;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -95,6 +93,22 @@ public class ApartmentServiceimpl implements IApartmentService {
         }
 
         Building building = buildingOpt.get();
+        Admin admin = building.getAdmin();
+
+        // Verificar límite de apartamentos solo si no es Premium Plus
+        boolean isPremiumPlus = "PREMIUM_PLUS".equalsIgnoreCase(admin.getPlan());
+        boolean isTrial = isTrialActive(admin);
+
+        if (!isPremiumPlus && !isTrial) {
+            int unitsPaid = admin.getUnitsPaid() != null ? admin.getUnitsPaid() : 0;
+            int apartmentsCount = apartmentRepository.countByAdmin(admin);
+
+            if (apartmentsCount >= unitsPaid) {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Has alcanzado el límite de apartamentos contratados."));
+            }
+        }
 
         Apartment apartment = new Apartment();
         apartment.setNumber(newApartment.getNumber());
@@ -106,6 +120,14 @@ public class ApartmentServiceimpl implements IApartmentService {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(Map.of("message", "Apartamento creado con éxito"));
+    }
+
+    private boolean isTrialActive(Admin admin) {
+        if (admin.getTrialStart() == null || admin.getTrialEnd() == null) return false;
+
+        LocalDate today = LocalDate.now();
+        return (today.isEqual(admin.getTrialStart()) || today.isAfter(admin.getTrialStart()))
+                && today.isBefore(admin.getTrialEnd());
     }
 
 

@@ -8,7 +8,7 @@ export const useReservationsByBuildingAndDate = (buildingId, date) => {
 
   const { data, loading, error } = useFetch(endpoint);
 
-  // filtramos por fecha en el frontend
+  
   const filteredReservations = data?.filter((res) => res.date === date) || [];
 
   return { reservations: filteredReservations, loading, error };

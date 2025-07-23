@@ -1,5 +1,6 @@
 package com.ediflow.backend.repository;
 
+import com.ediflow.backend.entity.Admin;
 import com.ediflow.backend.entity.Apartment;
 import com.ediflow.backend.entity.Resident;
 import org.springframework.data.domain.Page;
@@ -139,5 +140,9 @@ public interface IApartmentRepository extends JpaRepository<Apartment, Long> {
                                                         @Param("buildingId") Long buildingId,
                                                         @Param("filter") String filter,
                                                         Pageable pageable);
+
+    @Query("SELECT COUNT(a) FROM Apartment a WHERE a.building.admin = :admin")
+    int countByAdmin(@Param("admin") Admin admin);
+
 
 }

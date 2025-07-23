@@ -73,8 +73,7 @@ const Payments = () => {
   // Traer residentes solo de edificios filtrados
   useEffect(() => {
     setLoadingResidents(true);
-    axios
-      .get("http://localhost:8080/residents/all", {
+    axios.get(`${import.meta.env.VITE_API_URL}/residents/all`, {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           page: 0,
@@ -93,7 +92,7 @@ const Payments = () => {
       .finally(() => setLoadingResidents(false));
   }, [token, filters.buildingId]);
 
-  // Extraer edificios únicos de residentes para filtro
+  
   useEffect(() => {
     if (residents.length > 0) {
       const uniqueBuildings = residents
@@ -151,12 +150,11 @@ const Payments = () => {
     try {
       if (editingPayment) {
         await axios.put(
-          `http://localhost:8080/payment/update/${editingPayment.id}`,
-          payload,
+          `${import.meta.env.VITE_API_URL}/payment/update/${editingPayment.id}`, payload,
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
-        await axios.post("http://localhost:8080/payment/create", payload, {
+        await axios.post(`${import.meta.env.VITE_API_URL}/payment/create`, payload, {
           headers: { Authorization: `Bearer ${token}` },
         });
       }
@@ -170,7 +168,7 @@ const Payments = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("¿Eliminar este pago?")) return;
     try {
-      await axios.delete(`http://localhost:8080/payment/delete/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/payment/delete/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchPayments(currentPage - 1, itemsPerPage, filters);
@@ -246,96 +244,146 @@ const Payments = () => {
       </div>
 
       {/* Formulario */}
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="mb-6 border p-4 rounded bg-gray-50 grid grid-cols-1 md:grid-cols-3 gap-4"
-        >
-          <div className="flex items-center gap-2">
-            <DollarSign className="text-gray-500" size={18} />
-            <input
-              name="amount"
-              type="number"
-              step="0.01"
-              placeholder="Monto"
-              value={formData.amount}
-              onChange={handleChange}
-              required
-              className="p-2 border rounded w-full"
-              disabled={trialExpired}
-            />
-          </div>
-          <input
-            name="issueDate"
-            type="date"
-            value={formData.issueDate}
-            onChange={handleChange}
-            required
-            className="p-2 border rounded"
-            disabled={trialExpired}
-          />
-          <input
-            name="dueDate"
-            type="date"
-            value={formData.dueDate}
-            onChange={handleChange}
-            required
-            className="p-2 border rounded"
-            disabled={trialExpired}
-          />
-          <input
-            name="paymentDate"
-            type="date"
-            value={formData.paymentDate}
-            onChange={handleChange}
-            className="p-2 border rounded"
-            disabled={trialExpired}
-          />
-          <input
-            name="concept"
-            placeholder="Concepto"
-            value={formData.concept}
-            onChange={handleChange}
-            className="p-2 border rounded"
-            disabled={trialExpired}
-          />
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="p-2 border rounded"
-            disabled={trialExpired}
-          >
-            <option value="PENDING">Pendiente</option>
-            <option value="PAID">Pagado</option>
-            <option value="CANCELLED">Cancelado</option>
-          </select>
-          <select
-            name="residentId"
-            value={formData.residentId}
-            onChange={handleChange}
-            required
-            className="p-2 border rounded col-span-full"
-            disabled={trialExpired}
-          >
-            <option value="">Seleccione un residente</option>
-            {residents.map((res) => (
-              <option key={res.id} value={res.id}>
-                {res.userDTO?.fullName || res.userDTO?.username || "Sin nombre"}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className={`bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 col-span-full ${
-              trialExpired ? "bg-gray-400 cursor-not-allowed hover:bg-gray-400" : ""
-            }`}
-            disabled={trialExpired}
-          >
-            {editingPayment ? "Actualizar Pago" : "Crear Pago"}
-          </button>
-        </form>
-      )}
+{showForm && (
+  <form
+    onSubmit={handleSubmit}
+    className="mb-6 border p-4 rounded bg-gray-50 grid grid-cols-1 md:grid-cols-3 gap-4"
+  >
+    <div className="flex flex-col">
+      <label htmlFor="amount" className="mb-1 font-medium text-gray-700">
+        Monto
+      </label>
+      <div className="flex items-center gap-2">
+        <DollarSign className="text-gray-500" size={18} />
+        <input
+          id="amount"
+          name="amount"
+          type="number"
+          step="0.01"
+          placeholder="Monto"
+          value={formData.amount}
+          onChange={handleChange}
+          required
+          className="p-2 border rounded w-full"
+          disabled={trialExpired}
+        />
+      </div>
+    </div>
+
+    <div className="flex flex-col">
+      <label htmlFor="issueDate" className="mb-1 font-medium text-gray-700">
+        Fecha de emisión
+      </label>
+      <input
+        id="issueDate"
+        name="issueDate"
+        type="date"
+        value={formData.issueDate}
+        onChange={handleChange}
+        required
+        className="p-2 border rounded"
+        disabled={trialExpired}
+      />
+    </div>
+
+    <div className="flex flex-col">
+      <label htmlFor="dueDate" className="mb-1 font-medium text-gray-700">
+        Fecha de vencimiento
+      </label>
+      <input
+        id="dueDate"
+        name="dueDate"
+        type="date"
+        value={formData.dueDate}
+        onChange={handleChange}
+        required
+        className="p-2 border rounded"
+        disabled={trialExpired}
+      />
+    </div>
+
+    <div className="flex flex-col">
+      <label htmlFor="paymentDate" className="mb-1 font-medium text-gray-700">
+        Fecha de pago (opcional)
+      </label>
+      <input
+        id="paymentDate"
+        name="paymentDate"
+        type="date"
+        value={formData.paymentDate}
+        onChange={handleChange}
+        className="p-2 border rounded"
+        disabled={trialExpired}
+      />
+    </div>
+
+    <div className="flex flex-col">
+      <label htmlFor="concept" className="mb-1 font-medium text-gray-700">
+        Concepto
+      </label>
+      <input
+        id="concept"
+        name="concept"
+        placeholder="Concepto"
+        value={formData.concept}
+        onChange={handleChange}
+        className="p-2 border rounded"
+        disabled={trialExpired}
+      />
+    </div>
+
+    <div className="flex flex-col">
+      <label htmlFor="status" className="mb-1 font-medium text-gray-700">
+        Estado
+      </label>
+      <select
+        id="status"
+        name="status"
+        value={formData.status}
+        onChange={handleChange}
+        className="p-2 border rounded"
+        disabled={trialExpired}
+      >
+        <option value="PENDING">Pendiente</option>
+        <option value="PAID">Pagado</option>
+        <option value="CANCELLED">Cancelado</option>
+      </select>
+    </div>
+
+    <div className="flex flex-col col-span-full">
+      <label htmlFor="residentId" className="mb-1 font-medium text-gray-700">
+        Residente
+      </label>
+      <select
+        id="residentId"
+        name="residentId"
+        value={formData.residentId}
+        onChange={handleChange}
+        required
+        className="p-2 border rounded w-full"
+        disabled={trialExpired}
+      >
+        <option value="">Seleccione un residente</option>
+        {residents.map((res) => (
+          <option key={res.id} value={res.id}>
+            {res.userDTO?.fullName || res.userDTO?.username || "Sin nombre"}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <button
+      type="submit"
+      className={`bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 col-span-full ${
+        trialExpired ? "bg-gray-400 cursor-not-allowed hover:bg-gray-400" : ""
+      }`}
+      disabled={trialExpired}
+    >
+      {editingPayment ? "Actualizar Pago" : "Crear Pago"}
+    </button>
+  </form>
+)}
+
 
       {/* Tabla de pagos */}
       <div className="overflow-x-auto">

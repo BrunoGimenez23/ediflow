@@ -32,7 +32,7 @@ const usePut = () => {
         return await res.json();
       }
 
-      return true; // por si el backend no devuelve JSON
+      return true; 
     } catch (err) {
       setError(err.message);
       return null;

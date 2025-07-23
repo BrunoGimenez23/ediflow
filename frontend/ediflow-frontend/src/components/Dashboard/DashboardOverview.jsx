@@ -61,10 +61,10 @@ const DashboardOverview = () => {
       setError(null)
       try {
         const [resResidents, resCommonAreas] = await Promise.all([
-          axios.get('http://localhost:8080/residents/all', {
+          axios.get(`${import.meta.env.VITE_API_URL}/residents/all`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get('http://localhost:8080/common-areas/all', {
+          axios.get(`${import.meta.env.VITE_API_URL}/common-areas/all`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ])
@@ -120,7 +120,7 @@ const DashboardOverview = () => {
     },
   ]
 
-  // Filtrado con lógica corregida para roles sin plan
+  
   const filteredStats = stats.filter(stat => {
     if (!user) return false
 

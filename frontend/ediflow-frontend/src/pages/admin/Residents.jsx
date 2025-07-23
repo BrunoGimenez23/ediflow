@@ -29,7 +29,7 @@ const Residents = () => {
     setError(null);
 
     try {
-      let url = `http://localhost:8080/residents/all?page=${page}&size=20`;
+      let url = `${import.meta.env.VITE_API_URL}/residents/all?page=${page}&size=20`;
       if (selectedBuildingId !== "all") {
         url += `&buildingId=${Number(selectedBuildingId)}`;
       }
@@ -57,7 +57,7 @@ const Residents = () => {
 
   const fetchBuildings = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/buildings/for-user", {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/buildings/for-user`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBuildings(Array.isArray(res.data) ? res.data : []);
@@ -113,7 +113,7 @@ const Residents = () => {
       };
 
       await axios.put(
-        `http://localhost:8080/residents/update/${editingResident.id}`,
+        `${import.meta.env.VITE_API_URL}/residents/update/${editingResident.id}`,
         payload,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -131,7 +131,7 @@ const Residents = () => {
   if (!window.confirm("¿Estás seguro que querés eliminar este residente?")) return;
 
   try {
-    await axios.delete(`http://localhost:8080/residents/delete/${id}`, {
+    await axios.delete(`${import.meta.env.VITE_API_URL}/residents/delete/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

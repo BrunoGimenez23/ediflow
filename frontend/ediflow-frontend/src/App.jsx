@@ -4,6 +4,7 @@ import './App.css'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import Buildings from './pages/admin/Buildings'
 import Layout from './layout/Layout'
+import PublicLayout from './layout/PublicLayout'
 import Register from './pages/auth/Register'
 import Home from './pages/home/Home'
 import Login from './pages/auth/Login'
@@ -18,16 +19,21 @@ import AdminReservationsPanel from './components/admin/AdminReservationsPanel'
 import UserManagement from './components/admin/UserManagement'
 import AssignPlanPage from './pages/admin/AssignPlanPage'
 import PricingPlans from './components/landing/PricingPlans'
+import PlanConfirmationPage from './pages/admin/PlanConfirmationPage'
 
 function App() {
   return (
     <Routes>
-      {/* Rutas públicas */}
+      {/* Home directo, sin layout */}
       <Route path='/' element={<Home />} />
-      <Route path="/auth/register-admin" element={<Register />} />
-      <Route path="/auth/login" element={<Login />} />
 
-      {/* Rutas de administrador */}
+      {/* Login y Register con PublicLayout */}
+      <Route element={<PublicLayout />}>
+        <Route path="/auth/register-admin" element={<Register />} />
+        <Route path="/auth/login" element={<Login />} />
+      </Route>
+
+      {/* Rutas de administrador con Layout */}
       <Route path='/admin' element={<Layout />}>
         <Route index element={<AdminDashboard />} />
         <Route path="reservas" element={<AdminReservationsPanel />} />
@@ -41,6 +47,7 @@ function App() {
         <Route path="planes" element={<PricingPlans />} />
       </Route>
       
+      <Route path="planes/confirmacion/:planName" element={<PlanConfirmationPage />} />
 
       {/* Rutas de residente */}
       <Route path='/resident' element={<ResidentDashboard />} />

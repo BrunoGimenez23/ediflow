@@ -44,6 +44,10 @@ const Apartments = () => {
   const [resCI, setResCI] = useState("");
   const [assignError, setAssignError] = useState("");
   const [errors, setErrors] = useState({});
+
+  
+  const [createError, setCreateError] = useState("");
+
   const formRef = useRef(null);
 
   useEffect(() => {
@@ -53,6 +57,8 @@ const Apartments = () => {
       setResUsername("");
       setResPassword("");
       setResCI("");
+      setAssignError("");
+      setErrors({});
       setTimeout(() => {
         formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
@@ -79,7 +85,6 @@ const Apartments = () => {
     setPage(0);
   };
 
-  // Función agregada para actualizar apartamento
   const handleAddOrUpdateApartment = async (e) => {
     e.preventDefault();
 
@@ -110,32 +115,34 @@ const Apartments = () => {
   };
 
   const handleCreateApartment = async (e) => {
-    e.preventDefault();
-    
-    if (isTrialBlocked(user, trialExpired)) {
-      alert("Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar.");
-      return;
-    }
-    if (!canEdit(user)) return;
+  e.preventDefault();
 
-    const payload = {
-      number: parseInt(number, 10),
-      floor: parseInt(floor, 10),
-      buildingId: buildingId,
-    };
+  if (isTrialBlocked(user, trialExpired)) {
+    alert("Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar.");
+    return;
+  }
+  if (!canEdit(user)) return;
 
-    try {
-      await post("/apartment/create", payload);
-      console.log("Apartamento creado:");
-      setCreatingApartment(false);
-      fetchApartments(page, filter);
-      setNumber("");
-      setFloor("");
-      setBuildingId("");
-    } catch (error) {
-      alert("Error al crear apartamento: " + error.message);
-    }
+  const payload = {
+    number: parseInt(number, 10),
+    floor: parseInt(floor, 10),
+    buildingId: buildingId,
   };
+
+  setCreateError("");  
+
+  const response = await post("/apartment/create", payload);
+
+  if (response.error) {
+    setCreateError(response.error);
+  } else {
+    setCreatingApartment(false);
+    fetchApartments(page, filter);
+    setNumber("");
+    setFloor("");
+    setBuildingId("");
+  }
+};
 
   const handleDeleteApartment = async (id) => {
     if (!window.confirm("¿Estás seguro que quieres eliminar este apartamento?")) return;
@@ -149,61 +156,57 @@ const Apartments = () => {
   };
 
   const handleAssignResident = async (e, apartmentId) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (isTrialBlocked(user, trialExpired)) {
-    alert("Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar.");
-    return;
-  }
-
-  if (!canAssignResident(user)) return;
-
-  if (!resFullName || !resEmail || !resUsername || !resPassword || !resCI) {
-    alert("Completa todos los campos del residente.");
-    return;
-  }
-
-  const payload = {
-    apartmentId,
-    username: resUsername,
-    email: resEmail,
-    password: resPassword,
-    fullName: resFullName,
-    ci: parseInt(resCI, 10),
-  };
-
-  setAssignError("");
-  setErrors({});
-
-  const response = await post("/residents/register-or-replace", payload);
-
-  if (response.error) {
-    const msg = response.error;
-
-    
-    if (msg.toLowerCase().includes("contraseña")) {
-      setErrors((prev) => ({ ...prev, resPassword: msg }));
-    } else if (msg.toLowerCase().includes("email")) {
-      setErrors((prev) => ({ ...prev, resEmail: msg }));
-    } else if (msg.toLowerCase().includes("nombre")) {
-      setErrors((prev) => ({ ...prev, resFullName: msg }));
-    } else if (msg.toLowerCase().includes("usuario")) {
-      setErrors((prev) => ({ ...prev, resUsername: msg }));
-    } else if (msg.toLowerCase().includes("ci")) {
-      setErrors((prev) => ({ ...prev, resCI: msg }));
-    } else {
-      setAssignError(msg);
+    if (isTrialBlocked(user, trialExpired)) {
+      alert("Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar.");
+      return;
     }
-  } else if (response.data) {
-    await fetchApartments(page, filter);
-    setResFormVisibleId(null);
-  } else {
-    setAssignError("No se pudo completar la asignación del residente.");
-  }
 
+    if (!canAssignResident(user)) return;
 
-};
+    if (!resFullName || !resEmail || !resUsername || !resPassword || !resCI) {
+      alert("Completa todos los campos del residente.");
+      return;
+    }
 
+    const payload = {
+      apartmentId,
+      username: resUsername,
+      email: resEmail,
+      password: resPassword,
+      fullName: resFullName,
+      ci: parseInt(resCI, 10),
+    };
+
+    setAssignError("");
+    setErrors({});
+
+    const response = await post("/residents/register-or-replace", payload);
+
+    if (response.error) {
+      const msg = response.error;
+
+      if (msg.toLowerCase().includes("contraseña")) {
+        setErrors((prev) => ({ ...prev, resPassword: msg }));
+      } else if (msg.toLowerCase().includes("email")) {
+        setErrors((prev) => ({ ...prev, resEmail: msg }));
+      } else if (msg.toLowerCase().includes("nombre")) {
+        setErrors((prev) => ({ ...prev, resFullName: msg }));
+      } else if (msg.toLowerCase().includes("usuario")) {
+        setErrors((prev) => ({ ...prev, resUsername: msg }));
+      } else if (msg.toLowerCase().includes("ci")) {
+        setErrors((prev) => ({ ...prev, resCI: msg }));
+      } else {
+        setAssignError(msg);
+      }
+    } else if (response.data) {
+      await fetchApartments(page, filter);
+      setResFormVisibleId(null);
+    } else {
+      setAssignError("No se pudo completar la asignación del residente.");
+    }
+  };
 
   const handleCancelAssignResident = () => {
     setResFormVisibleId(null);
@@ -270,6 +273,7 @@ const Apartments = () => {
           Crear apartamento
         </button>
       </div>
+      
 
       {/* FORMULARIO CREAR APARTAMENTO */}
       {creatingApartment && (
@@ -278,6 +282,12 @@ const Apartments = () => {
           className="mb-6 max-w-md mx-auto p-6 bg-gray-50 rounded-md shadow-md"
         >
           <h2 className="text-xl font-semibold mb-4 text-center">Crear apartamento</h2>
+
+          {/* Mostrar error si existe */}
+          {createError && (
+            <p className="text-red-600 font-semibold mb-4 text-center">{createError}</p>
+          )}
+
           <form onSubmit={handleCreateApartment} className="space-y-4">
             <label className="block mb-1 font-medium text-gray-700">Número</label>
             <input
@@ -359,323 +369,338 @@ const Apartments = () => {
             </tr>
           </thead>
           <tbody>
-            {apartments.map((apt) =>  {
+            {apartments.map((apt) => {
               return (
-              <Fragment key={apt.id}>
-                
-                <tr className="hover:bg-gray-100 transition-colors">
-                  <td className="py-3 px-4 border-b border-gray-200">{apt.number}</td>
-                  <td className="py-3 px-4 border-b border-gray-200">{apt.floor}</td>
-                  <td className="py-3 px-4 border-b border-gray-200">
-                    {apt.residentDTO?.userDTO?.fullName || "Sin asignar"}
-                  </td>
-                  <td className="py-3 px-4 border-b border-gray-200">
-                    {apt.residentDTO?.userDTO?.email || "-"}
-                  </td>
-                  <td className="py-3 px-4 border-b border-gray-200">
-                    {apt.buildingDTO?.name || "-"}
-                  </td>
-                  <td className="py-3 px-4 border-b border-gray-200 flex flex-col gap-1">
-                    <button
-                      onClick={() => {
-                        if (isTrialBlocked(user, trialExpired)) {
-                          alert(
-                            "Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar."
-                          );
-                          return;
+                <Fragment key={apt.id}>
+                  <tr className="hover:bg-gray-100 transition-colors">
+                    <td className="py-3 px-4 border-b border-gray-200">{apt.number}</td>
+                    <td className="py-3 px-4 border-b border-gray-200">{apt.floor}</td>
+                    <td className="py-3 px-4 border-b border-gray-200">
+                      {apt.residentDTO?.userDTO?.fullName || "Sin asignar"}
+                    </td>
+                    <td className="py-3 px-4 border-b border-gray-200">
+                      {apt.residentDTO?.userDTO?.email || "-"}
+                    </td>
+                    <td className="py-3 px-4 border-b border-gray-200">
+                      {apt.buildingDTO?.name || "-"}
+                    </td>
+                    <td className="py-3 px-4 border-b border-gray-200 flex flex-col gap-1">
+                      <button
+                        onClick={() => {
+                          if (isTrialBlocked(user, trialExpired)) {
+                            alert(
+                              "Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar."
+                            );
+                            return;
+                          }
+                          if (!canEdit(user)) return;
+                          setEditingApartment(apt);
+                          setCreatingApartment(false);
+                        }}
+                        className={`text-white bg-ediblue hover:bg-ediblueLight rounded px-3 py-1 text-sm font-medium ${
+                          isTrialBlocked(user, trialExpired) || !canEdit(user)
+                            ? "opacity-50 cursor-not-allowed"
+                            : ""
+                        }`}
+                        disabled={isTrialBlocked(user, trialExpired) || !canEdit(user)}
+                      >
+                        Editar
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteApartment(apt.id)}
+                        disabled={
+                          loadingDelete ||
+                          apt.residentDTO !== null ||
+                          isTrialBlocked(user, trialExpired) ||
+                          !canDelete(user)
                         }
-                        if (!canEdit(user)) return;
-                        setEditingApartment(apt);
-                        setCreatingApartment(false);
-                      }}
-                      className={`text-white bg-ediblue hover:bg-ediblueLight rounded px-3 py-1 text-sm font-medium ${
-                        isTrialBlocked(user, trialExpired) || !canEdit(user)
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      }`}
-                      disabled={isTrialBlocked(user, trialExpired) || !canEdit(user)}
-                    >
-                      Editar
-                    </button>
-
-                    <button
-                      onClick={() => handleDeleteApartment(apt.id)}
-                      disabled={
-                        loadingDelete ||
-                        apt.residentDTO !== null ||
-                        isTrialBlocked(user, trialExpired) ||
-                        !canDelete(user)
-                      }
-                      className={`text-white bg-red-600 hover:bg-red-700 rounded px-3 py-1 text-sm font-medium ${
-                        apt.residentDTO !== null || !canDelete(user)
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      }`}
-                      title={
-                        !canDelete(user)
-                          ? "No tenés permiso para eliminar"
-                          : apt.residentDTO !== null
-                          ? "No se puede eliminar porque tiene residente asignado"
-                          : "Eliminar apartamento"
-                      }
-                    >
-                      Eliminar
-                    </button>
-
-                    {!apt.residentDTO ? (
-                      
-                      <button
-                        onClick={() => {
-                          if (isTrialBlocked(user, trialExpired)) {
-                            alert(
-                              "Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar."
-                            );
-                            return;
-                          }
-                          if (!canAssignResident(user)) return;
-                          setResFormVisibleId(apt.id);
-                        }}
-                        className={`text-white bg-green-600 hover:bg-green-700 rounded px-3 py-1 text-sm font-medium ${
-                          isTrialBlocked(user, trialExpired) || !canAssignResident(user)
+                        className={`text-white bg-red-600 hover:bg-red-700 rounded px-3 py-1 text-sm font-medium ${
+                          apt.residentDTO !== null || !canDelete(user)
                             ? "opacity-50 cursor-not-allowed"
                             : ""
                         }`}
-                        disabled={isTrialBlocked(user, trialExpired) || !canAssignResident(user)}
+                        title={
+                          !canDelete(user)
+                            ? "No tenés permiso para eliminar"
+                            : apt.residentDTO !== null
+                            ? "No se puede eliminar porque tiene residente asignado"
+                            : "Eliminar apartamento"
+                        }
                       >
-                        Asignar residente
+                        Eliminar
                       </button>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          if (isTrialBlocked(user, trialExpired)) {
-                            alert(
-                              "Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar."
-                            );
-                            return;
-                          }
-                          if (!canAssignResident(user)) return;
-                          if (window.confirm("Esto reemplazará al residente actual. ¿Continuar?")) {
+
+                      {!apt.residentDTO ? (
+                        <button
+                          onClick={() => {
+                            if (isTrialBlocked(user, trialExpired)) {
+                              alert(
+                                "Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar."
+                              );
+                              return;
+                            }
+                            if (!canAssignResident(user)) return;
                             setResFormVisibleId(apt.id);
-                          }
-                        }}
-                        className={`text-white bg-yellow-600 hover:bg-yellow-700 rounded px-3 py-1 text-sm font-medium ${
-                          isTrialBlocked(user, trialExpired) || !canAssignResident(user)
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
-                        disabled={isTrialBlocked(user, trialExpired) || !canAssignResident(user)}
-                      >
-                        Reasignar residente
-                      </button>
-                    )}
-                  </td>
-                </tr>
-
-                {/* FORM EDITAR APARTAMENTO justo debajo de la fila */}
-                {editingApartment?.id === apt.id && (
-                  <tr>
-                    <td colSpan={6} ref={formRef} className="bg-gray-50 p-6">
-                      <form
-                        onSubmit={handleAddOrUpdateApartment}
-                        className="space-y-4 max-w-md mx-auto"
-                      >
-                        <label className="block mb-1 font-medium text-gray-700">
-                          Número
-                        </label>
-                        <input
-                          type="number"
-                          value={number}
-                          onChange={(e) => setNumber(e.target.value)}
-                          required
-                          disabled={isTrialBlocked(user, trialExpired) || !canEdit(user)}
-                          className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ediblue"
-                        />
-
-                        <label className="block mb-1 font-medium text-gray-700">
-                          Piso
-                        </label>
-                        <input
-                          type="number"
-                          value={floor}
-                          onChange={(e) => setFloor(e.target.value)}
-                          required
-                          disabled={isTrialBlocked(user, trialExpired) || !canEdit(user)}
-                          className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ediblue"
-                        />
-
-                        <label className="block mb-1 font-medium text-gray-700">
-                          Edificio
-                        </label>
-                        <select
-                          value={buildingId}
-                          onChange={(e) => setBuildingId(e.target.value)}
-                          required
-                          disabled={isTrialBlocked(user, trialExpired) || !canEdit(user)}
-                          className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ediblue"
+                          }}
+                          className={`text-white bg-green-600 hover:bg-green-700 rounded px-3 py-1 text-sm font-medium ${
+                            isTrialBlocked(user, trialExpired) || !canAssignResident(user)
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          }`}
+                          disabled={isTrialBlocked(user, trialExpired) || !canAssignResident(user)}
                         >
-                          <option value="">Selecciona un edificio</option>
-                          {buildings.map((b) => (
-                            <option key={b.id} value={b.id}>
-                              {b.name}
-                            </option>
-                          ))}
-                        </select>
-
-                        <div className="flex justify-between items-center mt-4">
-                          <button
-                            type="submit"
-                            className={`px-5 py-2 rounded-md text-white font-semibold ${
-                              isTrialBlocked(user, trialExpired) || !canEdit(user)
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : loadingPut
-                                ? "bg-ediblueLight cursor-wait"
-                                : "bg-ediblue hover:bg-ediblueLight"
-                            } transition`}
-                            disabled={loadingPut || isTrialBlocked(user, trialExpired) || !canEdit(user)}
-                          >
-                            Guardar
-                          </button>
-                          <button
-                            type="button"
-                            className="text-gray-600 hover:underline focus:outline-none"
-                            onClick={() => setEditingApartment(null)}
-                            disabled={isTrialBlocked(user, trialExpired)}
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      </form>
+                          Asignar residente
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            if (isTrialBlocked(user, trialExpired)) {
+                              alert(
+                                "Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar."
+                              );
+                              return;
+                            }
+                            if (!canAssignResident(user)) return;
+                            if (
+                              window.confirm(
+                                "Esto reemplazará al residente actual. ¿Continuar?"
+                              )
+                            ) {
+                              setResFormVisibleId(apt.id);
+                            }
+                          }}
+                          className={`text-white bg-yellow-600 hover:bg-yellow-700 rounded px-3 py-1 text-sm font-medium ${
+                            isTrialBlocked(user, trialExpired) || !canAssignResident(user)
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          }`}
+                          disabled={isTrialBlocked(user, trialExpired) || !canAssignResident(user)}
+                        >
+                          Reasignar residente
+                        </button>
+                      )}
                     </td>
                   </tr>
-                )}
 
-                {/* FORMULARIO ASIGNAR/REASIGNAR RESIDENTE justo debajo */}
-                {resFormVisibleId === apt.id && (
-  <tr>
-    <td colSpan={6} ref={formRef} className="bg-green-50 p-6">
-      <h3 className="text-lg font-semibold mb-4 text-center">
-        {apt.residentDTO ? "Reasignar" : "Asignar"} residente
-      </h3>
-      <form
-        onSubmit={(e) => handleAssignResident(e, apt.id)}
-        className="space-y-4 max-w-md mx-auto"
-        noValidate
-      >
-        <input
-          type="text"
-          placeholder="Nombre completo"
-          value={resFullName}
-          onChange={(e) => setResFullName(e.target.value)}
-          disabled={isTrialBlocked(user, trialExpired) || !canAssignResident(user)}
-          className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
-            errors.resFullName ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-green-500"
-          }`}
-        />
-        {errors.resFullName && (
-          <p className="text-red-500 text-sm mt-1">{errors.resFullName}</p>
-        )}
+                  {/* FORM EDITAR APARTAMENTO justo debajo de la fila */}
+                  {editingApartment?.id === apt.id && (
+                    <tr>
+                      <td colSpan={6} ref={formRef} className="bg-gray-50 p-6">
+                        <form
+                          onSubmit={handleAddOrUpdateApartment}
+                          className="space-y-4 max-w-md mx-auto"
+                        >
+                          <label className="block mb-1 font-medium text-gray-700">
+                            Número
+                          </label>
+                          <input
+                            type="number"
+                            value={number}
+                            onChange={(e) => setNumber(e.target.value)}
+                            required
+                            disabled={isTrialBlocked(user, trialExpired) || !canEdit(user)}
+                            className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ediblue"
+                          />
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={resEmail}
-          onChange={(e) => setResEmail(e.target.value)}
-          disabled={isTrialBlocked(user, trialExpired) || !canAssignResident(user)}
-          className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
-            errors.resEmail ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-green-500"
-          }`}
-        />
-        {errors.resEmail && (
-          <p className="text-red-500 text-sm mt-1">{errors.resEmail}</p>
-        )}
+                          <label className="block mb-1 font-medium text-gray-700">Piso</label>
+                          <input
+                            type="number"
+                            value={floor}
+                            onChange={(e) => setFloor(e.target.value)}
+                            required
+                            disabled={isTrialBlocked(user, trialExpired) || !canEdit(user)}
+                            className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ediblue"
+                          />
 
-        <input
-          type="text"
-          placeholder="Nombre de usuario"
-          value={resUsername}
-          onChange={(e) => setResUsername(e.target.value)}
-          disabled={isTrialBlocked(user, trialExpired) || !canAssignResident(user)}
-          className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
-            errors.resUsername ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-green-500"
-          }`}
-        />
-        {errors.resUsername && (
-          <p className="text-red-500 text-sm mt-1">{errors.resUsername}</p>
-        )}
+                          <label className="block mb-1 font-medium text-gray-700">
+                            Edificio
+                          </label>
+                          <select
+                            value={buildingId}
+                            onChange={(e) => setBuildingId(e.target.value)}
+                            required
+                            disabled={isTrialBlocked(user, trialExpired) || !canEdit(user)}
+                            className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ediblue"
+                          >
+                            <option value="">Selecciona un edificio</option>
+                            {buildings.map((b) => (
+                              <option key={b.id} value={b.id}>
+                                {b.name}
+                              </option>
+                            ))}
+                          </select>
 
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={resPassword}
-          onChange={(e) => setResPassword(e.target.value)}
-          disabled={isTrialBlocked(user, trialExpired) || !canAssignResident(user)}
-          className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
-            errors.resPassword ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-green-500"
-          }`}
-        />
-        {errors.resPassword && (
-          <p className="text-red-500 text-sm mt-1">{errors.resPassword}</p>
-        )}
+                          <div className="flex justify-between items-center mt-4">
+                            <button
+                              type="submit"
+                              className={`px-5 py-2 rounded-md text-white font-semibold ${
+                                isTrialBlocked(user, trialExpired) || !canEdit(user)
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : loadingPut
+                                  ? "bg-ediblueLight cursor-wait"
+                                  : "bg-ediblue hover:bg-ediblueLight"
+                              } transition`}
+                              disabled={loadingPut || isTrialBlocked(user, trialExpired) || !canEdit(user)}
+                            >
+                              Guardar
+                            </button>
+                            <button
+                              type="button"
+                              className="text-gray-600 hover:underline focus:outline-none"
+                              onClick={() => setEditingApartment(null)}
+                              disabled={isTrialBlocked(user, trialExpired)}
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </form>
+                      </td>
+                    </tr>
+                  )}
 
-        <input
-          type="number"
-          placeholder="CI"
-          value={resCI}
-          onChange={(e) => setResCI(e.target.value)}
-          disabled={isTrialBlocked(user, trialExpired) || !canAssignResident(user)}
-          className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
-            errors.resCI ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-green-500"
-          }`}
-        />
-        {errors.resCI && (
-          <p className="text-red-500 text-sm mt-1">{errors.resCI}</p>
-        )}
+                  {/* FORMULARIO ASIGNAR RESIDENTE justo debajo de la fila */}
+                  {resFormVisibleId === apt.id && (
+                    <tr>
+                      <td colSpan={6} ref={formRef} className="bg-green-50 p-6">
+                        <form
+                          onSubmit={(e) => handleAssignResident(e, apt.id)}
+                          className="space-y-4 max-w-md mx-auto"
+                        >
+                          {assignError && (
+                            <p className="text-red-600 font-semibold mb-4 text-center">{assignError}</p>
+                          )}
+                          <div>
+                            <label className="block mb-1 font-medium text-gray-700">
+                              Nombre completo
+                            </label>
+                            <input
+                              type="text"
+                              value={resFullName}
+                              onChange={(e) => setResFullName(e.target.value)}
+                              disabled={isTrialBlocked(user, trialExpired)}
+                              className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
+                                errors.resFullName ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-ediblue"
+                              }`}
+                            />
+                            {errors.resFullName && (
+                              <p className="text-red-600 text-sm mt-1">{errors.resFullName}</p>
+                            )}
+                          </div>
 
-        {assignError && (
-          <p className="text-red-600 font-semibold text-center mt-2">{assignError}</p>
-        )}
+                          <div>
+                            <label className="block mb-1 font-medium text-gray-700">
+                              Email
+                            </label>
+                            <input
+                              type="email"
+                              value={resEmail}
+                              onChange={(e) => setResEmail(e.target.value)}
+                              disabled={isTrialBlocked(user, trialExpired)}
+                              className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
+                                errors.resEmail ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-ediblue"
+                              }`}
+                            />
+                            {errors.resEmail && (
+                              <p className="text-red-600 text-sm mt-1">{errors.resEmail}</p>
+                            )}
+                          </div>
 
-        <div className="flex justify-between items-center mt-4">
-          <button
-            type="submit"
-            className={`px-5 py-2 rounded-md text-white font-semibold ${
-              isTrialBlocked(user, trialExpired) || !canAssignResident(user)
-                ? "bg-gray-400 cursor-not-allowed"
-                : loadingPost
-                ? "bg-green-400 cursor-wait"
-                : "bg-green-600 hover:bg-green-700"
-            } transition`}
-            disabled={loadingPost || isTrialBlocked(user, trialExpired) || !canAssignResident(user)}
-          >
-            Guardar
-          </button>
-          <button
-            type="button"
-            className="text-gray-600 hover:underline focus:outline-none"
-            onClick={handleCancelAssignResident}
-            disabled={isTrialBlocked(user, trialExpired)}
-          >
-            Cancelar
-          </button>
-        </div>
-      </form>
-    </td>
-  </tr>
-)}
+                          <div>
+                            <label className="block mb-1 font-medium text-gray-700">
+                              Usuario
+                            </label>
+                            <input
+                              type="text"
+                              value={resUsername}
+                              onChange={(e) => setResUsername(e.target.value)}
+                              disabled={isTrialBlocked(user, trialExpired)}
+                              className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
+                                errors.resUsername ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-ediblue"
+                              }`}
+                            />
+                            {errors.resUsername && (
+                              <p className="text-red-600 text-sm mt-1">{errors.resUsername}</p>
+                            )}
+                          </div>
 
-              </Fragment>
+                          <div>
+                            <label className="block mb-1 font-medium text-gray-700">
+                              Contraseña
+                            </label>
+                            <input
+                              type="password"
+                              value={resPassword}
+                              onChange={(e) => setResPassword(e.target.value)}
+                              disabled={isTrialBlocked(user, trialExpired)}
+                              className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
+                                errors.resPassword ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-ediblue"
+                              }`}
+                            />
+                            {errors.resPassword && (
+                              <p className="text-red-600 text-sm mt-1">{errors.resPassword}</p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="block mb-1 font-medium text-gray-700">
+                              Cédula de Identidad (CI)
+                            </label>
+                            <input
+                              type="number"
+                              value={resCI}
+                              onChange={(e) => setResCI(e.target.value)}
+                              disabled={isTrialBlocked(user, trialExpired)}
+                              className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
+                                errors.resCI ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-ediblue"
+                              }`}
+                            />
+                            {errors.resCI && (
+                              <p className="text-red-600 text-sm mt-1">{errors.resCI}</p>
+                            )}
+                          </div>
+
+                          <div className="flex justify-between items-center mt-4">
+                            <button
+                              type="submit"
+                              disabled={isTrialBlocked(user, trialExpired)}
+                              className={`px-5 py-2 rounded-md text-white font-semibold ${
+                                isTrialBlocked(user, trialExpired)
+                                  ? "bg-gray-400 cursor-not-allowed"
+                                  : "bg-green-600 hover:bg-green-700"
+                              } transition`}
+                            >
+                              Asignar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelAssignResident}
+                              className="text-gray-600 hover:underline focus:outline-none"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        </form>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               );
             })}
           </tbody>
         </table>
       </div>
 
-      {/* Paginación */}
-      <div className="flex justify-between items-center mt-6 max-w-md mx-auto">
+      {/* PAGINACIÓN */}
+      <div className="flex justify-center items-center mt-6 space-x-4">
         <button
           onClick={goToPrevPage}
           disabled={page === 0}
-          className="px-4 py-2 bg-ediblue text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`px-4 py-2 rounded-md font-semibold ${
+            page === 0
+              ? "bg-gray-300 cursor-not-allowed"
+              : "bg-ediblue text-white hover:bg-ediblueLight"
+          }`}
         >
           Anterior
         </button>
@@ -685,7 +710,11 @@ const Apartments = () => {
         <button
           onClick={goToNextPage}
           disabled={page + 1 >= totalPages}
-          className="px-4 py-2 bg-ediblue text-white rounded disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`px-4 py-2 rounded-md font-semibold ${
+            page + 1 >= totalPages
+              ? "bg-gray-300 cursor-not-allowed"
+              : "bg-ediblue text-white hover:bg-ediblueLight"
+          }`}
         >
           Siguiente
         </button>

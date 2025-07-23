@@ -49,11 +49,17 @@ public class AdminServiceimpl implements IAdminService {
         this.adminAccountRepository = adminAccountRepository;
     }
 
-    private int calculateTrialDaysLeft(Admin admin) {
+    private Integer calculateTrialDaysLeft(Admin admin) {
         LocalDate today = LocalDate.now();
-        if (admin.getTrialEnd() == null || admin.getTrialEnd().isBefore(today)) {
+
+        if (admin.getTrialEnd() == null) {
+            return null;
+        }
+
+        if (admin.getTrialEnd().isBefore(today)) {
             return 0;
         }
+
         return (int) ChronoUnit.DAYS.between(today, admin.getTrialEnd());
     }
 
@@ -159,7 +165,7 @@ public class AdminServiceimpl implements IAdminService {
         adminDTO.setUserDTO(userDTO);
 
 
-        int trialDaysLeft = calculateTrialDaysLeft(admin);
+        Integer trialDaysLeft = calculateTrialDaysLeft(admin);
         adminDTO.setTrialDaysLeft(trialDaysLeft);
 
         List<BuildingSummaryDTO> buildingSummaryDTO = admin.getBuildings().stream().map(building -> {
@@ -292,7 +298,7 @@ public class AdminServiceimpl implements IAdminService {
     }
     @Override
     @Transactional
-    public ResponseEntity<String> assignPlan(String email, String planName, String duration) {
+    public ResponseEntity<String> assignPlan(String email, String planName, String duration, Integer unitsPaid) {
         if (email == null || email.isBlank()) {
             return ResponseEntity.badRequest().body("El email es requerido.");
         }
@@ -301,6 +307,9 @@ public class AdminServiceimpl implements IAdminService {
         }
         if (duration == null || duration.isBlank()) {
             return ResponseEntity.badRequest().body("La duración del plan es requerida.");
+        }
+        if (unitsPaid == null || unitsPaid < 1) {
+            return ResponseEntity.badRequest().body("La cantidad de unidades pagadas es requerida y debe ser mayor que 0.");
         }
 
         Optional<Admin> adminOpt = adminRepository.findByUserEmail(email);
@@ -313,7 +322,7 @@ public class AdminServiceimpl implements IAdminService {
 
         admin.setPlan(planName.toUpperCase());
         admin.setPlanDuration(duration.toLowerCase());
-
+        admin.setUnitsPaid(unitsPaid);
 
         admin.setTrialStart(null);
         admin.setTrialEnd(null);
@@ -352,7 +361,6 @@ public class AdminServiceimpl implements IAdminService {
                 adminAccountRepository.save(adminAccount);
             }
         } else {
-
             if (user.getAdminAccount() != null) {
                 AdminAccount oldAccount = user.getAdminAccount();
                 user.setAdminAccount(null);
@@ -363,8 +371,9 @@ public class AdminServiceimpl implements IAdminService {
 
         adminRepository.save(admin);
 
-        return ResponseEntity.ok("Plan y duración asignados correctamente.");
+        return ResponseEntity.ok("Plan, duración y unidades pagadas asignados correctamente.");
     }
+
 
 
 

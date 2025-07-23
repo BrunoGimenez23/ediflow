@@ -39,8 +39,8 @@ public class UserServiceImpl implements IUserService {
                 .orElseThrow(() -> new RuntimeException("Admin account not found"));
 
 
-        if (!"ENTERPRISE".equalsIgnoreCase(adminAccount.getPlan())) {
-            throw new ForbiddenOperationException("Solo admins con plan ENTERPRISE pueden crear usuarios secundarios");
+        if (!"PREMIUM_PLUS".equalsIgnoreCase(adminAccount.getPlan())) {
+            throw new ForbiddenOperationException("Solo admins con plan PREMIUM_PLUS pueden crear usuarios secundarios");
         }
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {

@@ -16,7 +16,7 @@ const CommonAreasPage = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:8080/common-areas/all", {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/common-areas/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCommonAreas(res.data);
@@ -31,7 +31,7 @@ const CommonAreasPage = () => {
   const fetchBuildings = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:8080/buildings", {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/buildings`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBuildings(res.data);
@@ -71,7 +71,7 @@ const CommonAreasPage = () => {
 
   try {
     const token = localStorage.getItem("token");
-    await axios.delete(`http://localhost:8080/common-areas/delete/${id}`, {
+    await axios.delete(`${import.meta.env.VITE_API_URL}/common-areas/delete/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
