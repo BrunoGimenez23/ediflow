@@ -14,20 +14,26 @@ const RegisterForm = () => {
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    const res = await post('/auth/register-admin', {
-      username,
-      email,
-      password,
-      fullName,         
-      inviteCode: adminCode,
-    })
+  e.preventDefault()
+  const res = await post('/auth/register-admin', {
+    username,
+    email,
+    password,
+    fullName,         
+    inviteCode: adminCode,
+  })
 
-    if (res) {
-      setSuccess(true)
-      setTimeout(() => navigate('/auth/login'), 2000)
+  if (res) {
+   
+    if (window.fbq) {
+      window.fbq('track', 'CompleteRegistration')
     }
+
+    setSuccess(true)
+    setTimeout(() => navigate('/auth/login'), 2000)
   }
+}
+
 
   const whatsappNumber = "598098235535" 
   const whatsappMessage = encodeURIComponent(
