@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import paneladmin from '../../assets/images/paneladmin.png';
 import Button from '../common/Button';
+import heroVideo from '../../assets/videos/Ediflow-video.mp4';
 
 const HeroSection = () => {
   const navigate = useNavigate();
@@ -28,12 +28,16 @@ const HeroSection = () => {
           </Button>
         </div>
 
-        {/* Imagen */}
-        <div className="md:flex-1 w-full max-w-md mx-auto md:mx-0">
-          <img
-            src={paneladmin}
-            alt="Panel administrativo de Ediflow mostrando gestión de edificios, residentes y pagos"
-            className="w-full rounded-2xl shadow-xl"
+        {/* Video en lugar de imagen */}
+        <div className="md:flex-1 w-full max-w-md mx-auto md:mx-0 rounded-2xl overflow-hidden shadow-xl">
+          <video
+            src={heroVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="w-full h-auto object-cover rounded-2xl"
+            aria-label="Demo mostrando cómo generar un pago en Ediflow"
           />
         </div>
       </div>
