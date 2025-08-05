@@ -12,14 +12,17 @@ const CTASection = ({ id }) => {
         className="bg-ediblue text-white py-16 px-8 text-center rounded-3xl mx-auto max-w-4xl shadow-lg mt-16"
       >
         <h2 className="text-4xl font-extrabold mb-6">
-          ¿Listo para mejorar la administración de tu edificio?
+          Gestioná tu edificio sin planillas, confusión ni estrés
         </h2>
         <p className="mb-4 text-lg max-w-3xl mx-auto leading-relaxed">
-          Probalo gratis por <span className="font-semibold">14 días</span> sin tarjeta de crédito.
+          Empezá ahora tu <span className="font-semibold">prueba gratuita de 14 días</span> sin tarjeta ni compromiso.
         </p>
         <p className="mb-10 text-lg max-w-3xl mx-auto leading-relaxed text-edigray/90">
-          Empezá hoy con <span className="font-semibold">Ediflow</span> y simplificá tu gestión en minutos.
+          Registrate en minutos y descubrí por qué cada vez más administradores eligen Ediflow.
         </p>
+        <p className="text-sm text-edigray/80 mb-2">
+  Oferta válida por tiempo limitado
+</p>
         <button
           type="button"
           className="
@@ -38,7 +41,7 @@ const CTASection = ({ id }) => {
             size={24}
             className="animate-pulse-slow"
           />
-          Empezar prueba gratis
+          Probar gratis ahora
         </button>
       </section>
     </div>
