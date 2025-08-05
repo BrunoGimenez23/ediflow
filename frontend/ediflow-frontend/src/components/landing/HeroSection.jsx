@@ -13,19 +13,20 @@ const HeroSection = () => {
         {/* Texto */}
         <div className="text-center md:text-left md:flex-1">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-editext mb-6 leading-tight">
-            Simplificá la administración de tu edificio con Ediflow
-          </h1>
-          <p className="text-base sm:text-lg text-gray-700 mb-6 max-w-lg mx-auto md:mx-0">
-            Administra residentes, pagos y reservas de manera eficiente y sin complicaciones. Optimiza tu tiempo con una plataforma intuitiva y moderna.
-          </p>
+  Olvidate del Excel. Gestioná tu edificio en un solo lugar.
+</h1>
+<p className="text-base sm:text-lg text-gray-700 mb-6 max-w-lg mx-auto md:mx-0">
+  Ediflow te permite administrar expensas, residentes y reservas desde una plataforma moderna, simple y eficiente. Ahorra tiempo y evitá errores.
+</p>
 
-          <Button
-            variant="primary"
-            size="lg"
-            onClick={() => navigate('/auth/register-admin')}
-          >
-            Comenzá tu prueba gratis ahora
-          </Button>
+<Button
+  variant="primary"
+  size="lg"
+  onClick={() => navigate('/auth/register-admin')}
+>
+  Empezá tu prueba gratuita de 14 días
+</Button>
+
         </div>
 
         {/* Video en lugar de imagen */}
