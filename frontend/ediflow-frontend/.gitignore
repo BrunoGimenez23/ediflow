@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Variables locales de entorno
+.env.local
+
+# Backend local
+/backend/src/main/resources/application-local.properties
+
