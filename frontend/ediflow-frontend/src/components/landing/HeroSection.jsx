@@ -13,7 +13,7 @@ const HeroSection = () => {
         {/* Texto */}
         <div className="text-center md:text-left md:flex-1">
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-editext mb-6 leading-tight">
-  Olvidate del Excel23. Gestioná tu edificio en un solo lugar.
+  Olvidate del Excel. Gestioná tu edificio en un solo lugar.
 </h1>
 <p className="text-base sm:text-lg text-gray-700 mb-6 max-w-lg mx-auto md:mx-0">
   Ediflow te permite administrar expensas, residentes y reservas desde una plataforma moderna, simple y eficiente. Ahorra tiempo y evitá errores.
