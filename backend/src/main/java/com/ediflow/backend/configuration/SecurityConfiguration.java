@@ -34,31 +34,37 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(cors -> cors.configurationSource(request -> {
-    var corsConfig = new CorsConfiguration();
-    corsConfig.setAllowedOriginPatterns(List.of(
-        "http://localhost:5173",
-        "https://ediflow23.vercel.app",
-        "https://ediflow.uy"
-    ));
-    corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    corsConfig.setAllowedHeaders(List.of("*"));
-    corsConfig.setAllowCredentials(true);
-    return corsConfig;
-}))
+                    var corsConfig = new CorsConfiguration();
+
+                    // Orígenes permitidos exactos
+                    corsConfig.setAllowedOrigins(List.of(
+                            "http://localhost:5173",
+                            "https://ediflow23.vercel.app",
+                            "https://ediflow.uy"
+                    ));
+
+                    // Métodos permitidos
+                    corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+
+                    // Headers permitidos (incluyendo Authorization para JWT)
+                    corsConfig.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+
+                    // Permitir envío de cookies y Authorization headers
+                    corsConfig.setAllowCredentials(true);
+
+                    return corsConfig;
+                }))
 
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-
                         .requestMatchers("/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
 
                         .requestMatchers("/admin/users").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/admin/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
                         .requestMatchers("/users/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
                         .requestMatchers(HttpMethod.POST, "/users").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/payment/all").hasAuthority("ROLE_ADMIN")
-
 
                         .requestMatchers(HttpMethod.POST, "/residents/register-or-replace").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
                         .requestMatchers("/admin/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
@@ -69,22 +75,13 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.PUT, "/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
                         .requestMatchers(HttpMethod.DELETE, "/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
 
-
                         .requestMatchers(HttpMethod.GET, "/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_RESIDENT")
-
-
                         .requestMatchers(HttpMethod.GET, "/reservations/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_SUPPORT", "ROLE_RESIDENT")
-
-
                         .requestMatchers("/resident/me").hasAnyAuthority("ROLE_RESIDENT", "ROLE_ADMIN")
                         .requestMatchers("/apartment/me").hasAnyAuthority("ROLE_RESIDENT", "ROLE_ADMIN")
                         .requestMatchers("/payment/by-resident/**").hasAuthority("ROLE_RESIDENT")
-
                         .requestMatchers(HttpMethod.PUT, "/residents/fix-assign-admin-account").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
-
                         .requestMatchers("/auth/me").authenticated()
-
-
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
