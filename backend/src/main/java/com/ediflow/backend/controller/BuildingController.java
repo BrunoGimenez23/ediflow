@@ -3,10 +3,12 @@ package com.ediflow.backend.controller;
 import com.ediflow.backend.dto.building.BuildingDTO;
 import com.ediflow.backend.dto.building.BuildingDetailDTO;
 import com.ediflow.backend.dto.building.BuildingSummaryDTO;
+import com.ediflow.backend.dto.resident.ResidentDTO;
 import com.ediflow.backend.dto.resident.ResidentSummaryDTO;
 import com.ediflow.backend.entity.User;
 import com.ediflow.backend.repository.IUserRepository;
 import com.ediflow.backend.service.IBuildingService;
+import com.ediflow.backend.service.IResidentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,7 @@ public class BuildingController {
 
     private final IBuildingService buildingService;
     private final IUserRepository userRepository;
+    private final IResidentService residentService;
 
     @PostMapping("/building")
     @PreAuthorize("hasAnyRole('ADMIN', 'EMPLOYEE')")
@@ -98,6 +101,14 @@ public class BuildingController {
         List<BuildingDTO> buildings = buildingService.findBuildingsForUser(user);
         return ResponseEntity.ok(buildings);
     }
+
+    @GetMapping("/by-building-porter/{buildingId}")
+    @PreAuthorize("hasRole('PORTER')")
+    public ResponseEntity<List<ResidentDTO>> findByBuildingForPorter(@PathVariable Long buildingId) {
+        List<ResidentDTO> residents = residentService.findByBuildingIdForPorter(buildingId);
+        return ResponseEntity.ok(residents);
+    }
+
 
 
 }

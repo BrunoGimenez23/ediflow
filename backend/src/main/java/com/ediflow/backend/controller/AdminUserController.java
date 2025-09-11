@@ -58,4 +58,32 @@ public class AdminUserController {
                 })
                 .orElse(ResponseEntity.notFound().build());
     }
+
+    @PostMapping("/porter")
+    public ResponseEntity<UserResponseDTO> createPorter(
+            @RequestBody CreateUserRequestDTO request,
+            Authentication authentication) {
+        try {
+            User currentUser = (User) authentication.getPrincipal();
+
+            // Solo admins con plan PREMIUM_PLUS
+            if (currentUser.getRole() != com.ediflow.backend.enums.Role.ADMIN ||
+                    currentUser.getAdminAccount() == null ||
+                    !"PREMIUM_PLUS".equalsIgnoreCase(currentUser.getAdminAccount().getPlan())) {
+                throw new ForbiddenOperationException("Solo admins PREMIUM_PLUS pueden crear porteros");
+            }
+
+            // Usamos el método específico de UserService
+            UserResponseDTO createdPorter = userService.createPorter(request, currentUser.getAdminAccount().getId());
+
+            return ResponseEntity.ok(createdPorter);
+
+        } catch (ForbiddenOperationException ex) {
+            return ResponseEntity.status(403).body(null);
+        } catch (ConflictException ex) {
+            return ResponseEntity.status(409).body(null);
+        }
+    }
+
+
 }

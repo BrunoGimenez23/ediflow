@@ -79,4 +79,11 @@ public interface IResidentRepository extends JpaRepository<Resident, Long> {
             @Param("buildingId") Long buildingId,
             Pageable pageable);
 
+    @Query("SELECT r FROM Resident r " +
+            "JOIN FETCH r.user u " +
+            "JOIN FETCH r.apartment a " +
+            "JOIN FETCH a.building b " +
+            "WHERE b.id = :buildingId")
+    List<Resident> findByBuildingIdWithUser(@Param("buildingId") Long buildingId);
+
 }

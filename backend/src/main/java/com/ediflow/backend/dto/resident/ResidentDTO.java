@@ -19,7 +19,7 @@ public class ResidentDTO {
 
     private Long id;
     private Long ci;
-
+    private String username;
     private UserDTO userDTO;
     private Long buildingId;
     private Long apartmentId;

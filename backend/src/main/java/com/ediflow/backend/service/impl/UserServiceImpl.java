@@ -3,14 +3,18 @@ package com.ediflow.backend.service.impl;
 import com.ediflow.backend.dto.user.CreateUserRequestDTO;
 import com.ediflow.backend.dto.user.UserResponseDTO;
 import com.ediflow.backend.entity.AdminAccount;
+import com.ediflow.backend.entity.Building;
 import com.ediflow.backend.entity.User;
 import com.ediflow.backend.exception.ConflictException;
 import com.ediflow.backend.exception.ForbiddenOperationException;
 import com.ediflow.backend.mapper.UserMapper;
 import com.ediflow.backend.repository.IAdminAccountRepository;
+import com.ediflow.backend.repository.IBuildingRepository;
 import com.ediflow.backend.repository.IUserRepository;
 import com.ediflow.backend.service.IUserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +31,30 @@ public class UserServiceImpl implements IUserService {
     private final IUserRepository userRepository;
     private final IAdminAccountRepository adminAccountRepository;
     private final PasswordEncoder passwordEncoder;
+    private final IBuildingRepository buildingRepository;
+
+    @Override
+    public User getLoggedUser() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String email;
+
+        if (principal instanceof UserDetails) {
+            email = ((UserDetails) principal).getUsername();
+        } else {
+            email = principal.toString();
+        }
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    }
+
+    @Override
+    public boolean userHasAccessToBuilding(User user, Long buildingId) {
+        if (user.getAdmin() == null) return false;
+        return user.getAdmin().getBuildings()
+                .stream()
+                .anyMatch(b -> b.getId().equals(buildingId));
+    }
 
     @Override
     public Optional<User> findById(Long id) {
@@ -141,4 +169,49 @@ public class UserServiceImpl implements IUserService {
     public Optional<User> findByEmailOptional(String email) {
         return userRepository.findByEmail(email);
     }
+
+    @Override
+    public UserResponseDTO createPorter(CreateUserRequestDTO request, Long adminAccountId) {
+        AdminAccount adminAccount = adminAccountRepository.findById(adminAccountId)
+                .orElseThrow(() -> new RuntimeException("Admin account not found"));
+
+        if (!"PREMIUM_PLUS".equalsIgnoreCase(adminAccount.getPlan())) {
+            throw new ForbiddenOperationException("Solo admins con plan PREMIUM_PLUS pueden crear porteros");
+        }
+
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new ConflictException("El email ya está registrado");
+        }
+        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+            throw new ConflictException("El nombre de usuario ya está en uso");
+        }
+
+        // Buscar edificio
+        Building building = buildingRepository.findById(request.getBuildingId())
+                .orElseThrow(() -> new RuntimeException("Building not found"));
+
+        // Crear portero
+        User user = User.builder()
+                .email(request.getEmail())
+                .username(request.getUsername())
+                .fullName(request.getFullName())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(com.ediflow.backend.enums.Role.PORTER)
+                .adminAccount(adminAccount)
+                .building(building)
+                .build();
+
+        userRepository.save(user);
+
+        return UserResponseDTO.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .username(user.getUsername())
+                .fullName(user.getFullName())
+                .role(user.getRole())
+                .adminId(adminAccountId)
+                .plan(adminAccount.getPlan())
+                .build();
+    }
+
 }

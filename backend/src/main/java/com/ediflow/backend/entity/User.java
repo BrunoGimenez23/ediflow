@@ -56,6 +56,10 @@ public class User implements UserDetails {
     @JsonIgnore
     private AdminAccount adminAccount;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "building_id")
+    private Building building;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
@@ -89,5 +93,9 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public boolean hasRole(String roleName) {
+        return this.role != null && this.role.name().equalsIgnoreCase(roleName);
     }
 }

@@ -21,4 +21,7 @@ public interface IUserService {
     UserResponseDTO updateUser(Long userId, CreateUserRequestDTO request, Long adminAccountId);
     Optional<AdminAccount> getAdminAccountById(Long id);
     Optional<User> findByEmailOptional(String email);
+    User getLoggedUser();
+    boolean userHasAccessToBuilding(User user, Long buildingId);
+    UserResponseDTO createPorter(CreateUserRequestDTO request, Long adminAccountId);
 }

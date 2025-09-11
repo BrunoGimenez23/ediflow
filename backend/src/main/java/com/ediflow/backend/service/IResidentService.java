@@ -34,5 +34,6 @@ public interface IResidentService {
     ResidentDTO createOrReplaceResident(ResidentDTO residentDTO);
     public void replaceResident(Long apartmentId, Long userId);
     Resident registerOrReplaceResident(RegisterOrReplaceResidentRequest request);
+    List<ResidentDTO> findByBuildingIdForPorter(Long buildingId);
 
 }

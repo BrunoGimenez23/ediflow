@@ -1,7 +1,7 @@
 import { useAuth } from "../../contexts/AuthContext";
 import logo from "../../assets/iconos/logo.png";
 import { Link } from "react-router-dom";
-import { Building, CalendarDays, DollarSign, HouseIcon, Users, Home } from "lucide-react";
+import { Building, CalendarDays, DollarSign, HouseIcon, Users, Home, ClipboardList } from "lucide-react";
 
 const Sidebar = () => {
   const { user } = useAuth();
@@ -10,7 +10,6 @@ const Sidebar = () => {
   const isEmployee = user?.role === "EMPLOYEE";
   const isSupport = user?.role === "SUPPORT";
 
-  
   const plan = user?.plan || "";
 
   return (
@@ -73,12 +72,22 @@ const Sidebar = () => {
             </li>
           )}
 
-          {/* Solo ADMIN con plan ENTERPRISE ve Gestión de Usuarios */}
+          {/* Solo ADMIN con plan PREMIUM_PLUS ve Gestión de Usuarios */}
           {isAdmin && plan === "PREMIUM_PLUS" && (
             <li>
               <Link to="/admin/users" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
                 <Users className="text-edigray" />
                 Gestión de Usuarios
+              </Link>
+            </li>
+          )}
+
+          {/* Solo ADMIN ve Historial */}
+          {isAdmin && (
+            <li>
+              <Link to="/admin/historial" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
+                <ClipboardList className="text-edigray" />
+                Historial Portero
               </Link>
             </li>
           )}

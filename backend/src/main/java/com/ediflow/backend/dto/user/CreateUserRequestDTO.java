@@ -14,4 +14,5 @@ public class CreateUserRequestDTO {
     private String fullName;
     private String password;
     private Role role;
+    private Long buildingId;
 }

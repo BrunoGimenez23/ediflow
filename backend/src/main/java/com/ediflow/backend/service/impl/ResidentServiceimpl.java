@@ -8,6 +8,7 @@ import com.ediflow.backend.dto.resident.ResidentDTO;
 import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.entity.*;
 import com.ediflow.backend.enums.Role;
+import com.ediflow.backend.mapper.ResidentMapper;
 import com.ediflow.backend.repository.IApartmentRepository;
 import com.ediflow.backend.repository.IBuildingRepository;
 import com.ediflow.backend.repository.IResidentRepository;
@@ -16,6 +17,7 @@ import com.ediflow.backend.service.IAdminService;
 import com.ediflow.backend.service.IResidentService;
 import com.ediflow.backend.service.IUserService;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -50,6 +52,9 @@ public class ResidentServiceimpl implements IResidentService {
     private IAdminService adminService;
     @Autowired
     private IUserService userService;
+
+    @Autowired
+    private ResidentMapper residentMapper;
     private static final Logger logger = LoggerFactory.getLogger(ResidentServiceimpl.class);
 
 
@@ -714,6 +719,23 @@ public class ResidentServiceimpl implements IResidentService {
         if (!password.matches(".*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?].*")) {
             throw new IllegalArgumentException("La contraseña debe contener al menos un carácter especial.");
         }
+    }
+
+    public List<ResidentDTO> findByBuildingIdForPorter(Long buildingId) {
+        List<Resident> residents = residentRepository.findByBuildingIdWithUser(buildingId);
+        return residents.stream()
+                .map(resident -> ResidentDTO.builder()
+                        .id(resident.getId())
+                        .ci(resident.getCi())
+                        .userDTO(UserDTO.builder()
+                                .id(resident.getUser().getId())
+                                .username(resident.getUser().getUsername())
+                                .email(resident.getUser().getEmail())
+                                .build())
+                        .apartmentId(resident.getApartment().getId())
+                        .buildingId(resident.getApartment().getBuilding().getId())
+                        .build())
+                .collect(Collectors.toList());
     }
 
 

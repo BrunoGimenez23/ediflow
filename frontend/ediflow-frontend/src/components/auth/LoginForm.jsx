@@ -26,10 +26,19 @@ const LoginForm = () => {
 
       const role = res.user?.role;
 
-      if (role === "ADMIN" || role === "EMPLOYEE" || role === "SUPPORT") {
-        navigate("/admin");
-      } else if (role === "RESIDENT") {
-        navigate("/resident");
+      // Mapa de roles a rutas
+      const roleRoutes = {
+        ADMIN: "/admin",
+        EMPLOYEE: "/admin",
+        SUPPORT: "/admin",
+        RESIDENT: "/resident",
+        PORTER: "/porter" // nueva ruta para porteros
+      };
+
+      const route = roleRoutes[role];
+
+      if (route) {
+        navigate(route);
       } else {
         alert("Rol desconocido");
       }

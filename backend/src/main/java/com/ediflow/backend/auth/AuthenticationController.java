@@ -80,6 +80,7 @@ public class AuthenticationController {
         Long adminId = null;
         Integer trialDaysLeft = null;
         String plan = null;
+        Long buildingId = null;
 
         if (user.getRole() == Role.ADMIN) {
             System.out.println("Entrando en bloque ADMIN");
@@ -129,6 +130,13 @@ public class AuthenticationController {
             }
         }
 
+        // Asignar buildingId dependiendo del rol
+        if (user.getRole() == Role.PORTER && user.getBuilding() != null) {
+            buildingId = user.getBuilding().getId();
+        } else if (user.getResident() != null && user.getResident().getBuilding() != null) {
+            buildingId = user.getResident().getBuilding().getId();
+        }
+
         UserDTO userDTO = UserDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -138,6 +146,7 @@ public class AuthenticationController {
                 .adminId(adminId)
                 .trialDaysLeft(trialDaysLeft)
                 .plan(plan)
+                .buildingId(buildingId)
                 .build();
 
         return ResponseEntity.ok(userDTO);

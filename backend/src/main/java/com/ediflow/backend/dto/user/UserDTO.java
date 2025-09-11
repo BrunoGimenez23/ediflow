@@ -22,5 +22,6 @@ public class UserDTO {
     private Long adminId;
     private Integer trialDaysLeft;
     private String plan;
+    private Long buildingId;
 
 }

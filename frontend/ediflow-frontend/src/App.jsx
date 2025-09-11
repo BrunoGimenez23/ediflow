@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, Navigate } from 'react-router-dom'
 import './App.css'
 
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -20,8 +20,16 @@ import UserManagement from './components/admin/UserManagement'
 import AssignPlanPage from './pages/admin/AssignPlanPage'
 import PricingPlans from './components/landing/PricingPlans'
 import PlanConfirmationPage from './pages/admin/PlanConfirmationPage'
+import MyLogEntries from './components/porteria/MyLogEntries'
+import LogHistory from './components/porteria/LogHistory'
+import { useAuth } from './contexts/AuthContext'
+import { useBuildingsContext } from "./contexts/BuildingContext";
+import PorterDashboard from './pages/porter/PorterDashboard'
 
 function App() {
+  const { user } = useAuth();
+  const { selectedBuilding } = useBuildingsContext();
+
   return (
     <Routes>
       {/* Home directo, sin layout */}
@@ -45,14 +53,29 @@ function App() {
         <Route path="users" element={<UserManagement />} />
         <Route path="assign-plan" element={<AssignPlanPage />} />
         <Route path="planes" element={<PricingPlans />} />
+
+        {/* historial relativo al admin */}
+        {user?.role === "ADMIN" && selectedBuilding && (
+          <Route
+            path="historial"
+            element={<LogHistory buildingId={selectedBuilding.id} userRole="ADMIN" />}
+          />
+        )}
       </Route>
-      
+
       <Route path="planes/confirmacion/:planName" element={<PlanConfirmationPage />} />
 
       {/* Rutas de residente */}
       <Route path='/resident' element={<ResidentDashboard />} />
       <Route path="/mis-pagos" element={<MyPayments />} />
       <Route path="/mis-reservas" element={<MyReservations />} />
+      <Route path="/mis-registros" element={<MyLogEntries residentId={user?.residentId} />} />
+
+      {/* Rutas de portero usando PorterDashboard */}
+      <Route
+        path="/porter/*"
+        element={user?.role === "PORTER" ? <PorterDashboard /> : <Navigate to="/" />}
+      />
     </Routes>
   )
 }

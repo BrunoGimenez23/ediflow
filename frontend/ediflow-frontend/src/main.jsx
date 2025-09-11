@@ -10,6 +10,7 @@ import { PaymentProvider } from './contexts/PaymentContext.jsx'
 import { AuthProvider } from './contexts/AuthContext.jsx'
 import { ResidentProvider } from './contexts/ResidentContext.jsx'
 import { ReservationsProvider } from './contexts/ReservationsContext.jsx'
+import { Toaster } from 'react-hot-toast'
 import { Analytics } from '@vercel/analytics/react';
 
 createRoot(document.getElementById('root')).render(
@@ -23,6 +24,7 @@ createRoot(document.getElementById('root')).render(
                 <PaymentProvider>
                   <App />
                   <Analytics />
+                  <Toaster position="top-right" />
                 </PaymentProvider>
               </ApartmentProvider>
             </BuildingProvider>

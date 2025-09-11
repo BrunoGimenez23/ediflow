@@ -6,13 +6,12 @@ const BuildingContext = createContext();
 export const BuildingProvider = ({ children }) => {
   const { user, ready } = useAuth();
   const [buildings, setBuildings] = useState([]);
+  const [selectedBuilding, setSelectedBuilding] = useState(null); // ✅ agregado
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchBuildings = useCallback(async () => {
-    if (!user || !ready) {
-      return;
-    }
+    if (!user || !ready) return;
 
     const token = localStorage.getItem("token");
     if (!token) {
@@ -42,13 +41,18 @@ export const BuildingProvider = ({ children }) => {
 
       const data = await res.json();
       setBuildings(data);
+
+      // Seleccionar automáticamente el primero si no hay selectedBuilding
+      if (!selectedBuilding && data.length > 0) {
+        setSelectedBuilding(data[0]);
+      }
     } catch (err) {
       setError(err.message);
       setBuildings([]);
     } finally {
       setLoading(false);
     }
-  }, [user, ready]);
+  }, [user, ready, selectedBuilding]);
 
   useEffect(() => {
     const allowedRoles = ["ADMIN", "EMPLOYEE"];
@@ -66,7 +70,9 @@ export const BuildingProvider = ({ children }) => {
   }, [user, ready, fetchBuildings]);
 
   return (
-    <BuildingContext.Provider value={{ buildings, loading, error, fetchBuildings }}>
+    <BuildingContext.Provider
+      value={{ buildings, selectedBuilding, setSelectedBuilding, loading, error, fetchBuildings }}
+    >
       {children}
     </BuildingContext.Provider>
   );
