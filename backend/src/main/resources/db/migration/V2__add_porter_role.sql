@@ -1,5 +1,0 @@
--- V__add_porter_role.sql
-ALTER TABLE user
-CHANGE COLUMN role role ENUM('ADMIN','EMPLOYEE','SUPPORT','RESIDENT','PORTER') NOT NULL;
-
-
