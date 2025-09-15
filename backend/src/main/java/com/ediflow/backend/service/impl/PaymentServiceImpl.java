@@ -4,6 +4,7 @@ import com.ediflow.backend.dto.apartment.ApartmentDTO;
 import com.ediflow.backend.dto.building.BuildingDTO;
 import com.ediflow.backend.dto.payment.PaymentByBuildingDTO;
 import com.ediflow.backend.dto.payment.PaymentDTO;
+import com.ediflow.backend.dto.payment.PaymentReportDTO;
 import com.ediflow.backend.dto.resident.ResidentDTO;
 import com.ediflow.backend.dto.resident.ResidentUsernameDTO;
 import com.ediflow.backend.dto.user.UserDTO;
@@ -14,6 +15,7 @@ import com.ediflow.backend.repository.IResidentRepository;
 import com.ediflow.backend.repository.IUserRepository;
 import com.ediflow.backend.service.IAdminService;
 import com.ediflow.backend.service.IPaymentService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,7 +23,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -427,5 +432,70 @@ public class PaymentServiceImpl implements IPaymentService {
         dto.setPaymentDate(payment.getPaymentDate());
         dto.setStatus(payment.getStatus());
         return dto;
+    }
+
+    public List<PaymentReportDTO> getPaymentReport(Long buildingId, LocalDate fromDate, LocalDate toDate) {
+        List<Payment> payments = paymentRepository.findByBuildingAndDateRange(buildingId, fromDate, toDate);
+
+        return payments.stream()
+                .map(payment -> {
+                    PaymentReportDTO dto = new PaymentReportDTO();
+                    dto.setResidentName(payment.getResident().getUser().getFullName());
+                    dto.setApartmentNumber(payment.getResident().getApartment().getNumber());
+                    dto.setBuildingName(payment.getResident().getApartment().getBuilding().getName());
+                    dto.setDueDate(payment.getDueDate());
+                    dto.setPaymentDate(payment.getPaymentDate());
+                    dto.setStatus(payment.getStatus());
+                    dto.setAmount(payment.getAmount());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+    public void exportReportToCSV(HttpServletResponse response, Long buildingId, LocalDate fromDate, LocalDate toDate) throws IOException {
+
+        response.setContentType("text/csv");
+        response.setHeader("Content-Disposition", "attachment; filename=report.csv");
+
+        List<PaymentReportDTO> report = getPaymentReport(buildingId, fromDate, toDate);
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        java.util.function.Function<PaymentStatus, String> translateStatus = status -> {
+            if (status == null) return "";
+            return switch (status) {
+                case PAID -> "Pagado";
+                case PENDING -> "Pendiente";
+                case OVERDUE -> "Vencido";
+                case CANCELLED -> "Cancelado";
+                default -> "Desconocido";
+            };
+        };
+
+        try (PrintWriter writer = response.getWriter()) {
+
+            writer.println("Residente,Apartamento,Edificio,Fecha Vencimiento,Fecha Pago,Estado,Monto");
+
+            for (PaymentReportDTO dto : report) {
+                String residentName = dto.getResidentName() != null ? dto.getResidentName() : "";
+                String apartmentNumber = dto.getApartmentNumber() != null ? dto.getApartmentNumber().toString() : "";
+                String buildingName = dto.getBuildingName() != null ? dto.getBuildingName() : "";
+                String dueDate = dto.getDueDate() != null ? dto.getDueDate().format(formatter) : "";
+                String paymentDate = dto.getPaymentDate() != null ? dto.getPaymentDate().format(formatter) : "";
+                String status = translateStatus.apply(dto.getStatus());
+                String amount = dto.getAmount() != null ? String.format("%.2f", dto.getAmount()) : "";
+
+                writer.printf("%s,%s,%s,%s,%s,%s,%s%n",
+                        residentName,
+                        apartmentNumber,
+                        buildingName,
+                        dueDate,
+                        paymentDate,
+                        status,
+                        amount
+                );
+            }
+
+            writer.flush();
+        }
     }
 }

@@ -25,6 +25,7 @@ import LogHistory from './components/porteria/LogHistory'
 import { useAuth } from './contexts/AuthContext'
 import { useBuildingsContext } from "./contexts/BuildingContext";
 import PorterDashboard from './pages/porter/PorterDashboard'
+import PaymentReport from './pages/admin/PaymentReport'
 
 function App() {
   const { user } = useAuth();
@@ -50,6 +51,7 @@ function App() {
         <Route path="residents" element={<Residents />} />
         <Route path="apartment" element={<Apartments />} />
         <Route path="payment/all" element={<Payments />} />
+        <Route path="payment/report" element={<PaymentReport />} />
         <Route path="users" element={<UserManagement />} />
         <Route path="assign-plan" element={<AssignPlanPage />} />
         <Route path="planes" element={<PricingPlans />} />

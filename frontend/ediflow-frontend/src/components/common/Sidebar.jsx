@@ -91,6 +91,15 @@ const Sidebar = () => {
               </Link>
             </li>
           )}
+          {/* Reporte de Pagos CSV */}
+{isAdmin && (plan === "PROFESIONAL" || plan === "PREMIUM_PLUS" || plan === "ENTERPRISE") && (
+  <li>
+    <Link to="/admin/payment/report" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
+      <ClipboardList className="text-edigray" />
+      Reporte de Pagos
+    </Link>
+  </li>
+)}
         </ul>
       </div>
     </nav>

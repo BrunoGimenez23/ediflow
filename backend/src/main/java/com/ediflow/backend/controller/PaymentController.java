@@ -3,6 +3,7 @@ package com.ediflow.backend.controller;
 import com.ediflow.backend.Specifications.PaymentSpecifications;
 import com.ediflow.backend.dto.payment.PaymentByBuildingDTO;
 import com.ediflow.backend.dto.payment.PaymentDTO;
+import com.ediflow.backend.dto.payment.PaymentReportDTO;
 import com.ediflow.backend.entity.Payment;
 import com.ediflow.backend.entity.Resident;
 import com.ediflow.backend.entity.User;
@@ -12,6 +13,7 @@ import com.ediflow.backend.repository.IPaymentRepository;
 import com.ediflow.backend.service.IAdminService;
 import com.ediflow.backend.service.IPaymentService;
 import com.ediflow.backend.service.IUserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,6 +28,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -137,4 +141,27 @@ public class PaymentController {
         return ResponseEntity.ok(payments);
     }
 
+    @GetMapping("/report")
+    public ResponseEntity<List<PaymentReportDTO>> getReport(
+            @RequestParam Long buildingId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
+    ) {
+        return ResponseEntity.ok(paymentService.getPaymentReport(buildingId, fromDate, toDate));
+    }
+
+
+    @GetMapping("/report/export/csv")
+    public void exportReportCSV(
+            HttpServletResponse response,
+            @RequestParam Long buildingId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
+    ) throws IOException {
+        paymentService.exportReportToCSV(response, buildingId, fromDate, toDate);
+    }
 }
+
+
+
+

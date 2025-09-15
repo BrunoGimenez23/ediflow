@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Repository
@@ -34,6 +35,15 @@ public interface IPaymentRepository extends JpaRepository<Payment, Long>, JpaSpe
 
     List<Payment> findByResident_User_AdminAccount_Id(Long adminAccountId);
 
+    @Query("SELECT p FROM Payment p " +
+            "WHERE p.resident.apartment.building.id = :buildingId " +
+            "AND (:fromDate IS NULL OR p.dueDate >= :fromDate) " +
+            "AND (:toDate IS NULL OR p.dueDate <= :toDate)")
+    List<Payment> findByBuildingAndDateRange(
+            @Param("buildingId") Long buildingId,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate
+    );
 
 
 }
