@@ -82,8 +82,8 @@ const Sidebar = () => {
             </li>
           )}
 
-          {/* Solo ADMIN ve Historial */}
-          {isAdmin && (
+          {/* Solo ADMIN con plan PREMIUM_PLUS ve Historial Portero */}
+          {isAdmin && plan === "PREMIUM_PLUS" && (
             <li>
               <Link to="/admin/historial" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
                 <ClipboardList className="text-edigray" />
@@ -91,15 +91,16 @@ const Sidebar = () => {
               </Link>
             </li>
           )}
-          {/* Reporte de Pagos CSV */}
-{isAdmin && (plan === "PROFESIONAL" || plan === "PREMIUM_PLUS" || plan === "ENTERPRISE") && (
-  <li>
-    <Link to="/admin/payment/report" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
-      <ClipboardCheck className="text-edigray" />
-      Reporte de Pagos
-    </Link>
-  </li>
-)}
+
+          {/* Reporte de Pagos CSV (solo PREMIUM_PLUS) */}
+          {isAdmin && plan === "PREMIUM_PLUS" && (
+            <li>
+              <Link to="/admin/payment/report" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
+                <ClipboardCheck className="text-edigray" />
+                Reporte de Pagos
+              </Link>
+            </li>
+          )}
         </ul>
       </div>
     </nav>
