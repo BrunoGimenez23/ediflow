@@ -1,4 +1,4 @@
-import { Building2, Cloud, CreditCard } from 'lucide-react';
+import { Building2, Cloud, CreditCard, ShieldCheck, AlertCircle } from 'lucide-react';
 import React from 'react';
 
 const features = [
@@ -11,6 +11,16 @@ const features = [
     icon: <CreditCard className="w-12 h-12 text-ediblue" />,
     title: "Cobros organizados y sin olvidos",
     desc: "Emití expensas, registrá pagos y seguí vencimientos fácilmente. Tus cuentas siempre al día, sin confusiones.",
+  },
+  {
+    icon: <ShieldCheck className="w-12 h-12 text-ediblue" />,
+    title: "Portería digital",
+    desc: "Centralizá la comunicación con la portería: registro de visitas, envíos y notificaciones en tiempo real, con todo documentado.",
+  },
+  {
+    icon: <AlertCircle className="w-12 h-12 text-ediblue" />,
+    title: "Gestión de morosidad",
+    desc: "Detectá residentes con pagos atrasados, visualizá estadísticas claras y tomá decisiones más rápido.",
   },
   {
     icon: <Cloud className="w-12 h-12 text-ediblue" />,

@@ -1,12 +1,11 @@
-import React from 'react';
-import { useParams, useLocation, Link } from 'react-router-dom';
-import { FaWhatsapp } from 'react-icons/fa';
+import React from "react";
+import { useParams, useLocation, Link } from "react-router-dom";
+import { FaWhatsapp } from "react-icons/fa";
 
 const planInfo = {
   esencial: {
     title: "Plan Esencial",
     pricePerUnit: 40,
-    // minimumMonthly eliminado para que no haya mínimo en este plan
     maxUnits: 50,
     features: [
       "Gestión de edificios, apartamentos y residentes",
@@ -43,31 +42,23 @@ const calculatePrice = (plan, units, billing) => {
   const safeUnits = Math.max(1, Math.min(Number(units), plan.maxUnits || Infinity));
   let price;
   if (plan.maxUnits === Infinity) {
-    price = plan.minimumMonthly * (billing === 'monthly' ? 1 : 12);
-    if (billing === 'yearly') price *= 0.85;
+    price = plan.minimumMonthly * (billing === "monthly" ? 1 : 12);
+    if (billing === "yearly") price = Math.round(price * 0.85);
   } else {
-    price = plan.pricePerUnit * safeUnits * (billing === 'monthly' ? 1 : 12);
-    if (billing === 'yearly') price *= 0.85;
-
-    // Si minimumMonthly no está definido, no se aplica mínimo
-    const minPrice = plan.minimumMonthly ? plan.minimumMonthly * (billing === 'monthly' ? 1 : 12) : 0;
+    price = plan.pricePerUnit * safeUnits * (billing === "monthly" ? 1 : 12);
+    if (billing === "yearly") price = Math.round(price * 0.85);
+    const minPrice = plan.minimumMonthly ? plan.minimumMonthly * (billing === "monthly" ? 1 : 12) : 0;
     if (price < minPrice) price = minPrice;
   }
   return Math.round(price);
 };
 
 const PlanConfirmationPage = () => {
-  const { planName } = useParams();
+  const { planName: paramPlanName } = useParams();
   const location = useLocation();
 
-  const normalizedPlanName = planName.toLowerCase().replace(/-/g, ' ').trim();
-  const plan = planInfo[normalizedPlanName];
-
-  const query = new URLSearchParams(location.search);
-  const billing = query.get('billing') === 'yearly' ? 'yearly' : 'monthly';
-
-  let units = parseInt(query.get('units'));
-  if (isNaN(units) || units < 1) units = 1;
+  const planName = (paramPlanName || "").toLowerCase().replace(/-/g, " ").trim();
+  const plan = planInfo[planName];
 
   if (!plan) {
     return (
@@ -81,16 +72,21 @@ const PlanConfirmationPage = () => {
     );
   }
 
-  // Asegurar que units no supere el max permitido
+  const query = new URLSearchParams(location.search);
+  const billingParam = query.get("billing") || "monthly";
+  const billing = billingParam.toLowerCase() === "yearly" ? "yearly" : "monthly";
+
+  let units = parseInt(query.get("units"));
+  if (isNaN(units) || units < 1) units = 1;
   units = Math.min(units, plan.maxUnits || units);
 
-  // Recalcular el precio correctamente según unidades y facturación
   const price = calculatePrice(plan, units, billing);
-  const priceText = billing === 'monthly' ? `${price} UYU/mes` : `${price} UYU/año`;
+  const priceText = billing === "monthly" ? `${price} UYU/mes` : `${price} UYU/año`;
+  const billingText = billing === "monthly" ? "mensual" : "anual";
 
-  const phoneNumber = '59898235535';
+  const phoneNumber = "59898235535";
   const message = encodeURIComponent(
-    `Hola, hice el pago del ${plan.title} (${billing === 'monthly' ? 'mensual' : 'anual'}), gestionando ${units} unidad${units > 1 ? 'es' : ''}. Adjunto comprobante. ¿Podrían validarlo? Gracias.`
+    `Hola, hice el pago del ${plan.title} (${billingText}), gestionando ${units} unidad${units > 1 ? "es" : ""}. Adjunto comprobante. ¿Podrían validarlo? Gracias.`
   );
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
 
@@ -124,8 +120,9 @@ const PlanConfirmationPage = () => {
           <p>Banco: BROU</p>
           <p>Cuenta: CA 001472266-00002</p>
           <p>A nombre de: Bruno Gimenez</p>
+
           <p className="mt-2">
-            📩 Enviá el comprobante a <strong>Brunogimenez23@hotmail.com</strong> o por WhatsApp al{' '}
+            📩 Enviá el comprobante a <strong>Brunogimenez23@hotmail.com</strong> o por WhatsApp al{" "}
             <strong>+598 98 235535</strong>
           </p>
 
@@ -147,7 +144,7 @@ const PlanConfirmationPage = () => {
 
         <div className="flex justify-center">
           <Link
-            to="/planes"
+            to="/admin"
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
           >
             Volver a planes

@@ -19,6 +19,7 @@ import AdminReservationsPanel from './components/admin/AdminReservationsPanel'
 import UserManagement from './components/admin/UserManagement'
 import AssignPlanPage from './pages/admin/AssignPlanPage'
 import PricingPlans from './components/landing/PricingPlans'
+import UpgradePlansContainer from './components/common/UpgradePlansContainer'
 import PlanConfirmationPage from './pages/admin/PlanConfirmationPage'
 import MyLogEntries from './components/porteria/MyLogEntries'
 import LogHistory from './components/porteria/LogHistory'
@@ -56,6 +57,9 @@ function App() {
         <Route path="assign-plan" element={<AssignPlanPage />} />
         <Route path="planes" element={<PricingPlans />} />
 
+        {/* Ruta dedicada para UpgradePlansContainer */}
+        <Route path="upgrade-plan" element={<UpgradePlansContainer />} />
+
         {/* historial relativo al admin */}
         {user?.role === "ADMIN" && selectedBuilding && (
           <Route
@@ -65,7 +69,8 @@ function App() {
         )}
       </Route>
 
-      <Route path="planes/confirmacion/:planName" element={<PlanConfirmationPage />} />
+      {/* PlanConfirmationPage usando params */}
+      <Route path="/admin/plan-confirmation/:planName" element={<PlanConfirmationPage />} />
 
       {/* Rutas de residente */}
       <Route path='/resident' element={<ResidentDashboard />} />
