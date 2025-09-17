@@ -19,24 +19,46 @@ const TicketDashboard = () => {
   const [loadingTickets, setLoadingTickets] = useState(false);
   const [filter, setFilter] = useState("ALL");
 
-  // 👇 Usamos el contexto de edificios
-  const { buildings, selectedBuilding, setSelectedBuilding, loading: loadingBuildings, error: errorBuildings } =
-    useBuildingsContext();
+  const {
+    buildings,
+    selectedBuilding,
+    setSelectedBuilding,
+    loading: loadingBuildings,
+    error: errorBuildings,
+  } = useBuildingsContext();
+
+  // Por defecto seleccionamos el primer edificio si es admin y no hay seleccionado
+  useEffect(() => {
+    if (user?.role === "ADMIN" && buildings.length > 0 && !selectedBuilding) {
+      setSelectedBuilding(buildings[0]);
+    }
+  }, [buildings, user, selectedBuilding, setSelectedBuilding]);
 
   const fetchTickets = async () => {
     if (!user) return;
-    const buildingIdToFetch = user.role === "ADMIN"
-  ? selectedBuilding?.id
-  : user.buildingId || (selectedBuilding?.id); // fallback por si acaso
+    if (user.role === "ADMIN" && !selectedBuilding) return; // espera a que el admin seleccione un edificio
+
+    const buildingIdToFetch =
+      user.role === "ADMIN" ? selectedBuilding.id : user.buildingId || selectedBuilding?.id;
 
     if (!buildingIdToFetch) return;
 
     setLoadingTickets(true);
     try {
       const data = await getTicketsByBuilding(buildingIdToFetch);
-      const filtered = user.role === "RESIDENT"
-  ? data.filter(t => t.type === "NOTICE" || t.createdById === user.id)
-  : data;
+
+      let filtered;
+      if (user.role === "RESIDENT") {
+        // Resident ve solo sus tickets y avisos
+        filtered = data.filter(t => t.type === "NOTICE" || t.createdById === user.id);
+      } else if (user.role === "ADMIN") {
+  // Admin ve todos los avisos y todos los reclamos de residentes
+  filtered = data.filter(
+    (t) => t.type === "NOTICE" || t.type === "COMPLAINT"
+  );
+} else {
+        filtered = data;
+      }
 
       setTickets(filtered);
     } catch (err) {
@@ -47,8 +69,8 @@ const TicketDashboard = () => {
   };
 
   useEffect(() => {
-    fetchTickets();
-  }, [selectedBuilding, user]);
+  fetchTickets();
+}, [selectedBuilding?.id, user]);
 
   const handleCreate = async () => {
     if (!title || !description) return;
@@ -89,9 +111,12 @@ const TicketDashboard = () => {
 
   const priorityLabel = { LOW: "Baja", MEDIUM: "Media", HIGH: "Alta" };
   const statusLabel = { PENDING: "Pendiente", IN_PROGRESS: "En progreso", RESOLVED: "Resuelto" };
-  const priorityColor = (p) => (p === "HIGH" ? "bg-red-200" : p === "MEDIUM" ? "bg-yellow-200" : "bg-green-200");
-  const statusColor = (s) => (s === "PENDING" ? "bg-gray-200" : s === "IN_PROGRESS" ? "bg-blue-200" : "bg-green-200");
-  const typeTagColor = (t) => (t === "NOTICE" ? "bg-purple-200 text-purple-800" : "bg-red-200 text-red-800");
+  const priorityColor = (p) =>
+    p === "HIGH" ? "bg-red-200" : p === "MEDIUM" ? "bg-yellow-200" : "bg-green-200";
+  const statusColor = (s) =>
+    s === "PENDING" ? "bg-gray-200" : s === "IN_PROGRESS" ? "bg-blue-200" : "bg-green-200";
+  const typeTagColor = (t) =>
+    t === "NOTICE" ? "bg-purple-200 text-purple-800" : "bg-red-200 text-red-800";
 
   const filteredTickets =
     filter === "ALL"
@@ -125,6 +150,26 @@ const TicketDashboard = () => {
         </div>
       </div>
 
+      {user.role === "ADMIN" && (
+        <div className="mb-4">
+          <select
+            value={selectedBuilding?.id || ""}
+            onChange={(e) => {
+              const b = buildings.find(b => b.id === Number(e.target.value));
+              setSelectedBuilding(b);
+            }}
+            className="border p-2 rounded w-full"
+          >
+            <option value="" disabled>Seleccione un edificio</option>
+            {buildings.map(b => (
+              <option key={b.id} value={b.id}>
+                {b.name} - {b.address}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {showForm && (
         <div className="mb-6 p-4 bg-gray-50 rounded-xl shadow-inner">
           <input
@@ -152,33 +197,14 @@ const TicketDashboard = () => {
           </select>
 
           {user.role === "ADMIN" && (
-            <>
-              {/* Select de edificios desde contexto */}
-              <select
-                value={selectedBuilding?.id || ""}
-                onChange={(e) => {
-                  const b = buildings.find(b => b.id === Number(e.target.value));
-                  setSelectedBuilding(b);
-                }}
-                className="border p-2 mb-2 rounded w-full"
-              >
-                <option value="" disabled>Seleccione un edificio</option>
-                {buildings.map(b => (
-                  <option key={b.id} value={b.id}>
-                    {b.name} - {b.address}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-                className="border p-2 mb-2 rounded w-full"
-              >
-                <option value="NOTICE">Aviso</option>
-                <option value="COMPLAINT">Reclamo</option>
-              </select>
-            </>
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="border p-2 mb-2 rounded w-full"
+            >
+              <option value="NOTICE">Aviso</option>
+              <option value="COMPLAINT">Reclamo</option>
+            </select>
           )}
 
           <button
