@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 const TicketDashboard = () => {
   const { user } = useAuth();
-  const { createTicket, getTicketsByBuilding, updateTicketStatus } = useTicketAPI();
+  const { createTicket, getTicketsByBuilding, updateTicketStatus, deleteTicket } = useTicketAPI();
   const navigate = useNavigate();
 
   const [tickets, setTickets] = useState([]);
@@ -24,7 +24,6 @@ const TicketDashboard = () => {
     selectedBuilding,
     setSelectedBuilding,
     loading: loadingBuildings,
-    error: errorBuildings,
   } = useBuildingsContext();
 
   // Por defecto seleccionamos el primer edificio si es admin y no hay seleccionado
@@ -36,7 +35,7 @@ const TicketDashboard = () => {
 
   const fetchTickets = async () => {
     if (!user) return;
-    if (user.role === "ADMIN" && !selectedBuilding) return; // espera a que el admin seleccione un edificio
+    if (user.role === "ADMIN" && !selectedBuilding) return;
 
     const buildingIdToFetch =
       user.role === "ADMIN" ? selectedBuilding.id : user.buildingId || selectedBuilding?.id;
@@ -49,14 +48,12 @@ const TicketDashboard = () => {
 
       let filtered;
       if (user.role === "RESIDENT") {
-        // Resident ve solo sus tickets y avisos
         filtered = data.filter(t => t.type === "NOTICE" || t.createdById === user.id);
       } else if (user.role === "ADMIN") {
-  // Admin ve todos los avisos y todos los reclamos de residentes
-  filtered = data.filter(
-    (t) => t.type === "NOTICE" || t.type === "COMPLAINT"
-  );
-} else {
+        filtered = data.filter(
+          t => t.type === "NOTICE" || t.type === "COMPLAINT"
+        );
+      } else {
         filtered = data;
       }
 
@@ -69,8 +66,8 @@ const TicketDashboard = () => {
   };
 
   useEffect(() => {
-  fetchTickets();
-}, [selectedBuilding?.id, user]);
+    fetchTickets();
+  }, [selectedBuilding?.id, user]);
 
   const handleCreate = async () => {
     if (!title || !description) return;
@@ -106,6 +103,16 @@ const TicketDashboard = () => {
       );
     } catch (err) {
       console.error("Error al actualizar estado", err);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteTicket(id);
+      // recarga los tickets después de eliminar para mantener consistencia
+      fetchTickets();
+    } catch (err) {
+      console.error("Error al eliminar ticket", err);
     }
   };
 
@@ -252,7 +259,7 @@ const TicketDashboard = () => {
                 <th className="border p-2">Tipo</th>
                 <th className="border p-2">Prioridad</th>
                 <th className="border p-2">Estado</th>
-                {user.role === "ADMIN" && <th className="border p-2">Acciones</th>}
+                <th className="border p-2">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -271,22 +278,38 @@ const TicketDashboard = () => {
                   <td className={`border p-2 font-semibold ${statusColor(t.status)}`}>
                     {statusLabel[t.status]}
                   </td>
-                  {user.role === "ADMIN" && (
-                    <td className="border p-2 space-x-2">
+                  <td className="border p-2 space-x-2">
+                    {user.role === "ADMIN" && (
+                      <>
+                        <button
+                          onClick={() => handleStatusChange(t.id, "IN_PROGRESS")}
+                          className="bg-blue-500 px-2 py-1 rounded text-white"
+                        >
+                          En progreso
+                        </button>
+                        <button
+                          onClick={() => handleStatusChange(t.id, "RESOLVED")}
+                          className="bg-green-600 px-2 py-1 rounded text-white"
+                        >
+                          Resuelto
+                        </button>
+                        <button
+                          onClick={() => handleDelete(t.id)}
+                          className="bg-red-500 px-2 py-1 rounded text-white"
+                        >
+                          Eliminar
+                        </button>
+                      </>
+                    )}
+                    {user.role === "RESIDENT" && t.type === "COMPLAINT" && t.createdById === user.id && (
                       <button
-                        onClick={() => handleStatusChange(t.id, "IN_PROGRESS")}
-                        className="bg-blue-500 px-2 py-1 rounded text-white"
+                        onClick={() => handleDelete(t.id)}
+                        className="bg-red-500 px-2 py-1 rounded text-white"
                       >
-                        En progreso
+                        Eliminar
                       </button>
-                      <button
-                        onClick={() => handleStatusChange(t.id, "RESOLVED")}
-                        className="bg-green-600 px-2 py-1 rounded text-white"
-                      >
-                        Resuelto
-                      </button>
-                    </td>
-                  )}
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
