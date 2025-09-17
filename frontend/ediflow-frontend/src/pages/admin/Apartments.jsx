@@ -42,10 +42,9 @@ const Apartments = () => {
   const [resUsername, setResUsername] = useState("");
   const [resPassword, setResPassword] = useState("");
   const [resCI, setResCI] = useState("");
+  const [resPhone, setResPhone] = useState(""); // <-- NUEVO
   const [assignError, setAssignError] = useState("");
   const [errors, setErrors] = useState({});
-
-  
   const [createError, setCreateError] = useState("");
 
   const formRef = useRef(null);
@@ -57,6 +56,7 @@ const Apartments = () => {
       setResUsername("");
       setResPassword("");
       setResCI("");
+      setResPhone(""); // <-- limpiar teléfono
       setAssignError("");
       setErrors({});
       setTimeout(() => {
@@ -115,34 +115,34 @@ const Apartments = () => {
   };
 
   const handleCreateApartment = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (isTrialBlocked(user, trialExpired)) {
-    alert("Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar.");
-    return;
-  }
-  if (!canEdit(user)) return;
+    if (isTrialBlocked(user, trialExpired)) {
+      alert("Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar.");
+      return;
+    }
+    if (!canEdit(user)) return;
 
-  const payload = {
-    number: parseInt(number, 10),
-    floor: parseInt(floor, 10),
-    buildingId: buildingId,
+    const payload = {
+      number: parseInt(number, 10),
+      floor: parseInt(floor, 10),
+      buildingId: buildingId,
+    };
+
+    setCreateError("");
+
+    const response = await post("/apartment/create", payload);
+
+    if (response.error) {
+      setCreateError(response.error);
+    } else {
+      setCreatingApartment(false);
+      fetchApartments(page, filter);
+      setNumber("");
+      setFloor("");
+      setBuildingId("");
+    }
   };
-
-  setCreateError("");  
-
-  const response = await post("/apartment/create", payload);
-
-  if (response.error) {
-    setCreateError(response.error);
-  } else {
-    setCreatingApartment(false);
-    fetchApartments(page, filter);
-    setNumber("");
-    setFloor("");
-    setBuildingId("");
-  }
-};
 
   const handleDeleteApartment = async (id) => {
     if (!window.confirm("¿Estás seguro que quieres eliminar este apartamento?")) return;
@@ -177,6 +177,7 @@ const Apartments = () => {
       password: resPassword,
       fullName: resFullName,
       ci: parseInt(resCI, 10),
+      phone: resPhone, // <-- NUEVO
     };
 
     setAssignError("");
@@ -197,6 +198,8 @@ const Apartments = () => {
         setErrors((prev) => ({ ...prev, resUsername: msg }));
       } else if (msg.toLowerCase().includes("ci")) {
         setErrors((prev) => ({ ...prev, resCI: msg }));
+      } else if (msg.toLowerCase().includes("teléfono") || msg.toLowerCase().includes("phone")) {
+        setErrors((prev) => ({ ...prev, resPhone: msg }));
       } else {
         setAssignError(msg);
       }
@@ -212,7 +215,6 @@ const Apartments = () => {
     setResFormVisibleId(null);
   };
 
-  // Paginación
   const goToPrevPage = () => {
     if (page > 0) setPage(page - 1);
   };
@@ -273,7 +275,6 @@ const Apartments = () => {
           Crear apartamento
         </button>
       </div>
-      
 
       {/* FORMULARIO CREAR APARTAMENTO */}
       {creatingApartment && (
@@ -283,7 +284,6 @@ const Apartments = () => {
         >
           <h2 className="text-xl font-semibold mb-4 text-center">Crear apartamento</h2>
 
-          {/* Mostrar error si existe */}
           {createError && (
             <p className="text-red-600 font-semibold mb-4 text-center">{createError}</p>
           )}
@@ -352,6 +352,7 @@ const Apartments = () => {
         </div>
       )}
 
+      {/* TABLA DE APARTAMENTOS */}
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white border border-gray-200 rounded-md">
           <thead className="bg-ediblue text-white">
@@ -513,9 +514,7 @@ const Apartments = () => {
                             className="w-full border border-gray-300 p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ediblue"
                           />
 
-                          <label className="block mb-1 font-medium text-gray-700">
-                            Edificio
-                          </label>
+                          <label className="block mb-1 font-medium text-gray-700">Edificio</label>
                           <select
                             value={buildingId}
                             onChange={(e) => setBuildingId(e.target.value)}
@@ -531,25 +530,22 @@ const Apartments = () => {
                             ))}
                           </select>
 
-                          <div className="flex justify-between items-center mt-4">
+                          <div className="flex justify-between mt-4">
                             <button
                               type="submit"
                               className={`px-5 py-2 rounded-md text-white font-semibold ${
                                 isTrialBlocked(user, trialExpired) || !canEdit(user)
                                   ? "bg-gray-400 cursor-not-allowed"
-                                  : loadingPut
-                                  ? "bg-ediblueLight cursor-wait"
                                   : "bg-ediblue hover:bg-ediblueLight"
                               } transition`}
-                              disabled={loadingPut || isTrialBlocked(user, trialExpired) || !canEdit(user)}
+                              disabled={isTrialBlocked(user, trialExpired) || !canEdit(user)}
                             >
                               Guardar
                             </button>
                             <button
                               type="button"
-                              className="text-gray-600 hover:underline focus:outline-none"
                               onClick={() => setEditingApartment(null)}
-                              disabled={isTrialBlocked(user, trialExpired)}
+                              className="text-gray-600 hover:underline focus:outline-none"
                             >
                               Cancelar
                             </button>
@@ -559,17 +555,20 @@ const Apartments = () => {
                     </tr>
                   )}
 
-                  {/* FORMULARIO ASIGNAR RESIDENTE justo debajo de la fila */}
+                  {/* FORMULARIO ASIGNAR/REASIGNAR RESIDENTE */}
                   {resFormVisibleId === apt.id && (
                     <tr>
-                      <td colSpan={6} ref={formRef} className="bg-green-50 p-6">
+                      <td colSpan={6} ref={formRef} className="bg-gray-50 p-6">
                         <form
                           onSubmit={(e) => handleAssignResident(e, apt.id)}
                           className="space-y-4 max-w-md mx-auto"
                         >
                           {assignError && (
-                            <p className="text-red-600 font-semibold mb-4 text-center">{assignError}</p>
+                            <p className="text-red-600 font-semibold mb-4 text-center">
+                              {assignError}
+                            </p>
                           )}
+
                           <div>
                             <label className="block mb-1 font-medium text-gray-700">
                               Nombre completo
@@ -580,7 +579,9 @@ const Apartments = () => {
                               onChange={(e) => setResFullName(e.target.value)}
                               disabled={isTrialBlocked(user, trialExpired)}
                               className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
-                                errors.resFullName ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-ediblue"
+                                errors.resFullName
+                                  ? "border-red-500 focus:ring-red-500"
+                                  : "border-gray-300 focus:ring-ediblue"
                               }`}
                             />
                             {errors.resFullName && (
@@ -589,16 +590,16 @@ const Apartments = () => {
                           </div>
 
                           <div>
-                            <label className="block mb-1 font-medium text-gray-700">
-                              Email
-                            </label>
+                            <label className="block mb-1 font-medium text-gray-700">Email</label>
                             <input
                               type="email"
                               value={resEmail}
                               onChange={(e) => setResEmail(e.target.value)}
                               disabled={isTrialBlocked(user, trialExpired)}
                               className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
-                                errors.resEmail ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-ediblue"
+                                errors.resEmail
+                                  ? "border-red-500 focus:ring-red-500"
+                                  : "border-gray-300 focus:ring-ediblue"
                               }`}
                             />
                             {errors.resEmail && (
@@ -616,7 +617,9 @@ const Apartments = () => {
                               onChange={(e) => setResUsername(e.target.value)}
                               disabled={isTrialBlocked(user, trialExpired)}
                               className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
-                                errors.resUsername ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-ediblue"
+                                errors.resUsername
+                                  ? "border-red-500 focus:ring-red-500"
+                                  : "border-gray-300 focus:ring-ediblue"
                               }`}
                             />
                             {errors.resUsername && (
@@ -634,7 +637,9 @@ const Apartments = () => {
                               onChange={(e) => setResPassword(e.target.value)}
                               disabled={isTrialBlocked(user, trialExpired)}
                               className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
-                                errors.resPassword ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-ediblue"
+                                errors.resPassword
+                                  ? "border-red-500 focus:ring-red-500"
+                                  : "border-gray-300 focus:ring-ediblue"
                               }`}
                             />
                             {errors.resPassword && (
@@ -643,16 +648,16 @@ const Apartments = () => {
                           </div>
 
                           <div>
-                            <label className="block mb-1 font-medium text-gray-700">
-                              Cédula de Identidad (CI)
-                            </label>
+                            <label className="block mb-1 font-medium text-gray-700">CI</label>
                             <input
                               type="number"
                               value={resCI}
                               onChange={(e) => setResCI(e.target.value)}
                               disabled={isTrialBlocked(user, trialExpired)}
                               className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
-                                errors.resCI ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-ediblue"
+                                errors.resCI
+                                  ? "border-red-500 focus:ring-red-500"
+                                  : "border-gray-300 focus:ring-ediblue"
                               }`}
                             />
                             {errors.resCI && (
@@ -660,17 +665,36 @@ const Apartments = () => {
                             )}
                           </div>
 
-                          <div className="flex justify-between items-center mt-4">
+                          {/* NUEVO INPUT TELÉFONO */}
+                          <div>
+                            <label className="block mb-1 font-medium text-gray-700">Teléfono</label>
+                            <input
+                              type="text"
+                              value={resPhone}
+                              onChange={(e) => setResPhone(e.target.value)}
+                              disabled={isTrialBlocked(user, trialExpired)}
+                              className={`w-full border p-2 rounded-md focus:outline-none focus:ring-2 ${
+                                errors.resPhone
+                                  ? "border-red-500 focus:ring-red-500"
+                                  : "border-gray-300 focus:ring-ediblue"
+                              }`}
+                            />
+                            {errors.resPhone && (
+                              <p className="text-red-600 text-sm mt-1">{errors.resPhone}</p>
+                            )}
+                          </div>
+
+                          <div className="flex justify-between mt-4">
                             <button
                               type="submit"
-                              disabled={isTrialBlocked(user, trialExpired)}
                               className={`px-5 py-2 rounded-md text-white font-semibold ${
                                 isTrialBlocked(user, trialExpired)
                                   ? "bg-gray-400 cursor-not-allowed"
                                   : "bg-green-600 hover:bg-green-700"
                               } transition`}
+                              disabled={isTrialBlocked(user, trialExpired)}
                             >
-                              Asignar
+                              Guardar
                             </button>
                             <button
                               type="button"
@@ -692,29 +716,18 @@ const Apartments = () => {
       </div>
 
       {/* PAGINACIÓN */}
-      <div className="flex justify-center items-center mt-6 space-x-4">
+      <div className="flex justify-between mt-4 max-w-md mx-auto">
         <button
           onClick={goToPrevPage}
-          disabled={page === 0}
-          className={`px-4 py-2 rounded-md font-semibold ${
-            page === 0
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-ediblue text-white hover:bg-ediblueLight"
-          }`}
+          disabled={page <= 0}
+          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Anterior
         </button>
-        <span>
-          Página {page + 1} de {totalPages}
-        </span>
         <button
           onClick={goToNextPage}
           disabled={page + 1 >= totalPages}
-          className={`px-4 py-2 rounded-md font-semibold ${
-            page + 1 >= totalPages
-              ? "bg-gray-300 cursor-not-allowed"
-              : "bg-ediblue text-white hover:bg-ediblueLight"
-          }`}
+          className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Siguiente
         </button>

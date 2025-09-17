@@ -105,6 +105,7 @@ public class ResidentController {
         response.setEmail(resident.getUser().getEmail());
         response.setApartmentId(resident.getApartment().getId());
         response.setCi(resident.getCi());
+        response.setPhone(resident.getPhone());
 
         return ResponseEntity.ok(response);
     }

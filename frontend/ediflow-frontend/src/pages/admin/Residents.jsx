@@ -19,6 +19,7 @@ const Residents = () => {
     email: "",
     ci: "",
     fullName: "",
+    phone: "", // <-- agregamos teléfono
   });
 
   const [currentPage, setCurrentPage] = useState(0);
@@ -39,6 +40,7 @@ const Residents = () => {
       });
 
       if (res.data && res.data.content) {
+        console.log("🟢 Datos crudos del backend:", res.data.content); // 🔹 log backend
         setData(res.data);
         setCurrentPage(res.data.number !== undefined ? res.data.number : page);
       } else {
@@ -86,6 +88,7 @@ const Residents = () => {
       email: resident.userDTO?.email || "",
       ci: resident.ci || "",
       fullName: resident.userDTO?.fullName || "",
+      phone: resident.phone || "", // <-- asignamos teléfono desde Resident
     });
   };
 
@@ -95,6 +98,7 @@ const Residents = () => {
       email: "",
       ci: "",
       fullName: "",
+      phone: "", // <-- limpiamos teléfono
     });
   };
 
@@ -105,6 +109,7 @@ const Residents = () => {
     try {
       const payload = {
         ci: formData.ci,
+        phone: formData.phone, // <-- actualizamos Resident.phone
         userDTO: {
           id: editingResident.userDTO?.id,
           email: formData.email,
@@ -127,26 +132,24 @@ const Residents = () => {
   };
 
   const handleDelete = async (id) => {
-  if (trialExpired || isSupport) return;
-  if (!window.confirm("¿Estás seguro que querés eliminar este residente?")) return;
+    if (trialExpired || isSupport) return;
+    if (!window.confirm("¿Estás seguro que querés eliminar este residente?")) return;
 
-  try {
-    await axios.delete(`${import.meta.env.VITE_API_URL}/residents/delete/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/residents/delete/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (data.content.length === 1 && currentPage > 0) {
-      fetchData(currentPage - 1);
-    } else {
-      fetchData(currentPage);
+      if (data.content.length === 1 && currentPage > 0) {
+        fetchData(currentPage - 1);
+      } else {
+        fetchData(currentPage);
+      }
+    } catch (err) {
+      const message = err?.response?.data || "Error al eliminar residente";
+      alert(message);
     }
-
-  } catch (err) {
-    
-    const message = err?.response?.data || "Error al eliminar residente";
-    alert(message); 
-  }
-};
+  };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 0 && newPage < (data.totalPages || 1)) {
@@ -189,6 +192,7 @@ const Residents = () => {
             <th className="px-4 py-2 text-left">Email</th>
             <th className="px-4 py-2 text-left">Nombre completo</th>
             <th className="px-4 py-2 text-left">CI</th>
+            <th className="px-4 py-2 text-left">Teléfono</th>
             <th className="px-4 py-2 text-left">Piso</th>
             <th className="px-4 py-2 text-left">Apartamento</th>
             <th className="px-4 py-2 text-left">Edificio</th>
@@ -196,13 +200,14 @@ const Residents = () => {
           </tr>
         </thead>
         <tbody>
-          {data.content.map((resident) => (
-            <React.Fragment key={resident.id}>
-              <tr className="border-t hover:bg-gray-50">
+          {data.content.map((resident) => {
+            const rows = [
+              <tr key={`main-${resident.id}`} className="border-t hover:bg-gray-50">
                 <td className="px-4 py-2">{resident.id}</td>
                 <td className="px-4 py-2">{resident.userDTO?.email || "Sin email"}</td>
                 <td className="px-4 py-2">{resident.userDTO?.fullName || "-"}</td>
                 <td className="px-4 py-2">{resident.ci}</td>
+                <td className="px-4 py-2">{resident.phone || "-"}</td>
                 <td className="px-4 py-2">{resident.apartmentDTO?.floor ?? "-"}</td>
                 <td className="px-4 py-2">{resident.apartmentDTO?.number ?? "-"}</td>
                 <td className="px-4 py-2">{resident.buildingDTO?.name || "Sin edificio"}</td>
@@ -211,18 +216,14 @@ const Residents = () => {
                     <>
                       <button
                         onClick={() => handleEditClick(resident)}
-                        className={`hover:underline ${
-                          trialExpired ? "text-gray-400 cursor-not-allowed" : "text-blue-600"
-                        }`}
+                        className={`hover:underline ${trialExpired ? "text-gray-400 cursor-not-allowed" : "text-blue-600"}`}
                         disabled={trialExpired}
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => handleDelete(resident.id)}
-                        className={`hover:underline ${
-                          trialExpired ? "text-gray-400 cursor-not-allowed" : "text-red-600"
-                        }`}
+                        className={`hover:underline ${trialExpired ? "text-gray-400 cursor-not-allowed" : "text-red-600"}`}
                         disabled={trialExpired}
                       >
                         Eliminar
@@ -231,9 +232,12 @@ const Residents = () => {
                   )}
                 </td>
               </tr>
-              {editingResident?.id === resident.id && !isSupport && (
-                <tr>
-                  <td colSpan={8}>
+            ];
+
+            if (editingResident?.id === resident.id && !isSupport) {
+              rows.push(
+                <tr key={`edit-${resident.id}`}>
+                  <td colSpan={9}>
                     <form onSubmit={handleSave} className="mb-6 p-4 border rounded bg-gray-100">
                       <h3 className="mb-4 font-semibold">Editar Residente</h3>
                       <input
@@ -263,14 +267,18 @@ const Residents = () => {
                         className="mb-2 p-2 w-full border rounded"
                         disabled={trialExpired}
                       />
+                      <input
+                        name="phone"
+                        placeholder="Teléfono"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="mb-2 p-2 w-full border rounded"
+                        disabled={trialExpired}
+                      />
                       <div className="flex gap-4">
                         <button
                           type="submit"
-                          className={`px-4 py-2 rounded text-white ${
-                            trialExpired
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : "bg-green-500 hover:bg-green-600"
-                          }`}
+                          className={`px-4 py-2 rounded text-white ${trialExpired ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600"}`}
                           disabled={trialExpired}
                         >
                           Guardar
@@ -287,9 +295,11 @@ const Residents = () => {
                     </form>
                   </td>
                 </tr>
-              )}
-            </React.Fragment>
-          ))}
+              );
+            }
+
+            return rows;
+          })}
         </tbody>
       </table>
 

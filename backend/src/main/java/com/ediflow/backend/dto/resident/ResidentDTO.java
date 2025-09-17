@@ -26,6 +26,7 @@ public class ResidentDTO {
     private ApartmentDTO apartmentDTO;
     private BuildingDTO buildingDTO;
     private List<PaymentDTO> payment;
+    private String phone;
 
 
 }

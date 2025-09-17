@@ -9,4 +9,5 @@ public class ResidentResponseDTO {
     private String email;
     private Long apartmentId;
     private Long ci;
+    private String phone;
 }

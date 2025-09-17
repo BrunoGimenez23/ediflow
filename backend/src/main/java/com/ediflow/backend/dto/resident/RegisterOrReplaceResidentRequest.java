@@ -10,6 +10,7 @@ public class RegisterOrReplaceResidentRequest {
     private String password;
     private String fullName;
     private Long ci;
+    private String phone;
 
 }
 

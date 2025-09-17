@@ -298,6 +298,11 @@ public class ResidentServiceimpl implements IResidentService {
             resident.setCi(residentDTO.getCi());
         }
 
+        // 🔹 Guardar teléfono si viene en el DTO
+        if (residentDTO.getPhone() != null) {
+            resident.setPhone(residentDTO.getPhone());
+        }
+
         if (residentDTO.getUserDTO() != null && residentDTO.getUserDTO().getId() != null) {
             Optional<User> optionalUser = userRepository.findById(residentDTO.getUserDTO().getId());
             if (optionalUser.isPresent()) {
@@ -314,7 +319,6 @@ public class ResidentServiceimpl implements IResidentService {
                     user.setFullName(residentDTO.getUserDTO().getFullName());
                 }
 
-
                 userRepository.save(user);
 
                 resident.setUser(user);
@@ -322,7 +326,6 @@ public class ResidentServiceimpl implements IResidentService {
                 return ResponseEntity.badRequest().body("Usuario con ID " + residentDTO.getUserDTO().getId() + " no encontrado");
             }
         }
-
 
         if (residentDTO.getBuildingId() != null) {
             Optional<Building> optionalBuilding = buildingRepository.findById(residentDTO.getBuildingId());
@@ -332,7 +335,6 @@ public class ResidentServiceimpl implements IResidentService {
                 return ResponseEntity.badRequest().body("Edificio con ID " + residentDTO.getBuildingId() + " no encontrado");
             }
         }
-
 
         if (residentDTO.getApartmentId() != null) {
             Optional<Apartment> optionalApartment = apartmentRepository.findById(residentDTO.getApartmentId());
@@ -352,6 +354,7 @@ public class ResidentServiceimpl implements IResidentService {
             return ResponseEntity.internalServerError().body("Error al actualizar el residente: " + e.getMessage());
         }
     }
+
 
 
     @Override
@@ -402,6 +405,7 @@ public class ResidentServiceimpl implements IResidentService {
             ResidentDTO residentDTO = new ResidentDTO();
             residentDTO.setId(resident.getId());
             residentDTO.setCi(resident.getCi());
+            residentDTO.setPhone(resident.getPhone());
             residentDTO.setUserDTO(userDTO);
 
 
@@ -449,6 +453,7 @@ public class ResidentServiceimpl implements IResidentService {
         User loggedUser = adminService.getLoggedUser();
         Page<Long> residentIdsPage;
 
+        // Filtrado según si el admin tiene AdminAccount
         if (loggedUser.getAdminAccount() != null) {
             Long accountId = loggedUser.getAdminAccount().getId();
 
@@ -478,7 +483,9 @@ public class ResidentServiceimpl implements IResidentService {
             ResidentDTO dto = new ResidentDTO();
             dto.setId(resident.getId());
             dto.setCi(resident.getCi());
+            dto.setPhone(resident.getPhone()); // ✅ teléfono agregado
 
+            // Mapeo UserDTO
             if (resident.getUser() != null) {
                 UserDTO userDTO = UserDTO.builder()
                         .id(resident.getUser().getId())
@@ -490,6 +497,7 @@ public class ResidentServiceimpl implements IResidentService {
                 dto.setUserDTO(userDTO);
             }
 
+            // Mapeo ApartmentDTO y BuildingDTO
             if (resident.getApartment() != null) {
                 ApartmentDTO apartmentDTO = ApartmentDTO.builder()
                         .id(resident.getApartment().getId())
@@ -497,17 +505,17 @@ public class ResidentServiceimpl implements IResidentService {
                         .number(resident.getApartment().getNumber())
                         .build();
                 dto.setApartmentDTO(apartmentDTO);
+                dto.setApartmentId(apartmentDTO.getId());
 
                 if (resident.getApartment().getBuilding() != null) {
                     BuildingDTO buildingDTO = BuildingDTO.builder()
                             .id(resident.getApartment().getBuilding().getId())
                             .name(resident.getApartment().getBuilding().getName())
+                            .address(resident.getApartment().getBuilding().getAddress()) // opcional si quieres
                             .build();
                     dto.setBuildingDTO(buildingDTO);
                     dto.setBuildingId(buildingDTO.getId());
                 }
-
-                dto.setApartmentId(apartmentDTO.getId());
             }
 
             return dto;
@@ -515,6 +523,7 @@ public class ResidentServiceimpl implements IResidentService {
 
         return new PageImpl<>(dtoList, pageable, residentIdsPage.getTotalElements());
     }
+
 
     private Long getAdminAccountIdOfLoggedUser() {
 
@@ -700,8 +709,20 @@ public class ResidentServiceimpl implements IResidentService {
         resident.setBuilding(apartment.getBuilding());
         resident.setCi(request.getCi());
 
+        if (request.getPhone() != null && !request.getPhone().isBlank()) {
+
+            String digits = request.getPhone().replaceAll("[^\\d]", "");
+
+            if (digits.startsWith("0")) {
+                digits = digits.substring(1);
+            }
+
+            resident.setPhone("+598" + digits);
+        }
+
         return residentRepository.save(resident);
     }
+
 
     private void validatePassword(String password) {
         if (password == null || password.length() < 8) {

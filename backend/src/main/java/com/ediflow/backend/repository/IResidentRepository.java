@@ -1,6 +1,7 @@
 package com.ediflow.backend.repository;
 
 import com.ediflow.backend.entity.Apartment;
+import com.ediflow.backend.entity.Building;
 import com.ediflow.backend.entity.Resident;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -85,5 +86,10 @@ public interface IResidentRepository extends JpaRepository<Resident, Long> {
             "JOIN FETCH a.building b " +
             "WHERE b.id = :buildingId")
     List<Resident> findByBuildingIdWithUser(@Param("buildingId") Long buildingId);
+
+    List<Resident> findByBuilding(Building building);
+    List<Resident> findByBuildingId(Long buildingId);
+
+
 
 }

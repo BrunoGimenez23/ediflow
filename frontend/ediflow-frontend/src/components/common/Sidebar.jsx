@@ -1,7 +1,7 @@
 import { useAuth } from "../../contexts/AuthContext";
 import logo from "../../assets/iconos/logo.png";
 import { Link } from "react-router-dom";
-import { Building, CalendarDays, DollarSign, HouseIcon, Users, Home, ClipboardList, ClipboardCheck } from "lucide-react";
+import { Building, CalendarDays, DollarSign, HouseIcon, Users, Home, ClipboardList, ClipboardCheck, MessageSquare } from "lucide-react";
 
 const Sidebar = () => {
   const { user } = useAuth();
@@ -101,6 +101,16 @@ const Sidebar = () => {
               </Link>
             </li>
           )}
+
+          {/* Solo ADMIN con plan PREMIUM_PLUS ve Avisos y Reclamos */}
+{isAdmin && plan === "PREMIUM_PLUS" && (
+  <li>
+    <Link to="/admin/avisos" className="flex items-center gap-3 px-4 py-2 hover:text-edicyan">
+      <MessageSquare className="text-edigray" />
+      Avisos y Reclamos
+    </Link>
+  </li>
+)}
         </ul>
       </div>
     </nav>

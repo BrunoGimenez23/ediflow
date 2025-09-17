@@ -2,7 +2,7 @@ import React from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useResidentContext } from "../../contexts/ResidentContext";
 import { useNavigate } from "react-router-dom";
-import { CreditCard, CalendarDays, LogOut, Package } from "lucide-react";
+import { CreditCard, CalendarDays, LogOut, Package, ClipboardList } from "lucide-react";
 
 const ResidentDashboard = () => {
   const { user, logout } = useAuth();
@@ -95,6 +95,17 @@ const ResidentDashboard = () => {
               <p className="text-sm text-gray-500">Revisá tus pagos realizados o pendientes</p>
             </div>
           </div>
+
+          <div
+  onClick={() => navigate("/mis-tickets")}
+  className="cursor-pointer bg-purple-50 hover:bg-purple-100 transition-colors p-6 rounded-2xl shadow-md flex items-center gap-4"
+>
+  <ClipboardList className="text-purple-600 w-10 h-10" />
+  <div>
+    <p className="text-xl font-semibold text-gray-800">Avisos y Reclamos</p>
+    <p className="text-sm text-gray-500">Creá o consultá tus avisos y reclamos</p>
+  </div>
+</div>
         </div>
       </section>
     </div>

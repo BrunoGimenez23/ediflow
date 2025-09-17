@@ -23,6 +23,10 @@ public class ResidentMapper {
         ResidentDTO dto = new ResidentDTO();
         dto.setId(resident.getId());
         dto.setCi(resident.getCi());
+        dto.setPhone(resident.getPhone());
+
+        // 🔹 Log para verificar el valor del teléfono
+        System.out.println("ResidentMapper.toDTO -> resident id: " + resident.getId() + ", phone: " + resident.getPhone());
 
         if (resident.getUser() != null) {
             dto.setUserDTO(userMapper.toUserDTO(resident.getUser(), null)); // suponiendo que este método existe

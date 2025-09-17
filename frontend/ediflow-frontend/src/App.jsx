@@ -27,6 +27,8 @@ import { useAuth } from './contexts/AuthContext'
 import { useBuildingsContext } from "./contexts/BuildingContext";
 import PorterDashboard from './pages/porter/PorterDashboard'
 import PaymentReport from './pages/admin/PaymentReport'
+import TicketDashboard from './components/resident/TicketDashboard'
+import PrivacyPolicy from './pages/public/PrivacyPolicy'
 
 function App() {
   const { user } = useAuth();
@@ -36,6 +38,9 @@ function App() {
     <Routes>
       {/* Home directo, sin layout */}
       <Route path='/' element={<Home />} />
+
+      {/* Política de privacidad pública */}
+  <Route path='/privacy-policy' element={<PrivacyPolicy />} />
 
       {/* Login y Register con PublicLayout */}
       <Route element={<PublicLayout />}>
@@ -56,6 +61,7 @@ function App() {
         <Route path="users" element={<UserManagement />} />
         <Route path="assign-plan" element={<AssignPlanPage />} />
         <Route path="planes" element={<PricingPlans />} />
+        <Route path="avisos" element={<TicketDashboard />} />
 
         {/* Ruta dedicada para UpgradePlansContainer */}
         <Route path="upgrade-plan" element={<UpgradePlansContainer />} />
@@ -77,6 +83,7 @@ function App() {
       <Route path="/mis-pagos" element={<MyPayments />} />
       <Route path="/mis-reservas" element={<MyReservations />} />
       <Route path="/mis-registros" element={<MyLogEntries residentId={user?.residentId} />} />
+      <Route path="/mis-tickets" element={<TicketDashboard />} />
 
       {/* Rutas de portero usando PorterDashboard */}
       <Route

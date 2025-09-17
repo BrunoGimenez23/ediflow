@@ -23,7 +23,7 @@ public class Resident {
     private Long id;
 
     @Column
-    private Integer phone;
+    private String phone;
 
     @Column
     private Long ci;

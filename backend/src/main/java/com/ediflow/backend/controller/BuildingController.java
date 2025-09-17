@@ -81,6 +81,7 @@ public class BuildingController {
     }
 
     @GetMapping("/by-admin")
+    @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE')")
     public ResponseEntity<List<BuildingDTO>> getBuildingsByAdmin(Authentication authentication) {
         String email = authentication.getName();
 
