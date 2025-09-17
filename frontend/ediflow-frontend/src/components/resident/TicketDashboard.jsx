@@ -140,21 +140,24 @@ const TicketDashboard = () => {
           Avisos y Reclamos
         </h2>
         <div className="flex gap-2">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-          >
-            <Plus className="w-4 h-4" />
-            Crear
-          </button>
-          <button
-            onClick={() => navigate("/resident")}
-            className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-          >
-            <Home className="w-4 h-4" />
-            Dashboard
-          </button>
-        </div>
+  <button
+    onClick={() => setShowForm(!showForm)}
+    className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+  >
+    <Plus className="w-4 h-4" />
+    Crear
+  </button>
+
+  {user.role === "RESIDENT" && (
+    <button
+      onClick={() => navigate("/resident")}
+      className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+    >
+      <Home className="w-4 h-4" />
+      Dashboard
+    </button>
+  )}
+</div>
       </div>
 
       {user.role === "ADMIN" && (
