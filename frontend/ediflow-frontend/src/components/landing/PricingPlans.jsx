@@ -47,6 +47,9 @@ const PricingPlans = ({ id, isUpgrade, onUpgradeClick }) => {
   const initialBilling = query.get("billing") === "yearly" ? "yearly" : "monthly";
   const [billing, setBilling] = useState(initialBilling);
 
+  // Determinar si estamos en Home
+  const isHomePage = location.pathname === "/" || location.pathname === "/home";
+
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     params.set("billing", billing);
@@ -56,6 +59,13 @@ const PricingPlans = ({ id, isUpgrade, onUpgradeClick }) => {
   // Pasamos billing y generamos URL-friendly planName
   const handleButtonClick = (planName, selectedBilling) => {
     const urlName = planName.toLowerCase().replace(/\s+/g, "-"); // Premium Plus → premium-plus
+
+    // Si estamos en Home y es prueba gratis, redirigir al registro
+    if (!isUpgrade && isHomePage) {
+      navigate("/auth/register-admin");
+      return;
+    }
+
     if (isUpgrade && onUpgradeClick) {
       onUpgradeClick(planName, selectedBilling);
     } else {

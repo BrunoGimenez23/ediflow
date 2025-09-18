@@ -3,6 +3,7 @@ package com.ediflow.backend.repository;
 import com.ediflow.backend.entity.Apartment;
 import com.ediflow.backend.entity.Building;
 import com.ediflow.backend.entity.Resident;
+import com.ediflow.backend.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -89,6 +90,7 @@ public interface IResidentRepository extends JpaRepository<Resident, Long> {
 
     List<Resident> findByBuilding(Building building);
     List<Resident> findByBuildingId(Long buildingId);
+    boolean existsByUser(User user);
 
 
 

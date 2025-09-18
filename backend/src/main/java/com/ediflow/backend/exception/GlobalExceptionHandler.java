@@ -50,12 +50,20 @@ public class GlobalExceptionHandler {
                 mensaje = "No se puede eliminar el área común porque tiene reservas asociadas.";
             } else if (rootMessage.contains("resident")) {
                 mensaje = "No se puede eliminar el residente porque tiene reservas u otros datos asociados.";
+            } else if (rootMessage.contains("UKsb8bbouer5wak8vyiiy4pf2bx")) { // constraint del username
+                mensaje = "El username ya está en uso. Elige otro.";
+            } else if (rootMessage.toLowerCase().contains("email")) { // cualquier constraint que contenga 'email'
+                mensaje = "Email en uso.";
             }
+        }
+
+        // Devuelve 409 Conflict si es por email duplicado (por ejemplo al crear portero)
+        if ("Email en uso.".equals(mensaje)) {
+            return buildResponse(mensaje, HttpStatus.CONFLICT);
         }
 
         return buildResponse(mensaje, HttpStatus.BAD_REQUEST);
     }
-
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {

@@ -686,8 +686,25 @@ public class ResidentServiceimpl implements IResidentService {
                 throw new IllegalArgumentException("El usuario ya existe y no es residente");
             }
 
+            // Validación: si el usuario ya tiene un residente distinto, no se puede usar este email
+            boolean userAlreadyAssigned = residentRepository.existsByUser(user);
+            if (userAlreadyAssigned) {
+                throw new IllegalArgumentException("El email ya está registrado para otro residente");
+            }
+
+            // Nueva validación para username
+            Optional<User> usernameUserOpt = userRepository.findByUsername(request.getUsername());
+            if (usernameUserOpt.isPresent() && !usernameUserOpt.get().getId().equals(user.getId())) {
+                throw new IllegalArgumentException("El username ya está en uso. Elige otro.");
+            }
+
         } else {
             validatePassword(request.getPassword());
+
+            // Validación de username para nuevos usuarios
+            if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+                throw new IllegalArgumentException("El username ya está en uso. Elige otro.");
+            }
 
             user = User.builder()
                     .username(request.getUsername())
@@ -710,18 +727,14 @@ public class ResidentServiceimpl implements IResidentService {
         resident.setCi(request.getCi());
 
         if (request.getPhone() != null && !request.getPhone().isBlank()) {
-
             String digits = request.getPhone().replaceAll("[^\\d]", "");
-
-            if (digits.startsWith("0")) {
-                digits = digits.substring(1);
-            }
-
+            if (digits.startsWith("0")) digits = digits.substring(1);
             resident.setPhone("+598" + digits);
         }
 
         return residentRepository.save(resident);
     }
+
 
 
     private void validatePassword(String password) {

@@ -154,7 +154,6 @@ public class AdminServiceimpl implements IAdminService {
         Admin admin = adminRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found with id: " + id));
 
-
         UserDTO userDTO = new UserDTO();
         userDTO.setId(admin.getUser().getId());
         userDTO.setUsername(admin.getUser().getUsername());
@@ -164,8 +163,15 @@ public class AdminServiceimpl implements IAdminService {
         adminDTO.setId(admin.getId());
         adminDTO.setUserDTO(userDTO);
 
-
+        // 🔹 Lógica ajustada para mostrar trialDaysLeft solo si corresponde
         Integer trialDaysLeft = calculateTrialDaysLeft(admin);
+        if (trialDaysLeft != null && trialDaysLeft <= 0 &&
+                admin.getPlan() != null &&
+                !admin.getPlan().equalsIgnoreCase("PROFESSIONAL") &&
+                !admin.getPlan().equalsIgnoreCase("TRIAL")) {
+            // Si la prueba terminó y el plan cambió manualmente, no mostrar banner
+            trialDaysLeft = null;
+        }
         adminDTO.setTrialDaysLeft(trialDaysLeft);
 
         List<BuildingSummaryDTO> buildingSummaryDTO = admin.getBuildings().stream().map(building -> {
@@ -173,7 +179,6 @@ public class AdminServiceimpl implements IAdminService {
             dto.setId(building.getId());
             dto.setName(building.getName());
             dto.setAddress(building.getAddress());
-
             return dto;
         }).collect(Collectors.toList());
 

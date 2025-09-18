@@ -1,23 +1,24 @@
 import React, { useState } from "react";
 import { AlertTriangle } from "lucide-react";
-import PricingPlans from "../landing/PricingPlans"; // tu componente
+import PricingPlans from "../landing/PricingPlans";
 
-const TrialExpiredBanner = () => {
+const TrialExpiredBanner = ({ user }) => {
   const [showUpgrade, setShowUpgrade] = useState(false);
 
-  const handleClickUpgrade = () => {
-    setShowUpgrade(!showUpgrade); // toggle para mostrar/ocultar
-  };
+  // Mostrar solo si la prueba venció
+  if (!user || user.trialDaysLeft === null || user.trialDaysLeft > 0) {
+    return null;
+  }
+
+  const handleClickUpgrade = () => setShowUpgrade(!showUpgrade);
 
   const handleSelectPlan = (plan, units, billing) => {
-    // Aquí redirigir al checkout o procesar la actualización
     console.log("Plan seleccionado:", plan.name, "Unidades:", units, "Facturación:", billing);
-    alert(`Seleccionaste ${plan.name} (${units} unidad${units>1?'es':''}) - ${billing}`);
+    alert(`Seleccionaste ${plan.name} (${units > 1 ? "es" : ""}) - ${billing}`);
   };
 
   return (
     <div className="mx-6 mt-4">
-      {/* Banner de prueba vencida */}
       <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-5 h-5" />
@@ -34,14 +35,9 @@ const TrialExpiredBanner = () => {
         </button>
       </div>
 
-      {/* Mostrar planes debajo del banner solo si el usuario clickeó */}
       {showUpgrade && (
         <div className="mt-4">
-          <PricingPlans
-            id="upgrade-plans"
-            mode="upgrade"
-            onSelectPlan={handleSelectPlan}
-          />
+          <PricingPlans id="upgrade-plans" mode="upgrade" onSelectPlan={handleSelectPlan} />
         </div>
       )}
     </div>

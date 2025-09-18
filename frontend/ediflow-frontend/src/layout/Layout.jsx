@@ -8,9 +8,6 @@ const Layout = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  
-  const trialExpired = user?.role === "ADMIN" && user.trialDaysLeft === 0;
-
   const handleUpgradeClick = () => {
     navigate('/admin/planes');
   };
@@ -21,7 +18,8 @@ const Layout = () => {
       <div className="flex flex-col flex-1">
         <Header />
 
-        {trialExpired && <TrialExpiredBanner onClickUpgrade={handleUpgradeClick} />}
+        {/* Renderizar banner solo si el usuario existe; el banner mismo valida si se muestra */}
+        {user && <TrialExpiredBanner user={user} onClickUpgrade={handleUpgradeClick} />}
 
         <main className="flex-1 overflow-auto bg-white p-6">
           <Outlet />

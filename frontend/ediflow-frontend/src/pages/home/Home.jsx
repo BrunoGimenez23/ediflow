@@ -14,7 +14,7 @@ const Home = () => {
       <HeroSection />
       <FeaturesSection id="features" />
       <ScreenshotsSection id="screenshots" />
-      <PricingPlans id="pricing"/>
+      <PricingPlans id="pricing" isUpgrade={false} />
       <CTASection id="contact"/>
       <Footer />
       <WhatsappButton/>

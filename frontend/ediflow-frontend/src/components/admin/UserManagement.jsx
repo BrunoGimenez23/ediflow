@@ -88,52 +88,57 @@ const UserManagement = () => {
 
     let result;
 
-    if (editingUserId) {
-      result = await put(`/users/${editingUserId}`, payload);
-    } else {
-      if (payload.role === "PORTER") {
-        if (!payload.buildingId) {
-          alert("Debés seleccionar un edificio para el portero.");
-          return;
-        }
-        result = await post("/admin/users/porter", payload);
+    try {
+      if (editingUserId) {
+        result = await put(`/users/${editingUserId}`, payload);
       } else {
-        result = await post("/users", payload);
+        if (payload.role === "PORTER") {
+          if (!payload.buildingId) {
+            alert("Debés seleccionar un edificio para el portero.");
+            return;
+          }
+          result = await post("/admin/users/porter", payload);
+        } else {
+          result = await post("/users", payload);
+        }
       }
-    }
 
-    if (result?.error) {
-      setFormError(result.error);
-      return;
-    }
+      if (result?.error) {
+        setFormError(result.error); // ❌ error del backend se muestra en el form
+        return;
+      }
 
-    alert(
-      editingUserId
-        ? "Usuario actualizado"
-        : payload.role === "PORTER"
-        ? "Portero creado"
-        : "Usuario creado"
-    );
-
-    if (editingUserId) {
-      setLocalUsers((prev) =>
-        prev.map((u) => (u.id === editingUserId ? { ...u, ...payload } : u))
+      alert(
+        editingUserId
+          ? "Usuario actualizado"
+          : payload.role === "PORTER"
+          ? "Portero creado"
+          : "Usuario creado"
       );
-      setEditingUserId(null);
-      setShowCreateForm(false);
-    } else {
-      await refetch();
-    }
 
-    setForm({
-      username: "",
-      email: "",
-      fullName: "",
-      password: "",
-      role: "SUPPORT",
-      buildingId: null,
-    });
-    setFormError(null);
+      if (editingUserId) {
+        setLocalUsers((prev) =>
+          prev.map((u) => (u.id === editingUserId ? { ...u, ...payload } : u))
+        );
+        setEditingUserId(null);
+        setShowCreateForm(false);
+      } else {
+        await refetch();
+      }
+
+      setForm({
+        username: "",
+        email: "",
+        fullName: "",
+        password: "",
+        role: "SUPPORT",
+        buildingId: null,
+      });
+      setFormError(null);
+    } catch (err) {
+      // Por si algo falla que no sea manejado por usePost/usePut
+      setFormError(err.response?.data?.message || "Error inesperado");
+    }
   };
 
   const handleDelete = async (userId) => {

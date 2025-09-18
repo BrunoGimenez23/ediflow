@@ -66,13 +66,12 @@ function App() {
         {/* Ruta dedicada para UpgradePlansContainer */}
         <Route path="upgrade-plan" element={<UpgradePlansContainer />} />
 
-        {/* historial relativo al admin */}
-        {user?.role === "ADMIN" && selectedBuilding && (
-          <Route
-            path="historial"
-            element={<LogHistory buildingId={selectedBuilding.id} userRole="ADMIN" />}
-          />
-        )}
+       <Route
+  path="/admin/historial"
+  element={
+    <LogHistory buildingId={selectedBuilding?.id} userRole="ADMIN" />
+  }
+/>
       </Route>
 
       {/* PlanConfirmationPage usando params */}
