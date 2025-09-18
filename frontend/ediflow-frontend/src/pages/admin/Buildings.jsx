@@ -17,7 +17,6 @@ const Buildings = () => {
   const [address, setAddress] = useState("");
   const [editingBuilding, setEditingBuilding] = useState(null);
 
-
   useEffect(() => {
     if (user?.adminId) {
       fetchBuildings();
@@ -37,12 +36,7 @@ const Buildings = () => {
       return;
     }
 
-    const payload = {
-      name,
-      address,
-      adminId: user.adminId,
-    };
-
+    const payload = { name, address, adminId: user.adminId };
     let res;
     if (editingBuilding) {
       res = await put(`/buildings/update/${editingBuilding.id}`, payload);
@@ -73,22 +67,14 @@ const Buildings = () => {
     }
   };
 
-  // 🛑 Esperar a que user esté cargado antes de renderizar
   if (!user) return <p className="text-center py-10 text-gray-500">Cargando usuario...</p>;
-
-  if (loading)
-    return <p className="text-center py-10 text-gray-500">Cargando edificios...</p>;
-  if (error)
-    return (
-      <p className="text-center py-10 text-red-600 font-semibold">
-        Error: {error}
-      </p>
-    );
+  if (loading) return <p className="text-center py-10 text-gray-500">Cargando edificios...</p>;
+  if (error) return <p className="text-center py-10 text-red-600 font-semibold">Error: {error}</p>;
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-center my-8">Edificios</h1>
-      <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
+    <div className="px-4 sm:px-6 md:px-12 lg:px-24 py-6">
+      <h1 className="text-3xl font-bold text-center mb-8">Edificios</h1>
+      <div className="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow-lg">
 
         {/* Botón agregar edificio */}
         <div className="mb-6 flex justify-end">
@@ -142,11 +128,11 @@ const Buildings = () => {
               disabled={trialExpired}
             />
 
-            <div className="flex items-center gap-4 mt-6">
+            <div className="flex flex-col sm:flex-row items-center gap-4 mt-6">
               <button
                 type="submit"
                 disabled={loadingPost || loadingPut || trialExpired}
-                className={`px-5 py-2 rounded-md text-white font-semibold transition ${
+                className={`px-5 py-2 rounded-md text-white font-semibold transition w-full sm:w-auto ${
                   trialExpired
                     ? "bg-gray-400 cursor-not-allowed"
                     : loadingPost || loadingPut
@@ -165,7 +151,7 @@ const Buildings = () => {
                     setAddress("");
                     setShowForm(false);
                   }}
-                  className="text-gray-600 hover:underline focus:outline-none"
+                  className="text-gray-600 hover:underline focus:outline-none w-full sm:w-auto"
                 >
                   Cancelar edición
                 </button>
@@ -179,12 +165,12 @@ const Buildings = () => {
           </form>
         )}
 
-        {/* Tabla responsive */}
-        <div className="overflow-x-auto">
+        {/* Tabla para desktop */}
+        <div className="hidden md:block overflow-x-auto">
           <h2 className="text-2xl font-semibold mb-4 text-center">
             {editingBuilding ? "Editando Edificio" : "Lista de Edificios"}
           </h2>
-          <table className="min-w-full bg-white border border-gray-200 rounded-md">
+          <table className="min-w-full bg-white border border-gray-200 rounded-md table-auto">
             <thead className="bg-ediblue text-white">
               <tr>
                 <th className="py-3 px-4 text-left font-semibold border-b border-ediblueLight">ID</th>
@@ -207,18 +193,13 @@ const Buildings = () => {
                   <td className="py-3 px-4 border-b border-gray-200 flex gap-3">
                     <button
                       onClick={() => {
-                        if (trialExpired) {
-                          alert("Tu prueba gratuita ha finalizado. Por favor, activa un plan para continuar.");
-                          return;
-                        }
+                        if (trialExpired) return;
                         setEditingBuilding(building);
                         setName(building.name);
                         setAddress(building.address);
                         setShowForm(true);
                       }}
-                      className={`text-blue-600 hover:underline focus:outline-none ${
-                        trialExpired ? "text-gray-400 cursor-not-allowed" : ""
-                      }`}
+                      className={`text-blue-600 hover:underline focus:outline-none ${trialExpired ? "text-gray-400 cursor-not-allowed" : ""}`}
                       disabled={trialExpired}
                     >
                       Editar
@@ -226,9 +207,7 @@ const Buildings = () => {
                     <button
                       onClick={() => handleDeleteBuilding(building.id)}
                       disabled={loadingDelete || trialExpired}
-                      className={`text-red-600 hover:underline focus:outline-none ${
-                        trialExpired ? "text-gray-400 cursor-not-allowed" : ""
-                      }`}
+                      className={`text-red-600 hover:underline focus:outline-none ${trialExpired ? "text-gray-400 cursor-not-allowed" : ""}`}
                     >
                       Eliminar
                     </button>
@@ -237,12 +216,45 @@ const Buildings = () => {
               ))}
             </tbody>
           </table>
-          {errorDelete && (
-            <p className="text-red-600 text-sm mt-3 text-center font-semibold">
-              {errorDelete}
-            </p>
-          )}
+          {errorDelete && <p className="text-red-600 text-sm mt-3 text-center font-semibold">{errorDelete}</p>}
         </div>
+
+        {/* Tarjetas responsive para mobile */}
+        <div className="md:hidden flex flex-col gap-4">
+          {buildings.map((building) => (
+            <div key={building.id} className="p-4 bg-gray-50 rounded-lg shadow flex flex-col gap-2">
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold text-lg">{building.name}</h3>
+                <span className="text-sm text-gray-500">ID: {building.id}</span>
+              </div>
+              <p className="text-gray-600">Ubicación: {building.address}</p>
+              <p className="text-gray-600">Residentes: {building.residentCount}</p>
+              <div className="flex gap-4 mt-2">
+                <button
+                  onClick={() => {
+                    if (trialExpired) return;
+                    setEditingBuilding(building);
+                    setName(building.name);
+                    setAddress(building.address);
+                    setShowForm(true);
+                  }}
+                  className={`text-blue-600 hover:underline focus:outline-none ${trialExpired ? "text-gray-400 cursor-not-allowed" : ""}`}
+                  disabled={trialExpired}
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleDeleteBuilding(building.id)}
+                  disabled={loadingDelete || trialExpired}
+                  className={`text-red-600 hover:underline focus:outline-none ${trialExpired ? "text-gray-400 cursor-not-allowed" : ""}`}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
       </div>
     </div>
   );

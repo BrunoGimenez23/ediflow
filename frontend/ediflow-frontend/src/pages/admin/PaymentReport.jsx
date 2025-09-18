@@ -87,19 +87,19 @@ const PaymentReport = () => {
   };
 
   return (
-    <div className="p-6 bg-white rounded shadow">
-      <h2 className="text-xl font-bold mb-4">Reporte de Pagos</h2>
+    <div className="p-6 bg-white rounded-lg shadow-md max-w-6xl mx-auto mt-6 space-y-6">
+      <h2 className="text-2xl font-semibold text-gray-700">Reporte de Pagos</h2>
 
       {/* Filtros */}
-      <div className="flex gap-4 mb-4 flex-wrap">
+      <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
         <select
           value={selectedBuilding?.id || ""}
           onChange={(e) => {
             const building = buildings.find((b) => b.id === parseInt(e.target.value));
             setSelectedBuilding(building);
-            setPage(0); // reset paginación al cambiar edificio
+            setPage(0);
           }}
-          className="border p-2 rounded"
+          className="border p-2 rounded w-full sm:w-auto"
         >
           {buildings.map((b) => (
             <option key={b.id} value={b.id}>
@@ -112,18 +112,22 @@ const PaymentReport = () => {
           type="date"
           value={fromDate}
           onChange={(e) => setFromDate(e.target.value)}
-          className="border p-2 rounded"
+          className="border p-2 rounded w-full sm:w-auto"
           placeholder="Desde"
         />
         <input
           type="date"
           value={toDate}
           onChange={(e) => setToDate(e.target.value)}
-          className="border p-2 rounded"
+          className="border p-2 rounded w-full sm:w-auto"
           placeholder="Hasta"
         />
 
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className="border p-2 rounded">
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+          className="border p-2 rounded w-full sm:w-auto"
+        >
           <option value="">Todos</option>
           <option value="PAID">Pagado</option>
           <option value="PENDING">Pendiente</option>
@@ -139,40 +143,62 @@ const PaymentReport = () => {
         </button>
       </div>
 
-      {/* Tabla */}
+      {/* Tabla desktop */}
       {loading ? (
         <p>Cargando pagos...</p>
+      ) : payments.length === 0 ? (
+        <p className="text-gray-500 mt-2">No hay pagos.</p>
       ) : (
-        <table className="w-full border-collapse border">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border px-2 py-1">Residente</th>
-              <th className="border px-2 py-1">Apt.</th>
-              <th className="border px-2 py-1">Edificio</th>
-              <th className="border px-2 py-1">Fecha Venc.</th>
-              <th className="border px-2 py-1">Fecha Pago</th>
-              <th className="border px-2 py-1">Estado</th>
-              <th className="border px-2 py-1">Monto</th>
-            </tr>
-          </thead>
-          <tbody>
+        <>
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full border-collapse border rounded-lg shadow-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  {["Residente", "Apt.", "Edificio", "Fecha Venc.", "Fecha Pago", "Estado", "Monto"].map((h) => (
+                    <th key={h} className="border px-3 py-2 text-left font-medium">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {payments.map((p) => (
+                  <tr key={p.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="border px-2 py-1">{p.residentDTO?.userDTO?.fullName || "-"}</td>
+                    <td className="border px-2 py-1">{p.residentDTO?.apartmentDTO?.number || "-"}</td>
+                    <td className="border px-2 py-1">{p.residentDTO?.apartmentDTO?.buildingDTO?.name || "-"}</td>
+                    <td className="border px-2 py-1">{p.dueDate}</td>
+                    <td className="border px-2 py-1">{p.paymentDate || "-"}</td>
+                    <td className="border px-2 py-1">{translateStatus(p.status)}</td>
+                    <td className="border px-2 py-1">{p.amount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Tarjetas mobile */}
+          <div className="md:hidden flex flex-col gap-4">
             {payments.map((p) => (
-              <tr key={p.id}>
-                <td className="border px-2 py-1">{p.residentDTO?.userDTO?.fullName || "-"}</td>
-                <td className="border px-2 py-1">{p.residentDTO?.apartmentDTO?.number || "-"}</td>
-                <td className="border px-2 py-1">{p.residentDTO?.apartmentDTO?.buildingDTO?.name || "-"}</td>
-                <td className="border px-2 py-1">{p.dueDate}</td>
-                <td className="border px-2 py-1">{p.paymentDate || "-"}</td>
-                <td className="border px-2 py-1">{translateStatus(p.status)}</td>
-                <td className="border px-2 py-1">{p.amount}</td>
-              </tr>
+              <div
+                key={p.id}
+                className="border rounded-lg p-4 shadow-sm bg-white space-y-2 hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="font-medium text-gray-700">{p.residentDTO?.userDTO?.fullName || "-"}</span>
+                  <span className="text-gray-500 text-xs">{p.dueDate}</span>
+                </div>
+                <p className="text-gray-600 text-sm">Apt.: {p.residentDTO?.apartmentDTO?.number || "-"}</p>
+                <p className="text-gray-600 text-sm">Edificio: {p.residentDTO?.apartmentDTO?.buildingDTO?.name || "-"}</p>
+                <p className="text-gray-600 text-sm">Fecha Pago: {p.paymentDate || "-"}</p>
+                <p className="text-gray-600 text-sm">Estado: {translateStatus(p.status)}</p>
+                <p className="text-gray-600 text-sm">Monto: {p.amount}</p>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </>
       )}
 
       {/* Paginación */}
-      <div className="flex justify-between mt-4 items-center gap-2 flex-wrap">
+      <div className="flex flex-col sm:flex-row justify-between mt-4 items-center gap-2 flex-wrap">
         <div className="flex gap-2 items-center">
           <span>Página:</span>
           <button
@@ -194,11 +220,14 @@ const PaymentReport = () => {
 
         <div className="flex gap-2 items-center">
           <span>Mostrar:</span>
-          <select value={size} onChange={(e) => { setSize(parseInt(e.target.value)); setPage(0); }} className="border p-1 rounded">
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
+          <select
+            value={size}
+            onChange={(e) => { setSize(parseInt(e.target.value)); setPage(0); }}
+            className="border p-1 rounded"
+          >
+            {[5, 10, 20, 50].map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
           </select>
           <span>items por página</span>
         </div>

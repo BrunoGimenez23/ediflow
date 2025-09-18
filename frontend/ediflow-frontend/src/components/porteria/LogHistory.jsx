@@ -50,19 +50,19 @@ const LogHistory = ({ buildingId: propBuildingId, userRole }) => {
   }, [selectedBuildingId, filterType]);
 
   return (
-    <div className="bg-white rounded shadow p-4 space-y-4 max-w-5xl mx-auto mt-6">
+    <div className="bg-white rounded-lg shadow-md p-6 space-y-6 max-w-6xl mx-auto mt-6">
       <h2 className="text-2xl font-semibold text-gray-700">
         {userRole === "PORTER" ? "Tus registros" : "Historial del edificio"}
       </h2>
 
       {/* Select de edificio solo para admin */}
       {userRole === "ADMIN" && buildings.length > 0 && (
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
           <label className="font-medium">Seleccionar edificio:</label>
           <select
             value={selectedBuildingId}
             onChange={(e) => setSelectedBuildingId(e.target.value)}
-            className="border rounded p-2"
+            className="border rounded p-2 w-full sm:w-auto"
           >
             <option value="">-- Elegir edificio --</option>
             {buildings.map((b) => (
@@ -74,12 +74,13 @@ const LogHistory = ({ buildingId: propBuildingId, userRole }) => {
         </div>
       )}
 
-      <div className="flex items-center gap-4 mb-4">
+      {/* Filtro por tipo */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
         <label className="font-medium">Filtrar por tipo:</label>
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
-          className="border rounded p-2"
+          className="border rounded p-2 w-full sm:w-auto"
         >
           <option value="">Todos</option>
           <option value="PAQUETE">Paquetes</option>
@@ -93,30 +94,75 @@ const LogHistory = ({ buildingId: propBuildingId, userRole }) => {
       ) : entries.length === 0 ? (
         <p className="text-gray-500 mt-2">No hay registros.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm border mt-2">
-            <thead>
-              <tr className="bg-gray-100 text-left">
-                <th className="p-2 border">Tipo</th>
-                <th className="p-2 border">Descripción</th>
-                <th className="p-2 border">Residente</th>
-                <th className="p-2 border">Registrado por</th>
-                <th className="p-2 border">Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((e) => (
-                <tr key={e.id} className="hover:bg-gray-50">
-                  <td className="p-2 border">{e.type}</td>
-                  <td className="p-2 border">{e.description}</td>
-                  <td className="p-2 border">{e.residentName || "N/A"}</td>
-                  <td className="p-2 border">{e.createdByName || "Portería"}</td>
-                  <td className="p-2 border">{new Date(e.createdAt).toLocaleString()}</td>
+        <>
+          {/* Tabla para desktop */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm border rounded-lg shadow-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  {["Tipo", "Descripción", "Residente", "Registrado por", "Fecha"].map((h) => (
+                    <th key={h} className="p-3 border-b text-left font-medium">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {entries.map((e) => (
+                  <tr key={e.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="p-2 border-b">
+                      <span
+                        className={`px-2 py-1 rounded text-sm font-medium ${
+                          e.type === "PAQUETE"
+                            ? "bg-blue-100 text-blue-800"
+                            : e.type === "VISITA"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {e.type}
+                      </span>
+                    </td>
+                    <td className="p-2 border-b">{e.description}</td>
+                    <td className="p-2 border-b">{e.residentName || "N/A"}</td>
+                    <td className="p-2 border-b">{e.createdByName || "Portería"}</td>
+                    <td className="p-2 border-b">{new Date(e.createdAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Tarjetas para mobile */}
+          <div className="md:hidden flex flex-col gap-4">
+            {entries.map((e) => (
+              <div
+                key={e.id}
+                className="border rounded-lg p-4 shadow-sm bg-white space-y-2 hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-center">
+                  <span
+                    className={`px-2 py-1 rounded text-sm font-medium ${
+                      e.type === "PAQUETE"
+                        ? "bg-blue-100 text-blue-800"
+                        : e.type === "VISITA"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {e.type}
+                  </span>
+                  <span className="text-gray-500 text-xs">
+                    {new Date(e.createdAt).toLocaleString()}
+                  </span>
+                </div>
+                <p className="text-gray-700">{e.description}</p>
+                <div className="flex flex-col text-sm text-gray-600">
+                  <span>Residente: {e.residentName || "N/A"}</span>
+                  <span>Registrado por: {e.createdByName || "Portería"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
