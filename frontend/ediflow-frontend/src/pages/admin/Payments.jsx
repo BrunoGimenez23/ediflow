@@ -42,15 +42,11 @@ const Payments = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const paymentsWithComputedStatus = (paymentsPage?.content || []).map((payment) => {
-    const today = new Date();
-    const due = payment.dueDate ? new Date(payment.dueDate) : null;
-    let status = payment.status;
-    if (due && due < today && status !== "PAID" && status !== "CANCELLED") {
-      status = "OVERDUE";
-    }
-    return { ...payment, computedStatus: status };
-  });
+  // Adaptado al backend: ya no recalculamos OVERDUE en frontend
+  const paymentsWithComputedStatus = (paymentsPage?.content || []).map((payment) => ({
+    ...payment,
+    computedStatus: payment.status
+  }));
 
   // Filtrado y paginación
   useEffect(() => {

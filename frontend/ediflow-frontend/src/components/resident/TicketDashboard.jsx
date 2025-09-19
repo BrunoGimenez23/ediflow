@@ -15,7 +15,7 @@ const TicketDashboard = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("MEDIUM");
-  const [type, setType] = useState("NOTICE"); // solo Admin
+  const [type, setType] = useState("NOTICE");
   const [loadingTickets, setLoadingTickets] = useState(false);
   const [filter, setFilter] = useState("ALL");
 
@@ -26,7 +26,6 @@ const TicketDashboard = () => {
     loading: loadingBuildings,
   } = useBuildingsContext();
 
-  // Por defecto seleccionamos el primer edificio si es admin y no hay seleccionado
   useEffect(() => {
     if (user?.role === "ADMIN" && buildings.length > 0 && !selectedBuilding) {
       setSelectedBuilding(buildings[0]);
@@ -50,9 +49,7 @@ const TicketDashboard = () => {
       if (user.role === "RESIDENT") {
         filtered = data.filter(t => t.type === "NOTICE" || t.createdById === user.id);
       } else if (user.role === "ADMIN") {
-        filtered = data.filter(
-          t => t.type === "NOTICE" || t.type === "COMPLAINT"
-        );
+        filtered = data.filter(t => t.type === "NOTICE" || t.type === "COMPLAINT");
       } else {
         filtered = data;
       }
@@ -98,9 +95,7 @@ const TicketDashboard = () => {
     if (user.role !== "ADMIN") return;
     try {
       const updated = await updateTicketStatus(id, newStatus);
-      setTickets(prev =>
-        prev.map(t => (t.id === updated.id ? updated : t))
-      );
+      setTickets(prev => prev.map(t => (t.id === updated.id ? updated : t)));
     } catch (err) {
       console.error("Error al actualizar estado", err);
     }
@@ -109,7 +104,6 @@ const TicketDashboard = () => {
   const handleDelete = async (id) => {
     try {
       await deleteTicket(id);
-      // recarga los tickets después de eliminar para mantener consistencia
       fetchTickets();
     } catch (err) {
       console.error("Error al eliminar ticket", err);
@@ -119,47 +113,46 @@ const TicketDashboard = () => {
   const priorityLabel = { LOW: "Baja", MEDIUM: "Media", HIGH: "Alta" };
   const statusLabel = { PENDING: "Pendiente", IN_PROGRESS: "En progreso", RESOLVED: "Resuelto" };
   const priorityColor = (p) =>
-    p === "HIGH" ? "bg-red-200" : p === "MEDIUM" ? "bg-yellow-200" : "bg-green-200";
+    p === "HIGH" ? "bg-red-200 text-red-700" : p === "MEDIUM" ? "bg-yellow-200 text-yellow-700" : "bg-green-200 text-green-700";
   const statusColor = (s) =>
-    s === "PENDING" ? "bg-gray-200" : s === "IN_PROGRESS" ? "bg-blue-200" : "bg-green-200";
+    s === "PENDING" ? "bg-gray-200 text-gray-700" : s === "IN_PROGRESS" ? "bg-blue-200 text-blue-700" : "bg-green-200 text-green-700";
   const typeTagColor = (t) =>
     t === "NOTICE" ? "bg-purple-200 text-purple-800" : "bg-red-200 text-red-800";
 
   const filteredTickets =
-    filter === "ALL"
-      ? tickets
-      : tickets.filter((t) => t.type === filter);
+    filter === "ALL" ? tickets : tickets.filter((t) => t.type === filter);
 
   if (!user) return <p className="text-center p-6">Cargando usuario...</p>;
 
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-white rounded-2xl shadow-lg mt-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <ClipboardList className="w-6 h-6 text-purple-600" />
+    <div className="max-w-6xl mx-auto p-6 bg-white rounded-2xl shadow-lg mt-8">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+        <h2 className="text-2xl font-bold flex items-center gap-2 text-purple-700">
+          <ClipboardList className="w-6 h-6" />
           Avisos y Reclamos
         </h2>
-        <div className="flex gap-2">
-  <button
-    onClick={() => setShowForm(!showForm)}
-    className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-  >
-    <Plus className="w-4 h-4" />
-    Crear
-  </button>
-
-  {user.role === "RESIDENT" && (
-    <button
-      onClick={() => navigate("/resident")}
-      className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-    >
-      <Home className="w-4 h-4" />
-      Dashboard
-    </button>
-  )}
-</div>
+        <div className="flex gap-2 flex-wrap">
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+          >
+            <Plus className="w-4 h-4" />
+            Crear
+          </button>
+          {user.role === "RESIDENT" && (
+            <button
+              onClick={() => navigate("/resident")}
+              className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+            >
+              <Home className="w-4 h-4" />
+              Dashboard
+            </button>
+          )}
+        </div>
       </div>
 
+      {/* Selector de edificio */}
       {user.role === "ADMIN" && (
         <div className="mb-4">
           <select
@@ -180,6 +173,7 @@ const TicketDashboard = () => {
         </div>
       )}
 
+      {/* Formulario */}
       {showForm && (
         <div className="mb-6 p-4 bg-gray-50 rounded-xl shadow-inner">
           <input
@@ -205,7 +199,6 @@ const TicketDashboard = () => {
             <option value="MEDIUM">Media</option>
             <option value="HIGH">Alta</option>
           </select>
-
           {user.role === "ADMIN" && (
             <select
               value={type}
@@ -216,89 +209,143 @@ const TicketDashboard = () => {
               <option value="COMPLAINT">Reclamo</option>
             </select>
           )}
-
           <button
             onClick={handleCreate}
-            className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 w-full"
           >
             Crear {user.role === "RESIDENT" ? "Reclamo" : type === "NOTICE" ? "Aviso" : "Reclamo"}
           </button>
         </div>
       )}
 
-      <div className="flex items-center gap-2 mb-4">
+      {/* Filtros */}
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
         <Filter className="w-5 h-5 text-gray-600" />
-        <button
-          onClick={() => setFilter("ALL")}
-          className={`px-3 py-1 rounded ${filter === "ALL" ? "bg-purple-600 text-white" : "bg-gray-200"}`}
-        >
-          Todos
-        </button>
-        <button
-          onClick={() => setFilter("NOTICE")}
-          className={`px-3 py-1 rounded ${filter === "NOTICE" ? "bg-purple-600 text-white" : "bg-gray-200"}`}
-        >
-          Avisos
-        </button>
-        <button
-          onClick={() => setFilter("COMPLAINT")}
-          className={`px-3 py-1 rounded ${filter === "COMPLAINT" ? "bg-purple-600 text-white" : "bg-gray-200"}`}
-        >
-          Reclamos
-        </button>
+        {["ALL", "NOTICE", "COMPLAINT"].map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`px-3 py-1 rounded-lg ${filter === f ? "bg-purple-600 text-white" : "bg-gray-200"}`}
+          >
+            {f === "ALL" ? "Todos" : f === "NOTICE" ? "Avisos" : "Reclamos"}
+          </button>
+        ))}
       </div>
 
+      {/* Tickets */}
       <div>
         {(loadingTickets || loadingBuildings) ? (
           <p>Cargando tickets...</p>
         ) : filteredTickets.length === 0 ? (
           <p>No hay tickets aún.</p>
         ) : (
-          <table className="w-full border">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="border p-2">Título</th>
-                <th className="border p-2">Descripción</th>
-                <th className="border p-2">Tipo</th>
-                <th className="border p-2">Prioridad</th>
-                <th className="border p-2">Estado</th>
-                <th className="border p-2">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Desktop → tabla */}
+            <div className="hidden md:block overflow-x-auto rounded-lg border">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-100 text-gray-700">
+                    <th className="p-3">Título</th>
+                    <th className="p-3">Descripción</th>
+                    <th className="p-3">Tipo</th>
+                    <th className="p-3">Prioridad</th>
+                    <th className="p-3">Estado</th>
+                    <th className="p-3">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTickets.map((t) => (
+                    <tr key={t.id} className="border-t hover:bg-gray-50">
+                      <td className="p-3">{t.title}</td>
+                      <td className="p-3">{t.description}</td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded text-sm font-semibold ${typeTagColor(t.type)}`}>
+                          {t.type === "NOTICE" ? "Aviso" : "Reclamo"}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded text-sm font-semibold ${priorityColor(t.priority)}`}>
+                          {priorityLabel[t.priority]}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded text-sm font-semibold ${statusColor(t.status)}`}>
+                          {statusLabel[t.status]}
+                        </span>
+                      </td>
+                      <td className="p-3 flex flex-wrap gap-2">
+                        {user.role === "ADMIN" && (
+                          <>
+                            <button
+                              onClick={() => handleStatusChange(t.id, "IN_PROGRESS")}
+                              className="bg-blue-500 px-2 py-1 rounded text-white text-sm hover:bg-blue-600"
+                            >
+                              En progreso
+                            </button>
+                            <button
+                              onClick={() => handleStatusChange(t.id, "RESOLVED")}
+                              className="bg-green-600 px-2 py-1 rounded text-white text-sm hover:bg-green-700"
+                            >
+                              Resuelto
+                            </button>
+                            <button
+                              onClick={() => handleDelete(t.id)}
+                              className="bg-red-500 px-2 py-1 rounded text-white text-sm hover:bg-red-600"
+                            >
+                              Eliminar
+                            </button>
+                          </>
+                        )}
+                        {user.role === "RESIDENT" && t.type === "COMPLAINT" && t.createdById === user.id && (
+                          <button
+                            onClick={() => handleDelete(t.id)}
+                            className="bg-red-500 px-2 py-1 rounded text-white text-sm hover:bg-red-600"
+                          >
+                            Eliminar
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile → tarjetas */}
+            <div className="grid grid-cols-1 gap-4 md:hidden">
               {filteredTickets.map((t) => (
-                <tr key={t.id}>
-                  <td className="border p-2">{t.title}</td>
-                  <td className="border p-2">{t.description}</td>
-                  <td className="border p-2">
-                    <span className={`px-2 py-1 rounded text-sm font-semibold ${typeTagColor(t.type)}`}>
+                <div key={t.id} className="p-4 border rounded-lg shadow-sm bg-gray-50">
+                  <h3 className="text-lg font-bold text-purple-700">{t.title}</h3>
+                  <p className="text-sm text-gray-600 mb-2">{t.description}</p>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <span className={`px-2 py-1 rounded text-xs font-semibold ${typeTagColor(t.type)}`}>
                       {t.type === "NOTICE" ? "Aviso" : "Reclamo"}
                     </span>
-                  </td>
-                  <td className={`border p-2 font-semibold ${priorityColor(t.priority)}`}>
-                    {priorityLabel[t.priority]}
-                  </td>
-                  <td className={`border p-2 font-semibold ${statusColor(t.status)}`}>
-                    {statusLabel[t.status]}
-                  </td>
-                  <td className="border p-2 space-x-2">
+                    <span className={`px-2 py-1 rounded text-xs font-semibold ${priorityColor(t.priority)}`}>
+                      {priorityLabel[t.priority]}
+                    </span>
+                    <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColor(t.status)}`}>
+                      {statusLabel[t.status]}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
                     {user.role === "ADMIN" && (
                       <>
                         <button
                           onClick={() => handleStatusChange(t.id, "IN_PROGRESS")}
-                          className="bg-blue-500 px-2 py-1 rounded text-white"
+                          className="bg-blue-500 px-2 py-1 rounded text-white text-sm hover:bg-blue-600"
                         >
                           En progreso
                         </button>
                         <button
                           onClick={() => handleStatusChange(t.id, "RESOLVED")}
-                          className="bg-green-600 px-2 py-1 rounded text-white"
+                          className="bg-green-600 px-2 py-1 rounded text-white text-sm hover:bg-green-700"
                         >
                           Resuelto
                         </button>
                         <button
                           onClick={() => handleDelete(t.id)}
-                          className="bg-red-500 px-2 py-1 rounded text-white"
+                          className="bg-red-500 px-2 py-1 rounded text-white text-sm hover:bg-red-600"
                         >
                           Eliminar
                         </button>
@@ -307,16 +354,16 @@ const TicketDashboard = () => {
                     {user.role === "RESIDENT" && t.type === "COMPLAINT" && t.createdById === user.id && (
                       <button
                         onClick={() => handleDelete(t.id)}
-                        className="bg-red-500 px-2 py-1 rounded text-white"
+                        className="bg-red-500 px-2 py-1 rounded text-white text-sm hover:bg-red-600"
                       >
                         Eliminar
                       </button>
                     )}
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
       </div>
     </div>

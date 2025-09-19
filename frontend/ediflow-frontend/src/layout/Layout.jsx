@@ -1,4 +1,5 @@
 import { Outlet, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import TrialExpiredBanner from "../components/common/TrialExpiredBanner";
 import Header from "../components/common/Header";
@@ -7,19 +8,21 @@ import Sidebar from "../components/common/Sidebar";
 const Layout = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false); // Control del sidebar mobile
 
   const handleUpgradeClick = () => {
-    navigate('/admin/planes');
+    navigate("/admin/planes");
   };
 
   return (
     <div className="flex h-screen">
-      <Sidebar />
+      <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
       <div className="flex flex-col flex-1">
-        <Header />
+        <Header onToggleSidebar={() => setIsOpen((prev) => !prev)} />
 
-        {/* Renderizar banner solo si el usuario existe; el banner mismo valida si se muestra */}
-        {user && <TrialExpiredBanner user={user} onClickUpgrade={handleUpgradeClick} />}
+        {user && (
+          <TrialExpiredBanner user={user} onClickUpgrade={handleUpgradeClick} />
+        )}
 
         <main className="flex-1 overflow-auto bg-white p-6">
           <Outlet />

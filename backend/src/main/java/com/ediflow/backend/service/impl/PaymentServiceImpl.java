@@ -162,8 +162,21 @@ public class PaymentServiceImpl implements IPaymentService {
         dto.setDueDate(payment.getDueDate());
         dto.setPaymentDate(payment.getPaymentDate());
         dto.setConcept(payment.getConcept());
-        dto.setStatus(payment.getStatus());
 
+        // Calcula el estado dinámicamente
+        PaymentStatus status = payment.getStatus();
+        if (status != PaymentStatus.PAID && status != PaymentStatus.CANCELLED) {
+            if (payment.getPaymentDate() != null) {
+                status = PaymentStatus.PAID;
+            } else if (payment.getDueDate() != null && payment.getDueDate().isBefore(LocalDate.now())) {
+                status = PaymentStatus.OVERDUE;
+            } else {
+                status = PaymentStatus.PENDING;
+            }
+        }
+        dto.setStatus(status);
+
+        // mapeo del residente (igual que antes)
         if (payment.getResident() != null) {
             Resident resident = payment.getResident();
             ResidentDTO residentDTO = new ResidentDTO();
@@ -206,7 +219,6 @@ public class PaymentServiceImpl implements IPaymentService {
 
         return dto;
     }
-
 
 
     @Override
@@ -343,6 +355,7 @@ public class PaymentServiceImpl implements IPaymentService {
 
         Specification<Payment> spec = Specification.where(null);
 
+        // Filtrado por AdminAccount o Admin normal
         if (user.getAdminAccount() != null) {
             Long adminAccountId = user.getAdminAccount().getId();
             System.out.println("Filtrando por AdminAccountId: " + adminAccountId);
@@ -357,6 +370,7 @@ public class PaymentServiceImpl implements IPaymentService {
             );
         }
 
+        // Filtro por edificio
         if (buildingId != null) {
             System.out.println("Aplicando filtro de buildingId: " + buildingId);
             spec = spec.and((root, query, cb) ->
@@ -364,11 +378,12 @@ public class PaymentServiceImpl implements IPaymentService {
             );
         }
 
+        // Filtro por estado dinámico
         if (status != null && !status.isBlank()) {
             System.out.println("Aplicando filtro de estado: " + status);
+            LocalDate today = LocalDate.now();
             switch (status.toUpperCase()) {
                 case "OVERDUE":
-                    LocalDate today = LocalDate.now();
                     spec = spec.and((root, query, cb) -> cb.and(
                             cb.lessThan(root.get("dueDate"), today),
                             cb.notEqual(root.get("status"), PaymentStatus.PAID),
@@ -376,13 +391,10 @@ public class PaymentServiceImpl implements IPaymentService {
                     ));
                     break;
                 case "PENDING":
-                    today = LocalDate.now();
                     spec = spec.and((root, query, cb) -> cb.and(
-                            cb.equal(root.get("status"), PaymentStatus.PENDING),
-                            cb.or(
-                                    cb.greaterThanOrEqualTo(root.get("dueDate"), today),
-                                    cb.isNull(root.get("dueDate"))
-                            )
+                            cb.or(cb.greaterThanOrEqualTo(root.get("dueDate"), today), cb.isNull(root.get("dueDate"))),
+                            cb.notEqual(root.get("status"), PaymentStatus.PAID),
+                            cb.notEqual(root.get("status"), PaymentStatus.CANCELLED)
                     ));
                     break;
                 default:
@@ -395,6 +407,7 @@ public class PaymentServiceImpl implements IPaymentService {
             System.out.println("No se aplicó filtro de estado por estar vacío o nulo");
         }
 
+        // Filtro por fechas
         if (fromDate != null && toDate != null) {
             System.out.println("Aplicando filtro entre fechas: " + fromDate + " y " + toDate);
             spec = spec.and((root, query, cb) ->
@@ -417,6 +430,7 @@ public class PaymentServiceImpl implements IPaymentService {
         System.out.println("Pagos encontrados: " + page.getTotalElements());
         System.out.println("Total páginas: " + page.getTotalPages());
 
+        // Mapeo usando convertToDTOWithResident que ya calcula OVERDUE/PENDING automáticamente
         return page.map(this::convertToDTOWithResident);
     }
 
