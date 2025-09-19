@@ -20,7 +20,7 @@ const HeroSection = () => {
         className="absolute top-0 left-0 w-full h-full object-cover blur-[1.5px]"
         aria-label="Demo mostrando cómo generar un pago en Ediflow"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/30"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-black/40"></div>
 
       {/* Contenido encima del video */}
       <div className="relative z-10 max-w-7xl mx-auto px-6 py-32 flex flex-col md:flex-row items-center justify-between gap-12 h-full">
