@@ -13,7 +13,7 @@ import {
   Cell,
   Legend,
 } from "recharts";
-import { CheckCircle, Clock, XCircle, DollarSign, AlertCircle, ArrowUp, ArrowDown } from "lucide-react";
+import { CheckCircle, Clock, XCircle, DollarSign, AlertCircle } from "lucide-react";
 import useFetch from "../../hooks/useFetch";
 
 const PaymentsChart = () => {
@@ -90,13 +90,13 @@ const PaymentsChart = () => {
       const total = payload.find((p) => p.dataKey === "TOTAL")?.value || 0;
 
       return (
-        <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200 text-sm">
+        <div className="bg-white p-4 rounded-2xl shadow-xl border border-gray-200 text-sm space-y-2 w-52">
           <p className="font-semibold text-gray-700">Día: <span className="font-normal">{label}</span></p>
           <p className="font-semibold text-edigreen">Pagados: <span className="font-normal">${paid.toLocaleString("es-UY")}</span></p>
           <p className="font-semibold text-ediorange">Pendientes: <span className="font-normal">${pending.toLocaleString("es-UY")}</span></p>
           <p className="font-semibold text-red-600">Cancelados: <span className="font-normal">${cancelled.toLocaleString("es-UY")}</span></p>
           <p className="font-semibold text-red-800">Vencidos: <span className="font-normal">${overdue.toLocaleString("es-UY")}</span></p>
-          <p className="font-semibold text-ediblue mt-1 border-t border-gray-200 pt-1">Total: <span className="font-normal">${total.toLocaleString("es-UY")}</span></p>
+          <p className="font-semibold text-ediblue border-t border-gray-200 pt-1 mt-1">Total: <span className="font-normal">${total.toLocaleString("es-UY")}</span></p>
         </div>
       );
     }
@@ -104,13 +104,19 @@ const PaymentsChart = () => {
   };
 
   const StatCard = ({ icon: Icon, label, value, description, highlight }) => (
-    <div className={`flex-1 min-w-[120px] bg-white p-3 rounded-xl shadow transition-transform transform ${highlight ? "scale-105 shadow-2xl" : "hover:scale-105 hover:shadow-xl"} cursor-pointer relative group`}>
-      <div className="flex flex-col items-center justify-center">
-        <Icon className="mb-1 w-5 h-5" />
-        <p className="font-semibold">{label}</p>
-        <p className="text-lg font-bold">{value}</p>
+    <div
+      className={`flex-1 min-w-[130px] p-4 rounded-2xl cursor-pointer relative group transition-transform duration-300 ${
+        highlight
+          ? "bg-gradient-to-tr from-blue-50 to-blue-100 shadow-2xl scale-105"
+          : "bg-white shadow-md hover:shadow-xl hover:scale-105"
+      }`}
+    >
+      <div className="flex flex-col items-center justify-center gap-2">
+        <Icon className="w-6 h-6 text-indigo-500" />
+        <p className="font-medium text-gray-700">{label}</p>
+        <p className="text-lg font-bold text-gray-900">${value.toLocaleString("es-UY")}</p>
       </div>
-      <div className="absolute left-1/2 -translate-x-1/2 -translate-y-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-100 border border-gray-300 rounded p-2 text-xs text-gray-700 w-max max-w-[180px] text-center pointer-events-none z-10">
+      <div className="absolute left-1/2 -translate-x-1/2 -translate-y-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-200 rounded-lg p-2 text-xs text-gray-700 text-center max-w-[180px] pointer-events-none z-10">
         {description}
       </div>
     </div>
@@ -122,48 +128,64 @@ const PaymentsChart = () => {
   ];
   const pieColors = ["#10B981", "#F97316"];
 
-  // Encuentra día con más pagos pendientes
   const maxPendingDay = chartData.reduce((acc, day) => {
     if (!acc || day.PENDING > acc.PENDING) return day;
     return acc;
   }, null);
 
   return (
-    <section className="bg-white rounded-3xl shadow-xl p-4 md:p-6 w-full mt-6 max-w-full md:max-w-[900px] mx-auto">
-      <h2 className="text-xl md:text-2xl font-semibold mb-4 text-gray-800 select-none">Pagos del mes</h2>
+    <section className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full mt-6 max-w-full md:max-w-[950px] mx-auto">
+      <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-gray-800 select-none">Pagos del mes</h2>
 
-      <div className="flex flex-col sm:flex-row flex-wrap gap-4 mb-6">
-        <StatCard icon={DollarSign} label="Total" value={`$${totals.total.toLocaleString("es-UY")}`} description="Suma total de todos los pagos registrados este mes" highlight={hoveredBar === "TOTAL"} />
-        <StatCard icon={CheckCircle} label="Pagados" value={`$${totals.paid.toLocaleString("es-UY")}`} description={`Pagos completados este mes (${((totals.paid / totals.total) * 100 || 0).toFixed(1)}%)`} highlight={hoveredBar === "PAID"} />
-        <StatCard icon={Clock} label="Pendientes" value={`$${totals.pending.toLocaleString("es-UY")}`} description={`Pagos pendientes este mes (${((totals.pending / totals.total) * 100 || 0).toFixed(1)}%)`} highlight={hoveredBar === "PENDING"} />
-        <StatCard icon={XCircle} label="Cancelados" value={`$${totals.cancelled.toLocaleString("es-UY")}`} description={`Pagos cancelados este mes (${((totals.cancelled / totals.total) * 100 || 0).toFixed(1)}%)`} highlight={hoveredBar === "CANCELLED"} />
-        <StatCard icon={AlertCircle} label="Vencidos" value={`$${totals.overdue.toLocaleString("es-UY")}`} description={`Pagos vencidos este mes (${((totals.overdue / totals.total) * 100 || 0).toFixed(1)}%)`} highlight={hoveredBar === "OVERDUE"} />
+      <div className="flex flex-col sm:flex-row flex-wrap gap-5 mb-6">
+        <StatCard icon={DollarSign} label="Total" value={totals.total} description="Suma total de todos los pagos registrados este mes" highlight={hoveredBar === "TOTAL"} />
+        <StatCard icon={CheckCircle} label="Pagados" value={totals.paid} description={`Pagos completados este mes (${((totals.paid / totals.total) * 100 || 0).toFixed(1)}%)`} highlight={hoveredBar === "PAID"} />
+        <StatCard icon={Clock} label="Pendientes" value={totals.pending} description={`Pagos pendientes este mes (${((totals.pending / totals.total) * 100 || 0).toFixed(1)}%)`} highlight={hoveredBar === "PENDING"} />
+        <StatCard icon={XCircle} label="Cancelados" value={totals.cancelled} description={`Pagos cancelados este mes (${((totals.cancelled / totals.total) * 100 || 0).toFixed(1)}%)`} highlight={hoveredBar === "CANCELLED"} />
+        <StatCard icon={AlertCircle} label="Vencidos" value={totals.overdue} description={`Pagos vencidos este mes (${((totals.overdue / totals.total) * 100 || 0).toFixed(1)}%)`} highlight={hoveredBar === "OVERDUE"} />
       </div>
 
-      <ResponsiveContainer width="100%" height={400}>
-        <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+      <ResponsiveContainer width="100%" height={420}>
+        <ComposedChart data={chartData} margin={{ top: 15, right: 30, left: 0, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis dataKey="day" tick={{ fill: "#4b5563", fontWeight: "600" }} axisLine={{ stroke: "#d1d5db" }} tickLine={false} padding={{ left: 10, right: 10 }} />
           <YAxis tick={{ fill: "#4b5563", fontWeight: "600" }} axisLine={{ stroke: "#d1d5db" }} tickLine={false} width={90} tickFormatter={(value) => `$${value.toLocaleString("es-UY")}`} />
           <Tooltip content={<CustomTooltip />} />
-          <Bar dataKey="PAID" stackId="a" fill="#10B981" radius={[4, 4, 0, 0]} cursor="pointer" onMouseEnter={() => setHoveredBar("PAID")} onMouseLeave={() => setHoveredBar(null)} />
-          <Bar dataKey="PENDING" stackId="a" fill="#F97316" radius={[4, 4, 0, 0]} cursor="pointer" onMouseEnter={() => setHoveredBar("PENDING")} onMouseLeave={() => setHoveredBar(null)} />
-          <Bar dataKey="CANCELLED" stackId="a" fill="#EF4444" radius={[4, 4, 0, 0]} cursor="pointer" onMouseEnter={() => setHoveredBar("CANCELLED")} onMouseLeave={() => setHoveredBar(null)} />
-          <Bar dataKey="OVERDUE" stackId="a" fill="#B91C1C" radius={[4, 4, 0, 0]} cursor="pointer" onMouseEnter={() => setHoveredBar("OVERDUE")} onMouseLeave={() => setHoveredBar(null)} />
-          <Line type="monotone" dataKey="TOTAL" stroke="#2563EB" strokeWidth={2} dot={{ r: 3 }} onMouseEnter={() => setHoveredBar("TOTAL")} onMouseLeave={() => setHoveredBar(null)} />
+          <Bar dataKey="PAID" stackId="a" fill="url(#gradPaid)" radius={[6, 6, 0, 0]} cursor="pointer" onMouseEnter={() => setHoveredBar("PAID")} onMouseLeave={() => setHoveredBar(null)} />
+          <Bar dataKey="PENDING" stackId="a" fill="url(#gradPending)" radius={[6, 6, 0, 0]} cursor="pointer" onMouseEnter={() => setHoveredBar("PENDING")} onMouseLeave={() => setHoveredBar(null)} />
+          <Bar dataKey="CANCELLED" stackId="a" fill="url(#gradCancelled)" radius={[6, 6, 0, 0]} cursor="pointer" onMouseEnter={() => setHoveredBar("CANCELLED")} onMouseLeave={() => setHoveredBar(null)} />
+          <Bar dataKey="OVERDUE" stackId="a" fill="url(#gradOverdue)" radius={[6, 6, 0, 0]} cursor="pointer" onMouseEnter={() => setHoveredBar("OVERDUE")} onMouseLeave={() => setHoveredBar(null)} />
+          <Line type="monotone" dataKey="TOTAL" stroke="#2563EB" strokeWidth={2} dot={{ r: 4 }} onMouseEnter={() => setHoveredBar("TOTAL")} onMouseLeave={() => setHoveredBar(null)} />
+
+          <defs>
+            <linearGradient id="gradPaid" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#34D399" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="#10B981" stopOpacity={0.6} />
+            </linearGradient>
+            <linearGradient id="gradPending" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#FB923C" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="#F97316" stopOpacity={0.6} />
+            </linearGradient>
+            <linearGradient id="gradCancelled" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#F87171" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="#EF4444" stopOpacity={0.6} />
+            </linearGradient>
+            <linearGradient id="gradOverdue" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#B91C1C" stopOpacity={0.8} />
+              <stop offset="100%" stopColor="#991B1B" stopOpacity={0.6} />
+            </linearGradient>
+          </defs>
         </ComposedChart>
       </ResponsiveContainer>
 
-      {/* Mini indicador del día con más pendientes */}
       {maxPendingDay && maxPendingDay.PENDING > 0 && (
-        <p className="mt-2 text-sm text-red-600 font-semibold">
+        <p className="mt-4 text-sm text-red-600 font-semibold">
           Día con más pagos pendientes: <span className="font-bold">{maxPendingDay.day} (${maxPendingDay.PENDING.toLocaleString("es-UY")})</span>
         </p>
       )}
 
-      {/* Gráfico de pastel interactivo */}
-      <h3 className="text-lg md:text-xl font-semibold mt-8 mb-4 text-gray-800 select-none">Pagos Pendientes vs Pagados</h3>
-      <ResponsiveContainer width="100%" height={300}>
+      <h3 className="text-xl md:text-2xl font-semibold mt-10 mb-5 text-gray-800 select-none">Pagos Pendientes vs Pagados</h3>
+      <ResponsiveContainer width="100%" height={320}>
         <PieChart>
           <Pie
             data={pieData}
@@ -171,12 +193,16 @@ const PaymentsChart = () => {
             nameKey="name"
             cx="50%"
             cy="50%"
-            outerRadius={80}
-            fill="#8884d8"
+            outerRadius={90}
             label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
           >
             {pieData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
+              <Cell
+                key={`cell-${index}`}
+                fill={pieColors[index % pieColors.length]}
+                stroke="#ffffff"
+                strokeWidth={2}
+              />
             ))}
           </Pie>
           <Legend verticalAlign="bottom" height={36} />

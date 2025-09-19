@@ -20,11 +20,11 @@ const ROLES = { ADMIN: "ADMIN", EMPLOYEE: "EMPLOYEE", SUPPORT: "SUPPORT" };
 
 // --- Colores consistentes por tipo de dato ---
 const COLORS = {
-  Edificios: "from-blue-500/30 to-indigo-600/70",
-  Residentes: "from-cyan-400/30 to-teal-500/70",
-  Pagos: "from-green-400/30 to-lime-500/70",
-  "Áreas Comunes": "from-orange-400/30 to-amber-500/70",
-  Portería: "from-purple-400/30 to-purple-600/70",
+  Edificios: "from-blue-600/40 to-blue-500/70",
+  Residentes: "from-cyan-500/40 to-teal-500/70",
+  Pagos: "from-green-500/40 to-lime-500/70",
+  "Áreas Comunes": "from-orange-400/40 to-amber-500/70",
+  Portería: "from-purple-500/40 to-purple-600/70",
 };
 
 // --- HELPERS ---
@@ -70,6 +70,13 @@ const SkeletonCard = () => (
 
 const SkeletonChart = () => (
   <div className="animate-pulse bg-gradient-to-r from-gray-200/40 via-gray-100/40 to-gray-200/40 rounded-xl shadow-md h-64"></div>
+);
+
+// --- MINI KPI COMPONENT ---
+const MiniKPI = ({ label, number, color }) => (
+  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${color} mr-1`}>
+    {label}: {number}
+  </span>
 );
 
 // --- HOOK PERSONALIZADO PARA FETCH ---
@@ -241,7 +248,14 @@ const DashboardOverview = () => {
                   {stat.icon}
                 </div>
                 {stat.type === "Pagos" && totals.pending > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full shadow">{totals.pending}</span>
+                  <span className="absolute -top-1 -right-1 bg-yellow-500 text-white text-[10px] px-1.5 py-0.5 rounded-full shadow" title={`${totals.pending} pagos pendientes`}>
+                    {totals.pending}
+                  </span>
+                )}
+                {stat.type === "Pagos" && totals.overdue > 0 && (
+                  <span className="absolute -top-5 -right-1 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded-full shadow" title={`${totals.overdue} pagos vencidos`}>
+                    {totals.overdue}
+                  </span>
                 )}
               </div>
               <p className="text-3xl font-bold text-gray-900 drop-shadow-sm">{stat.number}</p>
