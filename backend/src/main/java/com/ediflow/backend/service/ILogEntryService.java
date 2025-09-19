@@ -11,4 +11,5 @@ public interface ILogEntryService {
     List<LogEntryDTO> findByResident(Long residentId);
     List<LogEntryDTO> findByBuilding(Long buildingId);
     List<LogEntryDTO> findByBuildingAndType(Long buildingId, EntryType type);
+    List<LogEntryDTO> findAll();
 }

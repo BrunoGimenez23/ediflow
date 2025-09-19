@@ -55,4 +55,11 @@ public class CommonAreaController {
         commonAreaService.delete(id);
         return ResponseEntity.ok("Área común eliminada correctamente");
     }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/by-building/{buildingId}")
+    public ResponseEntity<List<CommonAreaDTO>> getByBuilding(@PathVariable Long buildingId) {
+        List<CommonAreaDTO> areas = commonAreaService.findByBuildingId(buildingId);
+        return ResponseEntity.ok(areas);
+    }
 }

@@ -113,4 +113,24 @@ public class LogEntryServiceImpl implements ILogEntryService {
         dto.setCreatedByName(entry.getCreatedBy() != null ? entry.getCreatedBy().getUsername() : null);
         return dto;
     }
+
+    @Override
+    public List<LogEntryDTO> findAll() {
+        List<LogEntry> logs = logEntryRepository.findAll();
+        return logs.stream().map(this::mapToDTO).toList();
+    }
+
+    private LogEntryDTO mapToDTO(LogEntry entry) {
+        LogEntryDTO dto = new LogEntryDTO();
+        dto.setId(entry.getId());
+        dto.setType(entry.getType());
+        dto.setDescription(entry.getDescription());
+        dto.setCreatedAt(entry.getCreatedAt());
+
+        // Ponemos nombres en lugar de IDs
+        dto.setResidentName(entry.getResident() != null ? entry.getResident().getUser().getFullName() : null);
+        dto.setCreatedByName(entry.getCreatedBy() != null ? entry.getCreatedBy().getFullName() : null);
+
+        return dto;
+    }
 }

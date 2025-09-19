@@ -133,7 +133,15 @@ public class CommonAreaServiceImpl implements ICommonAreaService {
                 .collect(Collectors.toList());
     }
 
-
+    @Override
+    public List<CommonAreaDTO> findByBuildingId(Long buildingId) {
+        // suponiendo que tenés un repositorio commonAreaRepository
+        List<CommonArea> areas = commonAreaRepo.findByBuildingId(buildingId);
+        // convertir a DTO
+        return areas.stream()
+                .map(this::mapToDTO) // mapToDTO convierte CommonArea a CommonAreaDTO
+                .toList();
+    }
 
 
 }

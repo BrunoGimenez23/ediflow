@@ -16,4 +16,7 @@ public interface ILogEntryRepository extends JpaRepository<LogEntry, Long> {
     List<LogEntry> findByBuildingIdOrderByCreatedAtDesc(@Param("buildingId") Long buildingId);
 
     List<LogEntry> findByBuildingIdAndTypeOrderByCreatedAtDesc(Long buildingId, EntryType type);
+
+    List<LogEntry> findByBuildingIdAndType(Long buildingId, EntryType type);
+
 }

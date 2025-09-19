@@ -76,4 +76,25 @@ public class LogEntryController {
 
         return ResponseEntity.ok(entries);
     }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasAnyRole('ADMIN','EMPLOYEE','SUPPORT','PORTER')")
+    public ResponseEntity<List<LogEntryDTO>> getAll(Principal principal) {
+        User requester = userService.findByEmail(principal.getName());
+
+        List<LogEntryDTO> entries;
+
+        if (requester.hasRole("ADMIN") || requester.hasRole("EMPLOYEE") || requester.hasRole("SUPPORT")) {
+            entries = service.findAll();
+        } else if (requester.hasRole("PORTER")) {
+            if (requester.getBuilding() == null) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            entries = service.findByBuilding(requester.getBuilding().getId());
+        } else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return ResponseEntity.ok(entries);
+    }
 }
