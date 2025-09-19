@@ -8,31 +8,38 @@ import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import { useNavigate } from "react-router-dom";
 
 import DashboardAdmin from '../../assets/images/paneladmin.png';
-import ListaResidentes from '../../assets/images/gestionapartamentos.png';
 import GestionPagos from '../../assets/images/pagosgestion.png';
 import ReservasResidente from '../../assets/images/reservasresidente.png';
 import DashboardResidente from '../../assets/images/panelresidente.png';
+import PaymentsChartImg from '../../assets/images/graficosadmin.png';
+import PorterPanel from '../../assets/images/panelportero.png';
+import AvisosReclamos from '../../assets/images/avisosyreclamos.png';
 
 const screenshots = [
   {
     src: DashboardAdmin,
     alt: "Dashboard principal del administrador de Ediflow",
-    caption: "Gestioná todos tus edificios y residentes desde un solo panel intuitivo.",
+    caption: "Tu panel central para controlar edificios, residentes, pagos, áreas comunes y portería de manera intuitiva.",
   },
   {
-    src: ListaResidentes,
-    alt: "Gestión de apartamentos con los residentes",
-    caption: "Organizá departamentos y residentes sin complicaciones.",
+    src: PaymentsChartImg,
+    alt: "Gráfico de pagos",
+    caption: "Visualizá pagos pagados, pendientes y vencidos de manera clara y rápida.",
   },
   {
-    src: GestionPagos,
-    alt: "Pantalla de gestión de pagos",
-    caption: "Mantené al día los pagos y controlá los estados de cada unidad fácilmente.",
+    src: AvisosReclamos,
+    alt: "Gestión de avisos y reclamos",
+    caption: "Recibí y gestioná avisos y reclamos de los residentes rápidamente.",
+  },
+  {
+    src: PorterPanel,
+    alt: "Panel de portería",
+    caption: "Registrá paquetes y visitas de manera sencilla.",
   },
   {
     src: DashboardResidente,
     alt: "Panel de usuario residente",
-    caption: "Permití a tus residentes ver pagos y reservas desde su propio panel.",
+    caption: "Permití a tus residentes ver pagos, paquetes, visitas, avisos y reservas desde su propio panel.",
   },
   {
     src: ReservasResidente,
@@ -54,20 +61,24 @@ const ScreenshotsSection = ({ id }) => {
         <Swiper
           modules={[Navigation, Pagination, Autoplay]}
           navigation
-          pagination={{ clickable: true }}
+          pagination={{ clickable: true, bulletActiveClass: 'bg-white' }}
           autoplay={{ delay: 6000, disableOnInteraction: false }}
           spaceBetween={30}
-          slidesPerView={1}
-          className="max-w-4xl mx-auto rounded-2xl shadow-xl shadow-black/40"
+          slidesPerView={1} // Solo un slide visible
+          className="max-w-4xl mx-auto rounded-2xl shadow-xl shadow-black/30"
         >
           {screenshots.map(({ src, alt, caption }, idx) => (
-            <SwiperSlide key={idx} className="transition-transform duration-300 hover:scale-[1.02]">
-              <img
-                src={src}
-                alt={alt}
-                className="w-full rounded-2xl object-contain shadow-md ring-1 ring-white/10"
-              />
-              <p className="mt-6 text-edigray text-base italic">{caption}</p>
+            <SwiperSlide key={idx} className="transition-transform duration-500 hover:scale-105 cursor-pointer">
+              <div className="relative">
+                <img
+                  src={src}
+                  alt={alt}
+                  className="w-full rounded-2xl object-contain shadow-md ring-1 ring-white/10"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-black/40 p-4 rounded-b-2xl">
+                  <p className="text-white text-base italic">{caption}</p>
+                </div>
+              </div>
             </SwiperSlide>
           ))}
         </Swiper>
@@ -75,7 +86,7 @@ const ScreenshotsSection = ({ id }) => {
         {/* CTA debajo del carrusel */}
         <div className="mt-14">
           <button
-            className="bg-white text-ediblue font-semibold py-4 px-10 rounded-xl hover:bg-edigray transition-all duration-300 shadow-md"
+            className="bg-white text-ediblue font-semibold py-4 px-10 rounded-xl hover:bg-edigray transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-1"
             onClick={() => navigate('/auth/register-admin')}
           >
             Empezar prueba gratis
