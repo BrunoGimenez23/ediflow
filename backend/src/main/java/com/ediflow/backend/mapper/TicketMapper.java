@@ -21,6 +21,11 @@ public class TicketMapper {
         ticket.setCreatedBy(user);
         ticket.setBuilding(building);
         ticket.setStatus(TicketStatus.PENDING);
+
+        // ✅ Asignar fecha de creación
+        ticket.setCreatedAt(java.time.LocalDateTime.now());
+        ticket.setUpdatedAt(java.time.LocalDateTime.now());
+
         return ticket;
     }
 

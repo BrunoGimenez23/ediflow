@@ -48,13 +48,17 @@ public class ITicketServiceImpl implements ITicketService {
                 .orElseThrow(() -> new RuntimeException("Building not found"));
 
         Ticket ticket = ticketMapper.toEntity(dto, user, building);
+
+        // ✅ Asignar fechas si el mapper no lo hace
+        if (ticket.getCreatedAt() == null) ticket.setCreatedAt(java.time.LocalDateTime.now());
+        ticket.setUpdatedAt(java.time.LocalDateTime.now());
+
         Ticket saved = ticketRepository.save(ticket);
 
         // ✅ Enviar aviso por WhatsApp solo si es un aviso (NOTICE)
         if (ticket.getType() == TicketType.NOTICE) {
             List<Resident> residents = residentRepository.findByBuilding(building);
 
-            // Usamos Set para evitar números repetidos
             Set<String> phoneNumbers = residents.stream()
                     .map(Resident::getPhone)
                     .filter(Objects::nonNull)
@@ -63,8 +67,6 @@ public class ITicketServiceImpl implements ITicketService {
 
             for (String phone : phoneNumbers) {
                 if (!phone.isEmpty()) {
-                    System.out.println("[DEBUG] Enviando WhatsApp a: " + phone);
-                    System.out.println("[DEBUG] Mensaje: Nuevo aviso: " + ticket.getTitle() + " - " + ticket.getDescription());
                     sendWhatsappMessage(phone, ticket.getTitle(), ticket.getDescription());
                 }
             }
@@ -158,6 +160,7 @@ public class ITicketServiceImpl implements ITicketService {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));
         ticket.setStatus(status);
+        ticket.setUpdatedAt(java.time.LocalDateTime.now()); 
         return ticketMapper.toDTO(ticketRepository.save(ticket));
     }
 
