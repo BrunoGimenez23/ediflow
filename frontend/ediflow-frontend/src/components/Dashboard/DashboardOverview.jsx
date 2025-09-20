@@ -8,6 +8,7 @@ import { usePaymentContext } from "../../contexts/PaymentContext";
 import axios from 'axios';
 import StatCard from './StatCard';
 import PaymentsChart from './PaymentsChart';
+import TicketsOverview from './TicketsOverview'; // <-- import agregado
 
 // --- CONSTANTES ---
 const planFeatures = {
@@ -159,7 +160,11 @@ const useDashboardData = (token, buildingId) => {
 const DashboardOverview = () => {
   const { user, token } = useAuth();
   const { buildings = [], selectedBuilding, setSelectedBuilding } = useBuildingsContext();
-  const buildingId = selectedBuilding?.id || null;
+
+  // --- ESTADO LOCAL PARA CONTROLAR EL SELECT ---
+  const [localSelectedBuilding, setLocalSelectedBuilding] = useState(selectedBuilding || null);
+
+  const buildingId = localSelectedBuilding?.id || null;
 
   const {
     loading, error,
@@ -202,27 +207,23 @@ const DashboardOverview = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto flex flex-col gap-10">
 
-      {/* Totales globales */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">Totales de todos los edificios</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <StatCard title="Residentes" number={globalResidentCount} icon={<Users2 />} color={COLORS.Residentes} />
-          <StatCard title="Áreas Comunes" number={globalCommonAreasCount} icon={<MapPin />} color={COLORS["Áreas Comunes"]} />
-          <StatCard title="Portería" number={globalLogHistoryCount} icon={<ClipboardList />} color={COLORS.Portería} />
-          <StatCard title="Pagos" number={globalPaymentsCount} icon={<DollarSign />} color={COLORS.Pagos} />
-        </div>
-      </div>
-
       {/* Selector de edificio */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <h2 className="text-xl md:text-2xl font-bold text-gray-800">Dashboard</h2>
         <div className="w-auto md:w-auto">
           <select
             className="w-full md:w-auto p-2 border rounded-lg shadow-sm bg-white text-gray-700"
-            value={selectedBuilding?.id || ""}
+            value={localSelectedBuilding?.id || ""}
             onChange={(e) => {
-              const b = buildings.find(b => b.id === Number(e.target.value));
-              setSelectedBuilding(b);
+              const value = e.target.value;
+              if (value === "") {
+                setLocalSelectedBuilding(null); // Todos los edificios
+                setSelectedBuilding(null);
+              } else {
+                const b = buildings.find(b => b.id === Number(value)) || null;
+                setLocalSelectedBuilding(b);
+                setSelectedBuilding(b);
+              }
             }}
           >
             <option value="">Todos los edificios</option>
@@ -282,6 +283,14 @@ const DashboardOverview = () => {
           <div className="bg-white/50 backdrop-blur-md rounded-xl shadow-lg overflow-hidden transition-all duration-700 animate-fade-in">
             <PaymentsChart />
           </div>
+        </div>
+      )}
+
+      {/* Tickets y reclamos */}
+      {user?.role?.toUpperCase() === ROLES.ADMIN && (
+        <div className="flex flex-col gap-4 mt-8">
+          <h2 className="text-2xl font-semibold text-indigo-600">Tickets y reclamos</h2>
+          <TicketsOverview buildingId={buildingId} />
         </div>
       )}
 
