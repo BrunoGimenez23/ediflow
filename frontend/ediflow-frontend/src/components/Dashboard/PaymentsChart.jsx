@@ -16,8 +16,11 @@ import {
 import { CheckCircle, Clock, XCircle, DollarSign, AlertCircle } from "lucide-react";
 import useFetch from "../../hooks/useFetch";
 
-const PaymentsChart = () => {
-  const { data: payments, loading, error } = useFetch("/payment/all");
+const PaymentsChart = ({ buildingId }) => {
+  // 👉 ahora usa el buildingId como filtro
+  const { data: payments, loading, error } = useFetch(
+    buildingId ? `/payment/all?buildingId=${buildingId}` : "/payment/all"
+  );
   const [hoveredBar, setHoveredBar] = useState(null);
 
   const chartData = useMemo(() => {

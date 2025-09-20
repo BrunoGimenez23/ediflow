@@ -281,7 +281,7 @@ const DashboardOverview = () => {
         <div className="flex flex-col gap-4">
           <h2 className="text-2xl font-semibold text-indigo-600">Resumen de pagos</h2>
           <div className="bg-white/50 backdrop-blur-md rounded-xl shadow-lg overflow-hidden transition-all duration-700 animate-fade-in">
-            <PaymentsChart />
+            <PaymentsChart buildingId={buildingId} />
           </div>
         </div>
       )}
