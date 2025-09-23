@@ -1,56 +1,55 @@
 import React, { useState } from "react";
-import { ORDER_STATUS_MAP } from "../../constants/marketplace";
-import QuoteForm from "./QuoteForm"; // asumimos que tienes QuoteForm separado
+import QuoteForm from "./QuoteForm";
 
 const OrderCard = ({ order, createQuoteFromRequest }) => {
   const [showForm, setShowForm] = useState(false);
-  const statusLabel = ORDER_STATUS_MAP[order.status] || "Desconocido";
 
-  const toggleForm = () => setShowForm(!showForm);
+  const toggleForm = () => setShowForm(prev => !prev);
 
-  // Validación antes de abrir el formulario
-  if (!order?.id) {
-    console.warn("OrderCard: order.id no definido", order);
-  }
+  const status = order.status?.toString?.() ?? "UNKNOWN";
+
+  // Mostrar botón solo si el estado es REQUESTED
+  const canCreateQuote = status.toUpperCase() === "REQUESTED";
+
+  const statusColors = {
+    REQUESTED: "bg-yellow-100 text-yellow-800",
+    QUOTED: "bg-blue-100 text-blue-800",
+    ACCEPTED: "bg-green-500 text-white",
+    PAID: "bg-teal-500 text-white",
+    SCHEDULED: "bg-indigo-200 text-indigo-800",
+    IN_PROGRESS: "bg-purple-200 text-purple-800",
+    COMPLETED: "bg-gray-300 text-gray-800",
+  };
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-4 mb-4">
-      <div className="flex justify-between items-center mb-2">
-        <h4 className="text-lg font-semibold">{order.title || order.description}</h4>
-        <span
-          className={`px-2 py-1 rounded text-sm ${
-            order.status === "COMPLETED" || order.status === "ACCEPTED"
-              ? "bg-green-500 text-white"
-              : order.status === "REJECTED"
-              ? "bg-red-500 text-white"
-              : "bg-yellow-200 text-black"
-          }`}
-        >
-          {statusLabel}
-        </span>
+    <div className="bg-white shadow-md rounded-lg p-5 mb-4 hover:shadow-lg transition flex flex-col md:flex-row justify-between md:items-center gap-4">
+      <div className="flex-1 space-y-2">
+        <p className="font-semibold text-lg">{order.title || order.description}</p>
+        <p className="text-gray-600"><strong>Proveedor:</strong> {order.providerName || "—"}</p>
+        <p className="text-gray-600">
+          <strong>Estado:</strong>{" "}
+          <span className={`px-2 py-1 rounded text-sm font-medium ${statusColors[status.toUpperCase()]}`}>
+            {status}
+          </span>
+        </p>
       </div>
 
-      <p className="text-sm text-gray-600">Proveedor: {order.providerName || "—"}</p>
-
-      <button
-        onClick={toggleForm}
-        className="mt-2 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition"
-      >
-        {showForm ? "Cerrar Formulario" : "Crear Cotización"}
-      </button>
-
-      {showForm && order?.id ? (
-        <div className="mt-3">
-          <QuoteForm
-            order={order}
-            createQuoteFromRequest={createQuoteFromRequest}
-          />
+      {canCreateQuote && (
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+          <button
+            onClick={toggleForm}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition shadow-md"
+          >
+            {showForm ? "Cerrar Formulario" : "Crear Cotización"}
+          </button>
         </div>
-      ) : showForm && !order?.id ? (
-        <p className="mt-3 text-red-500 font-semibold">
-          Error: no se puede crear cotización, orderId no definido.
-        </p>
-      ) : null}
+      )}
+
+      {showForm && canCreateQuote && (
+        <div className="mt-3 w-full md:mt-0 md:w-2/3">
+          <QuoteForm order={order} createQuoteFromRequest={createQuoteFromRequest} />
+        </div>
+      )}
     </div>
   );
 };
