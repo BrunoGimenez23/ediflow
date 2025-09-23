@@ -1,11 +1,14 @@
 package com.ediflow.backend.auth;
 
 import com.ediflow.backend.configuration.JwtService;
+import com.ediflow.backend.dto.marketplace.RegisterRequestDTO;
 import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.entity.*;
+import com.ediflow.backend.entity.marketplace.Provider;
 import com.ediflow.backend.enums.Role;
 import com.ediflow.backend.mapper.UserMapper;
 import com.ediflow.backend.repository.*;
+import com.ediflow.backend.repository.marketplace.ProviderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,6 +30,7 @@ public class AuthenticationService {
     private final IApartmentRepository apartmentRepository;
     private final IResidentRepository residentRepository;
     private final InvitationCodeRepository invitationCodeRepository;
+    private final ProviderRepository providerRepository;
 
 
     public AuthenticationResponse registerAdmin(RegisterRequest request) {
@@ -204,7 +208,42 @@ public class AuthenticationService {
                 .build();
     }
 
+    public AuthenticationResponse registerProvider(com.ediflow.backend.dto.marketplace.RegisterRequestDTO request) {
+        // 1. Crear usuario base
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .fullName(request.getFullName())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(Role.PROVIDER)
+                .build();
 
+        userRepository.save(user);
+
+        // 2. Crear provider asociado al usuario
+        Provider provider = new Provider();
+        provider.setName(request.getCompanyName());
+        provider.setContactName(request.getContactName());
+        provider.setEmail(request.getEmail());
+        provider.setPhone(request.getPhone());
+        provider.setAddress(request.getAddress());
+        provider.setCategory(request.getCategory());
+        provider.setLocation(request.getLocation());
+        provider.setUser(user);
+
+        providerRepository.save(provider);
+
+        // 3. Generar token JWT
+        String jwtToken = jwtService.generateToken(user);
+
+        // 4. Devolver respuesta
+        return AuthenticationResponse.builder()
+                .token(jwtToken)
+                .role(user.getRole())
+                .email(user.getEmail())
+                .username(user.getUsername())
+                .build();
+    }
 
 
 

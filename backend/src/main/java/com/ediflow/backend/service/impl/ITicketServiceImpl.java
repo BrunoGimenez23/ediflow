@@ -160,7 +160,7 @@ public class ITicketServiceImpl implements ITicketService {
         Ticket ticket = ticketRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));
         ticket.setStatus(status);
-        ticket.setUpdatedAt(java.time.LocalDateTime.now()); 
+        ticket.setUpdatedAt(java.time.LocalDateTime.now());
         return ticketMapper.toDTO(ticketRepository.save(ticket));
     }
 

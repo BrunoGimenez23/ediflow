@@ -5,7 +5,8 @@ package com.ediflow.backend.enums;
         EMPLOYEE,
         SUPPORT,
         RESIDENT,
-        PORTER
+        PORTER,
+        PROVIDER
 
     }
 

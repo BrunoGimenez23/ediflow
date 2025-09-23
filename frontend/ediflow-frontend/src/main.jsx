@@ -12,24 +12,27 @@ import { ResidentProvider } from './contexts/ResidentContext.jsx'
 import { ReservationsProvider } from './contexts/ReservationsContext.jsx'
 import { Toaster } from 'react-hot-toast'
 import { Analytics } from '@vercel/analytics/react';
+import { MarketplaceProvider } from './contexts/marketplace/MarketplaceContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <ReservationsProvider>
-          <ResidentProvider>
-            <BuildingProvider>
-              <ApartmentProvider>
-                <PaymentProvider>
-                  <App />
-                  <Analytics />
-                  <Toaster position="top-right" />
-                </PaymentProvider>
-              </ApartmentProvider>
-            </BuildingProvider>
-          </ResidentProvider>
-        </ReservationsProvider>
+        <BuildingProvider>        
+          <MarketplaceProvider>
+            <ReservationsProvider>
+              <ResidentProvider>
+                <ApartmentProvider>
+                  <PaymentProvider>
+                    <App />
+                    <Analytics />
+                    <Toaster position="top-right" />
+                  </PaymentProvider>
+                </ApartmentProvider>
+              </ResidentProvider>
+            </ReservationsProvider>
+          </MarketplaceProvider>
+        </BuildingProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

@@ -1,5 +1,6 @@
 package com.ediflow.backend.auth;
 
+import com.ediflow.backend.dto.marketplace.RegisterRequestDTO;
 import com.ediflow.backend.dto.user.UserDTO;
 import com.ediflow.backend.dto.user.UserResponseDTO;
 import com.ediflow.backend.entity.AdminAccount;
@@ -8,6 +9,7 @@ import com.ediflow.backend.enums.Role;
 import com.ediflow.backend.mapper.UserMapper;
 import com.ediflow.backend.repository.IAdminRepository;
 import com.ediflow.backend.repository.IUserRepository;
+import com.ediflow.backend.repository.marketplace.ProviderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -27,6 +29,7 @@ public class AuthenticationController {
     private final IUserRepository userRepository;
 
     private final IAdminRepository adminRepository;
+    private final ProviderRepository providerRepository;
 
     @PostMapping("/register-admin")
     public ResponseEntity<AuthenticationResponse> registerAdmin(@RequestBody RegisterRequest request) {
@@ -81,6 +84,7 @@ public class AuthenticationController {
         Integer trialDaysLeft = null;
         String plan = null;
         Long buildingId = null;
+        Long providerId = null; // 👈 nuevo
 
         if (user.getRole() == Role.ADMIN) {
             System.out.println("Entrando en bloque ADMIN");
@@ -137,6 +141,14 @@ public class AuthenticationController {
             buildingId = user.getResident().getBuilding().getId();
         }
 
+        // 👇 Nuevo bloque para Provider
+        if (user.getRole() == Role.PROVIDER) {
+            var providerOpt = providerRepository.findByUserId(user.getId());
+            if (providerOpt.isPresent()) {
+                providerId = providerOpt.get().getId();
+            }
+        }
+
         UserDTO userDTO = UserDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
@@ -147,8 +159,16 @@ public class AuthenticationController {
                 .trialDaysLeft(trialDaysLeft)
                 .plan(plan)
                 .buildingId(buildingId)
+                .providerId(providerId)
                 .build();
 
         return ResponseEntity.ok(userDTO);
+    }
+
+
+    @PostMapping("/register-provider")
+    public ResponseEntity<AuthenticationResponse> registerProvider(@RequestBody RegisterRequestDTO request) {
+        AuthenticationResponse response = authenticationService.registerProvider(request);
+        return ResponseEntity.ok(response);
     }
 }

@@ -1,58 +1,77 @@
-import { Route, Routes, Navigate } from 'react-router-dom'
-import './App.css'
+import { Route, Routes, Navigate } from "react-router-dom";
+import "./App.css";
 
-import AdminDashboard from './pages/admin/AdminDashboard'
-import Buildings from './pages/admin/Buildings'
-import Layout from './layout/Layout'
-import PublicLayout from './layout/PublicLayout'
-import Register from './pages/auth/Register'
-import Home from './pages/home/Home'
-import Login from './pages/auth/Login'
-import Residents from './pages/admin/Residents'
-import Apartments from './pages/admin/Apartments'
-import Payments from './pages/admin/Payments'
-import ResidentDashboard from './pages/resident/ResidentDashboard'
-import CommonAreasPage from './pages/admin/CommonAreasPage'
-import MyPayments from './pages/resident/MyPayments'
-import MyReservations from './pages/resident/MyReservations'
-import AdminReservationsPanel from './components/admin/AdminReservationsPanel'
-import UserManagement from './components/admin/UserManagement'
-import AssignPlanPage from './pages/admin/AssignPlanPage'
-import PricingPlans from './components/landing/PricingPlans'
-import UpgradePlansContainer from './components/common/UpgradePlansContainer'
-import PlanConfirmationPage from './pages/admin/PlanConfirmationPage'
-import MyLogEntries from './components/porteria/MyLogEntries'
-import LogHistory from './components/porteria/LogHistory'
-import { useAuth } from './contexts/AuthContext'
-import { useBuildingsContext } from "./contexts/BuildingContext";
-import PorterDashboard from './pages/porter/PorterDashboard'
-import PaymentReport from './pages/admin/PaymentReport'
-import TicketDashboard from './components/resident/TicketDashboard'
-import PrivacyPolicy from './pages/public/PrivacyPolicy'
+// Layouts
+import Layout from "./layout/Layout";
+import PublicLayout from "./layout/PublicLayout";
+
+// Auth
+import { useAuth } from "./contexts/AuthContext";
+import RegisterSelector from "./pages/auth/RegisterSelector";
+import Register from "./pages/auth/Register";
+import RegisterProviderForm from "./components/auth/RegisterProviderForm";
+import Login from "./pages/auth/Login";
+
+// Public
+import Home from "./pages/home/Home";
+import PrivacyPolicy from "./pages/public/PrivacyPolicy";
+
+// Admin
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import Buildings from "./pages/admin/Buildings";
+import Residents from "./pages/admin/Residents";
+import Apartments from "./pages/admin/Apartments";
+import Payments from "./pages/admin/Payments";
+import CommonAreasPage from "./pages/admin/CommonAreasPage";
+import AdminReservationsPanel from "./components/admin/AdminReservationsPanel";
+import UserManagement from "./components/admin/UserManagement";
+import AssignPlanPage from "./pages/admin/AssignPlanPage";
+import PricingPlans from "./components/landing/PricingPlans";
+import UpgradePlansContainer from "./components/common/UpgradePlansContainer";
+import PlanConfirmationPage from "./pages/admin/PlanConfirmationPage";
+import MyLogEntries from "./components/porteria/MyLogEntries";
+import LogHistory from "./components/porteria/LogHistory";
+import PaymentReport from "./pages/admin/PaymentReport";
+import TicketDashboard from "./components/resident/TicketDashboard";
+
+// Resident
+import ResidentDashboard from "./pages/resident/ResidentDashboard";
+import MyPayments from "./pages/resident/MyPayments";
+import MyReservations from "./pages/resident/MyReservations";
+
+// Porter
+import PorterDashboard from "./pages/porter/PorterDashboard";
+
+// Marketplace
+import MarketplaceLayout from "./pages/marketplace/MarketplaceLayout";
+import ProvidersPage from "./pages/marketplace/ProvidersPage";
+import OrdersPage from "./pages/marketplace/OrdersPage";
+import QuotesPage from "./pages/marketplace/QuotesPage";
+
+// Provider
+import MarketplaceDashboard from "./pages/marketplace/MarketplaceDashboard";
+import ProviderDashboard from "./pages/marketplace/ProviderDashboard";
 
 function App() {
   const { user } = useAuth();
-  const { selectedBuilding } = useBuildingsContext();
-
+  
   return (
     <Routes>
-      {/* Home directo, sin layout */}
-      <Route path='/' element={<Home />} />
+      {/* Public */}
+      <Route path="/" element={<Home />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
 
-      {/* Política de privacidad pública */}
-  <Route path='/privacy-policy' element={<PrivacyPolicy />} />
-
-      {/* Login y Register con PublicLayout */}
+      {/* Auth routes */}
       <Route element={<PublicLayout />}>
+        <Route path="/auth/register" element={<RegisterSelector />} />
         <Route path="/auth/register-admin" element={<Register />} />
+        <Route path="/auth/register-provider" element={<RegisterProviderForm />} />
         <Route path="/auth/login" element={<Login />} />
       </Route>
 
-      {/* Rutas de administrador con Layout */}
-      <Route path='/admin' element={<Layout />}>
+      {/* Admin routes */}
+      <Route path="/admin" element={<Layout />}>
         <Route index element={<AdminDashboard />} />
-        <Route path="reservas" element={<AdminReservationsPanel />} />
-        <Route path="common-areas/all" element={<CommonAreasPage />} />
         <Route path="buildings" element={<Buildings />} />
         <Route path="residents" element={<Residents />} />
         <Route path="apartment" element={<Apartments />} />
@@ -62,35 +81,35 @@ function App() {
         <Route path="assign-plan" element={<AssignPlanPage />} />
         <Route path="planes" element={<PricingPlans />} />
         <Route path="avisos" element={<TicketDashboard />} />
-
-        {/* Ruta dedicada para UpgradePlansContainer */}
         <Route path="upgrade-plan" element={<UpgradePlansContainer />} />
+        <Route path="common-areas/all" element={<CommonAreasPage />} />
+        <Route path="historial" element={<LogHistory userRole="ADMIN" />} />
+        <Route path="plan-confirmation/:planName" element={<PlanConfirmationPage />} />
 
-       <Route
-  path="/admin/historial"
-  element={
-    <LogHistory buildingId={selectedBuilding?.id} userRole="ADMIN" />
-  }
-/>
+        {/* Marketplace sub-routes */}
+        <Route path="marketplace" element={<MarketplaceLayout />}>
+          <Route index element={<ProvidersPage />} /> {/* default */}
+          <Route path="providers" element={<ProvidersPage />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="quotes" element={<QuotesPage />} />
+        </Route>
+
       </Route>
 
-      {/* PlanConfirmationPage usando params */}
-      <Route path="/admin/plan-confirmation/:planName" element={<PlanConfirmationPage />} />
-
-      {/* Rutas de residente */}
-      <Route path='/resident' element={<ResidentDashboard />} />
+      {/* Resident routes */}
+      <Route path="/resident" element={<ResidentDashboard />} />
       <Route path="/mis-pagos" element={<MyPayments />} />
       <Route path="/mis-reservas" element={<MyReservations />} />
       <Route path="/mis-registros" element={<MyLogEntries residentId={user?.residentId} />} />
       <Route path="/mis-tickets" element={<TicketDashboard />} />
 
-      {/* Rutas de portero usando PorterDashboard */}
-      <Route
-        path="/porter/*"
-        element={user?.role === "PORTER" ? <PorterDashboard /> : <Navigate to="/" />}
-      />
+      {/* Porter routes */}
+      <Route path="/porter/*" element={user?.role === "PORTER" ? <PorterDashboard /> : <Navigate to="/" />} />
+
+      {/* Provider dashboard */}
+      <Route path="/provider" element={user?.role === "PROVIDER" ? <ProviderDashboard /> : <Navigate to="/" />} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

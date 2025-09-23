@@ -57,24 +57,34 @@ public class SecurityConfiguration {
 
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        // endpoints públicos
                         .requestMatchers("/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // === Admin & Employee ===
                         .requestMatchers("/admin/users").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/admin/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
                         .requestMatchers("/users/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
                         .requestMatchers(HttpMethod.POST, "/users").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/payment/all").hasAuthority("ROLE_ADMIN")
 
-                        .requestMatchers(HttpMethod.POST, "/residents/register-or-replace").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
-                        .requestMatchers("/admin/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
-                        .requestMatchers("/admin/residents/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
-                        .requestMatchers("/admin/apartment/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
-                        .requestMatchers("/apartment/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
-                        .requestMatchers(HttpMethod.POST, "/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
-                        .requestMatchers(HttpMethod.PUT, "/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
-                        .requestMatchers(HttpMethod.DELETE, "/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+                        // === Marketplace ===
 
+                        // Providers (crearse como proveedor, ver lista de proveedores)
+                        .requestMatchers(HttpMethod.POST, "/marketplace/providers").hasAuthority("ROLE_PROVIDER")
+                        .requestMatchers(HttpMethod.GET, "/marketplace/providers").authenticated() // cualquiera logueado puede verlos
+
+                        // Orders
+                        .requestMatchers("/marketplace/orders/my").hasAuthority("ROLE_PROVIDER") // pedidos de un proveedor
+                        .requestMatchers("/marketplace/orders/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_PROVIDER")
+
+                        // Quotes
+                        .requestMatchers("/marketplace/quotes/my").hasAuthority("ROLE_PROVIDER") // proveedor ve las suyas
+                        .requestMatchers("/marketplace/quotes/requests").hasAuthority("ROLE_PROVIDER") // solicitudes que le llegan al proveedor
+                        .requestMatchers("/marketplace/quotes").hasAnyAuthority("ROLE_PROVIDER","ROLE_ADMIN", "ROLE_EMPLOYEE") // admin/empleado ven todas
+                        .requestMatchers("/marketplace/quotes/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_PROVIDER")
+
+                        // === Otros ===
                         .requestMatchers(HttpMethod.GET, "/buildings/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_RESIDENT")
                         .requestMatchers(HttpMethod.GET, "/reservations/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_SUPPORT", "ROLE_RESIDENT")
                         .requestMatchers("/resident/me").hasAnyAuthority("ROLE_RESIDENT", "ROLE_ADMIN")
@@ -82,8 +92,11 @@ public class SecurityConfiguration {
                         .requestMatchers("/payment/by-resident/**").hasAuthority("ROLE_RESIDENT")
                         .requestMatchers(HttpMethod.PUT, "/residents/fix-assign-admin-account").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
                         .requestMatchers("/auth/me").authenticated()
+
+                        // catch-all
                         .anyRequest().authenticated()
                 )
+
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

@@ -32,7 +32,8 @@ const LoginForm = () => {
         EMPLOYEE: "/admin",
         SUPPORT: "/admin",
         RESIDENT: "/resident",
-        PORTER: "/porter" // nueva ruta para porteros
+        PORTER: "/porter",
+        PROVIDER: "/provider" // nueva ruta para porteros
       };
 
       const route = roleRoutes[role];

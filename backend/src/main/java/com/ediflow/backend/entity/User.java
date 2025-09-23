@@ -1,14 +1,15 @@
 package com.ediflow.backend.entity;
 
-
+import com.ediflow.backend.entity.marketplace.Provider;
 import com.ediflow.backend.enums.Role;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
 
 import java.util.Collection;
 import java.util.List;
@@ -17,14 +18,13 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 @Builder
+@Entity
 @Table(name = "user")
 public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column
     private Long id;
 
     @Column(nullable = false, unique = true)
@@ -51,13 +51,17 @@ public class User implements UserDetails {
     @JsonIgnore
     private Resident resident;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private Provider provider;
+
     @ManyToOne
     @JoinColumn(name = "admin_account_id")
     @JsonIgnore
     private AdminAccount adminAccount;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "building_id")
+    @JsonIgnore
     private Building building;
 
     @Override
@@ -66,34 +70,22 @@ public class User implements UserDetails {
     }
 
     @Override
-    public String getPassword() {
-        return password;
-    }
+    public String getPassword() { return password; }
 
     @Override
-    public String getUsername() {
-        return email;
-    }
+    public String getUsername() { return email; }
 
     @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
+    public boolean isAccountNonExpired() { return true; }
 
     @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
+    public boolean isAccountNonLocked() { return true; }
 
     @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
+    public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() {
-        return true;
-    }
+    public boolean isEnabled() { return true; }
 
     public boolean hasRole(String roleName) {
         return this.role != null && this.role.name().equalsIgnoreCase(roleName);

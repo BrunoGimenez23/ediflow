@@ -23,5 +23,6 @@ public class UserDTO {
     private Integer trialDaysLeft;
     private String plan;
     private Long buildingId;
+    private Long providerId;
 
 }
