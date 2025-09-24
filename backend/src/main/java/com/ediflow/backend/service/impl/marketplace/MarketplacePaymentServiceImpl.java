@@ -38,11 +38,17 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
 
     private PaymentClient paymentClient;
 
+    // Token sandbox para producción
     @Value("${mercadopago.token.sandbox}")
-    private String mpTokenSandbox; // Token sandbox para prod de pruebas
+    private String mpTokenSandbox;
 
+    // URL pública del frontend (para redirecciones)
     @Value("${app.frontend.url}")
-    private String frontendUrl; // URL pública de prod
+    private String frontendUrl;
+
+    // URL pública del backend (para webhooks)
+    @Value("${app.backend.url}")
+    private String backendUrl;
 
     @PostConstruct
     public void init() {
@@ -58,7 +64,7 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
             Provider provider = providerRepository.findById(order.getProviderId())
                     .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
 
-            // ⚡ En producción con sandbox usamos el token de prueba
+            // ⚡ En producción con sandbox usamos el token de prueba Connect
             MercadoPagoConfig.setAccessToken(mpTokenSandbox);
 
             PreferenceClient preferenceClient = new PreferenceClient();
@@ -76,12 +82,14 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
                                     .currencyId("UYU")
                                     .build()
                     ))
+                    // URLs de redirección al frontend
                     .backUrls(PreferenceBackUrlsRequest.builder()
                             .success(frontendUrl + "/success")
                             .pending(frontendUrl + "/pending")
                             .failure(frontendUrl + "/failure")
                             .build())
-                    .notificationUrl(frontendUrl + "/marketplace/payment/webhook")
+                    // URL de notificación al backend
+                    .notificationUrl(backendUrl + "/marketplace/payment/webhook")
                     .autoReturn("approved")
                     .build();
 
