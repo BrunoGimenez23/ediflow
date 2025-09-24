@@ -18,7 +18,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration; 
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
+
 import java.util.List;
 
 @Configuration
@@ -32,34 +35,14 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http
-                .cors(cors -> cors.configurationSource(request -> {
-                    var corsConfig = new CorsConfiguration();
 
-                    // Orígenes permitidos exactos
-                    corsConfig.setAllowedOrigins(List.of(
-                            "http://localhost:5173",
-                            "https://ediflow23.vercel.app",
-                            "https://ediflow.uy"
-                    ));
-
-                    // Métodos permitidos
-                    corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-                    // Headers permitidos (incluyendo Authorization para JWT)
-                    corsConfig.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-
-                    // Permitir envío de cookies y Authorization headers
-                    corsConfig.setAllowCredentials(true);
-
-                    return corsConfig;
-                }))
-
+        http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors() // habilita CORS usando CorsFilter bean
+                .and()
                 .authorizeHttpRequests(auth -> auth
                         // endpoints públicos
                         .requestMatchers("/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // === Admin & Employee ===
                         .requestMatchers("/admin/users").hasAuthority("ROLE_ADMIN")
@@ -69,22 +52,14 @@ public class SecurityConfiguration {
                         .requestMatchers("/payment/all").hasAuthority("ROLE_ADMIN")
 
                         // === Marketplace ===
-
-                        // === Webhook Mercado Pago ===
                         .requestMatchers("/marketplace/payment/webhook").permitAll()
-
-                        // Providers (crearse como proveedor, ver lista de proveedores)
                         .requestMatchers(HttpMethod.POST, "/marketplace/providers").hasAuthority("ROLE_PROVIDER")
-                        .requestMatchers(HttpMethod.GET, "/marketplace/providers").authenticated() // cualquiera logueado puede verlos
-
-                        // Orders
-                        .requestMatchers("/marketplace/orders/my").hasAuthority("ROLE_PROVIDER") // pedidos de un proveedor
+                        .requestMatchers(HttpMethod.GET, "/marketplace/providers").authenticated()
+                        .requestMatchers("/marketplace/orders/my").hasAuthority("ROLE_PROVIDER")
                         .requestMatchers("/marketplace/orders/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_PROVIDER")
-
-                        // Quotes
-                        .requestMatchers("/marketplace/quotes/my").hasAuthority("ROLE_PROVIDER") // proveedor ve las suyas
-                        .requestMatchers("/marketplace/quotes/requests").hasAuthority("ROLE_PROVIDER") // solicitudes que le llegan al proveedor
-                        .requestMatchers("/marketplace/quotes").hasAnyAuthority("ROLE_PROVIDER","ROLE_ADMIN", "ROLE_EMPLOYEE") // admin/empleado ven todas
+                        .requestMatchers("/marketplace/quotes/my").hasAuthority("ROLE_PROVIDER")
+                        .requestMatchers("/marketplace/quotes/requests").hasAuthority("ROLE_PROVIDER")
+                        .requestMatchers("/marketplace/quotes").hasAnyAuthority("ROLE_PROVIDER","ROLE_ADMIN", "ROLE_EMPLOYEE")
                         .requestMatchers("/marketplace/quotes/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE", "ROLE_PROVIDER")
 
                         // === Otros ===
@@ -99,11 +74,11 @@ public class SecurityConfiguration {
                         // catch-all
                         .anyRequest().authenticated()
                 )
-
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .build();
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
     }
 
     @Bean
@@ -122,5 +97,24 @@ public class SecurityConfiguration {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
+    }
+
+    // --- Este bean reemplaza tu configuración de CORS en el filterChain ---
+    @Bean
+    public CorsFilter corsFilter() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "https://ediflow23.vercel.app",
+                "https://ediflow.uy"
+        ));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+
+        return new CorsFilter(source);
     }
 }
