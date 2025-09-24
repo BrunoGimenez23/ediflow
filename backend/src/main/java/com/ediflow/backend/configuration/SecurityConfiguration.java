@@ -70,6 +70,9 @@ public class SecurityConfiguration {
 
                         // === Marketplace ===
 
+                        // === Webhook Mercado Pago ===
+                        .requestMatchers("/marketplace/payment/webhook").permitAll()
+
                         // Providers (crearse como proveedor, ver lista de proveedores)
                         .requestMatchers(HttpMethod.POST, "/marketplace/providers").hasAuthority("ROLE_PROVIDER")
                         .requestMatchers(HttpMethod.GET, "/marketplace/providers").authenticated() // cualquiera logueado puede verlos

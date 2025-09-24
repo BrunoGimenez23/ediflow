@@ -208,4 +208,15 @@ public class MarketplaceController {
             return ResponseEntity.internalServerError().body(null);
         }
     }
+    @GetMapping("/orders/{id}")
+    public ResponseEntity<OrderResponseDTO> getOrderById(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(marketplaceService.getOrderById(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
 }

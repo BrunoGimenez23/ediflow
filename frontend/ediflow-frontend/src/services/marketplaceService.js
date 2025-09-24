@@ -102,6 +102,23 @@ export const useMarketplaceService = () => {
     return res.data;
   };
 
+  // === Pagos MercadoPago ===
+const createCheckout = async (orderId) => {
+  const res = await axios.post(`${API}/payment/checkout/${orderId}`, {}, authHeaders());
+
+  // 🔹 Si el backend devuelve un objeto { init_point: "..." }
+  if (res.data.init_point) return res.data.init_point;
+
+  // 🔹 Si el backend devuelve directamente la URL como string
+  return typeof res.data === "string" ? res.data : res.data.init_point;
+};
+
+// 🔹 Obtener una orden específica
+const getOrder = async (orderId) => {
+  const res = await axios.get(`${API}/orders/${orderId}`, authHeaders());
+  return res.data;
+};
+
   return {
     getProviders,
     createOrder,
@@ -116,6 +133,8 @@ export const useMarketplaceService = () => {
     getQuotesByProvider,
     getQuotesByLoggedProvider,
     getQuotesByAdmin,
-    getQuoteRequestsByProvider
+    getQuoteRequestsByProvider,
+    createCheckout,
+    getOrder
   };
 };

@@ -33,6 +33,7 @@ public class Provider {
 
     private Double rating = 0.0;
     private Integer totalReviews = 0;
+    private String mpAccessToken;
 
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

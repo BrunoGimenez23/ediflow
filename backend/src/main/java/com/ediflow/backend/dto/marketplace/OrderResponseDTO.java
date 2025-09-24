@@ -18,4 +18,5 @@ public class OrderResponseDTO {
     private LocalDateTime createdAt;
     private Double totalAmount;
     private LocalDateTime preferredDate;
+    private boolean paid;
 }

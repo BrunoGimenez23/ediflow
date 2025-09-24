@@ -241,6 +241,7 @@ public class MarketplaceServiceImpl implements MarketplaceService {
         dto.setStatus(serviceOrder.getStatus().name());
         dto.setCreatedAt(serviceOrder.getCreatedAt());
         dto.setTotalAmount(serviceOrder.getTotalAmount());
+        dto.setPaid(serviceOrder.isPaid());
 
         return dto;
     }
@@ -474,6 +475,12 @@ public class MarketplaceServiceImpl implements MarketplaceService {
                     dto.setOrderId(order.getId());
                     return dto;
                 }).collect(Collectors.toList());
+    }
+    @Override
+    public OrderResponseDTO getOrderById(Long orderId) {
+        ServiceOrder order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Orden no encontrada: " + orderId));
+        return mapOrder(order);
     }
 
 

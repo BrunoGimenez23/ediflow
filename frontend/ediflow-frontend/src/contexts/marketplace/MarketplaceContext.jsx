@@ -35,6 +35,7 @@ export const MarketplaceProvider = ({ children }) => {
         ? await marketplaceService.getOrders()
         : await marketplaceService.getOrdersByLoggedProvider();
       setOrders(Array.isArray(data) ? data : []);
+      console.log("💡 Orders cargadas:", data);
     } catch (err) {
       console.error(err);
       setOrders([]);
@@ -42,28 +43,26 @@ export const MarketplaceProvider = ({ children }) => {
   }, [user, marketplaceService]);
 
   const fetchQuotes = useCallback(async () => {
-  if (!user) return setQuotes([]);
-  try {
-    const data = user.role === "ADMIN"
-  ? await marketplaceService.getQuotesByAdmin()
-  : await marketplaceService.getQuotesByLoggedProvider();
+    if (!user) return setQuotes([]);
+    try {
+      const data = user.role === "ADMIN"
+        ? await marketplaceService.getQuotesByAdmin()
+        : await marketplaceService.getQuotesByLoggedProvider();
 
-    // 🔹 Normalizar status y asegurar campos mínimos
-    const normalized = Array.isArray(data) ? data.map(q => ({
-      ...q,
-      status: q.status?.toUpperCase() || "UNKNOWN",
-      amount: q.amount ?? q.total ?? 0,
-      message: q.message || "—",
-    })) : [];
+      const normalized = Array.isArray(data) ? data.map(q => ({
+        ...q,
+        status: q.status?.toUpperCase() || "UNKNOWN",
+        amount: q.amount ?? q.total ?? 0,
+        message: q.message || "—",
+      })) : [];
 
-    console.log("💡 Quotes recibidas:", normalized);
-
-    setQuotes(normalized);
-  } catch (err) {
-    console.error(err);
-    setQuotes([]);
-  }
-}, [user, marketplaceService]);
+      console.log("💡 Quotes recibidas:", normalized);
+      setQuotes(normalized);
+    } catch (err) {
+      console.error(err);
+      setQuotes([]);
+    }
+  }, [user, marketplaceService]);
 
   const fetchQuoteRequests = useCallback(async () => {
     if (!user || user.role !== "PROVIDER") return setQuoteRequests([]);
@@ -87,51 +86,103 @@ export const MarketplaceProvider = ({ children }) => {
     }
   };
 
-  // 🔹 Corrección: Propagar el error al componente
   const createQuoteFromRequest = async ({ orderId, amount, message }) => {
-  try {
-    const newQuote = await marketplaceService.createQuote({ orderId, amount, message });
+    try {
+      const newQuote = await marketplaceService.createQuote({ orderId, amount, message });
 
-    const normalized = {
-      ...newQuote,
-      status: newQuote.status?.toUpperCase() || "UNKNOWN",
-      amount: newQuote.amount ?? newQuote.total ?? 0,
-      message: newQuote.message || "—",
-    };
+      const normalized = {
+        ...newQuote,
+        status: newQuote.status?.toUpperCase() || "UNKNOWN",
+        amount: newQuote.amount ?? newQuote.total ?? 0,
+        message: newQuote.message || "—",
+      };
 
-    setQuotes(prev => [normalized, ...prev]);
-    setQuoteRequests(prev => prev.filter(q => q.id !== newQuote.requestId));
-  } catch (err) {
-    console.error(err);
-    throw new Error("No se pudo crear la cotización");
-  }
-};
+      setQuotes(prev => [normalized, ...prev]);
+      setQuoteRequests(prev => prev.filter(q => q?.id !== newQuote.requestId));
+    } catch (err) {
+      console.error(err);
+      throw new Error("No se pudo crear la cotización");
+    }
+  };
 
   const acceptQuote = async (quoteId) => {
+    try {
+      const updatedQuote = await marketplaceService.acceptQuote(quoteId);
+      setQuotes(prev => prev.map(q => {
+        if (q?.id === quoteId) return { ...q, status: "ACCEPTED" };
+        if (q?.orderId === updatedQuote?.orderId) return { ...q, status: "REJECTED" };
+        return q;
+      }));
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo aceptar la cotización");
+    }
+  };
+
+  const rejectQuote = async (quoteId) => {
+    try {
+      await marketplaceService.rejectQuote(quoteId);
+      setQuotes(prev => prev.map(q => (q?.id === quoteId ? { ...q, status: "REJECTED" } : q)));
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo rechazar la cotización");
+    }
+  };
+
+  // 🔹 Función para actualizar orden localmente
+  const updateOrder = (updatedOrder) => {
+    if (!updatedOrder?.id) return;
+    setOrders(prev =>
+      prev.map(o => (o?.id === updatedOrder.id ? { ...o, ...updatedOrder } : o))
+    );
+  };
+
+  // 🔹 Pagar orden
+  const handlePayOrder = async (orderId) => {
   try {
-    const updatedQuote = await marketplaceService.acceptQuote(quoteId); // <- sin {}
-    setQuotes(prev => prev.map(q => {
-      if (q.id === quoteId) return { ...q, status: "ACCEPTED" };
-      if (q.orderId === updatedQuote.orderId) return { ...q, status: "REJECTED" };
-      return q;
-    }));
+    const initPoint = await marketplaceService.createCheckout(orderId);
+    if (!initPoint) throw new Error("No se pudo generar el link de pago");
+
+    window.open(initPoint, "_blank");
+
+    // 🔹 Polling para actualizar con la info real del backend
+    let attempts = 0;
+    const interval = setInterval(async () => {
+      attempts++;
+      try {
+        const updatedOrder = await marketplaceService.getOrder(orderId);
+        if (updatedOrder) {
+          updateOrder(updatedOrder); // 🔹 actualizar con el objeto real del backend
+          
+          // 🔹 si ya fue pagada, detener polling
+          if (updatedOrder.paid === true || updatedOrder.status?.toUpperCase() === "PAID") {
+            clearInterval(interval);
+          }
+        }
+        if (attempts >= 10) clearInterval(interval);
+      } catch (err) {
+        console.error("Error refrescando orden:", err);
+        if (attempts >= 10) clearInterval(interval);
+      }
+    }, 3000);
+
   } catch (err) {
-    console.error(err);
-    setError("No se pudo aceptar la cotización");
+    console.error("Error iniciando pago:", err);
+    setError("No se pudo iniciar el pago: " + err.message);
+    alert("Error al iniciar el pago: " + err.message);
+    return null;
   }
 };
 
-const rejectQuote = async (quoteId) => {
-  try {
-    const updatedQuote = await marketplaceService.rejectQuote(quoteId); // <- sin {}
-    setQuotes(prev => prev.map(q => q.id === quoteId ? { ...q, status: "REJECTED" } : q));
-  } catch (err) {
-    console.error(err);
-    setError("No se pudo rechazar la cotización");
-  }
-};
 
-  
+  const refreshOrder = async (orderId) => {
+    try {
+      const updatedOrder = await marketplaceService.getOrder(orderId);
+      if (updatedOrder) updateOrder(updatedOrder);
+    } catch (err) {
+      console.error("Error refrescando orden:", err);
+    }
+  };
 
   useEffect(() => {
     if (!user) return setLoading(false);
@@ -169,6 +220,9 @@ const rejectQuote = async (quoteId) => {
       createQuoteFromRequest,
       acceptQuote,
       rejectQuote,
+      handlePayOrder,
+      refreshOrder,
+      updateOrder,
       loading,
       error
     }}>

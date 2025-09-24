@@ -19,6 +19,7 @@ public interface MarketplaceService {
     List<OrderResponseDTO> getOrdersByProvider(Long providerId);
     List<OrderResponseDTO> getAllOrders(); // <-- agregado
     OrderResponseDTO updateOrderStatus(Long orderId, OrderStatus newStatus);
+    OrderResponseDTO getOrderById(Long orderId);
 
     // Quotes
 
