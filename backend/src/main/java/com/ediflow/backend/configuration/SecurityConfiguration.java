@@ -43,6 +43,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         // endpoints públicos
                         .requestMatchers("/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // preflight OPTIONS permitido
 
                         // === Admin & Employee ===
                         .requestMatchers("/admin/users").hasAuthority("ROLE_ADMIN")
@@ -99,7 +100,7 @@ public class SecurityConfiguration {
         return configuration.getAuthenticationManager();
     }
 
-    // --- Este bean reemplaza tu configuración de CORS en el filterChain ---
+    // --- CorsFilter global que responde correctamente a todos los preflight OPTIONS ---
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
