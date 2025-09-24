@@ -120,7 +120,8 @@ const StatCard = ({ label, value, color }) => {
 };
 
 const OrderCard = ({ order, openModal }) => {
-  const ocultarBoton = ["COMPLETED", "ACCEPTED"].includes(order.status?.toUpperCase());
+  // ⚡ Ocultar botón si la orden ya está pagada o completada
+  const ocultarBoton = ["COMPLETED", "ACCEPTED", "PAID"].includes(order.status?.toUpperCase());
 
   return (
     <div className="border p-5 rounded-xl shadow-md hover:shadow-lg transition bg-gray-50 flex flex-col justify-between">
@@ -153,6 +154,7 @@ const colorEstado = (estado) => {
     case "REQUESTED": return "bg-yellow-200 text-yellow-800";
     case "COMPLETED":
     case "ACCEPTED": return "bg-green-500 text-white";
+    case "PAID": return "bg-green-500 text-white"; // color para pagado
     case "REJECTED": return "bg-red-500 text-white";
     case "SENT": return "bg-blue-500 text-white";
     default: return "bg-gray-300 text-black";
@@ -165,6 +167,7 @@ const nombreEstado = (estado) => {
     case "REQUESTED": return "Pendiente";
     case "COMPLETED":
     case "ACCEPTED": return "Aceptada";
+    case "PAID": return "Pagada ✅"; // traducido
     case "REJECTED": return "Rechazada";
     case "SENT": return "Enviada";
     default: return estado;
