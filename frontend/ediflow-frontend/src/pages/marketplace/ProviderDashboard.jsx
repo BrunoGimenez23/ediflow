@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useMarketplace } from "../../contexts/marketplace/MarketplaceContext";
 import QuoteForm from "../../components/marketplace/QuoteForm";
 import QuoteCard from "../../components/marketplace/QuoteCard";
@@ -7,6 +7,7 @@ import axios from "axios";
 
 const ProviderDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { orders, quotes, createQuoteFromRequest, loading, error } = useMarketplace();
 
   const [modalOrder, setModalOrder] = useState(null); 
@@ -28,18 +29,28 @@ const ProviderDashboard = () => {
     navigate("/");
   };
 
-  // --- Traer info del proveedor logueado ---
-  useEffect(() => {
+
+useEffect(() => {
+  const query = new URLSearchParams(location.search);
+  const connected = query.get("connected");
+  const providerId = query.get("providerId");
+
+  if (connected === "true" && providerId) {
+    // Traer info actualizada del proveedor
     const fetchProvider = async () => {
       try {
-        const { data } = await axios.get("/marketplace/providers/me"); // endpoint que devuelve info del proveedor
+        const { data } = await axios.get(`/marketplace/providers/me?providerId=${providerId}`);
         setProvider(data);
+        // Limpiar query string para no repetir la acción
+        navigate("/dashboard/provider", { replace: true });
       } catch (e) {
-        console.error("Error fetching provider info", e);
+        console.error("Error fetching provider after OAuth", e);
       }
     };
     fetchProvider();
-  }, []);
+  }
+}, [location.search, navigate]);
+
 
   // --- Conectar con Mercado Pago ---
   const handleConnect = async () => {

@@ -3,6 +3,7 @@ package com.ediflow.backend.controller.marketplace;
 import com.ediflow.backend.entity.marketplace.Provider;
 import com.ediflow.backend.repository.marketplace.ProviderRepository;
 import com.ediflow.backend.service.marketplace.MarketplacePaymentService;
+import com.ediflow.backend.service.IUserService; // Servicio para obtener el usuario logueado
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -24,15 +25,15 @@ public class MarketplacePaymentController {
 
     private final MarketplacePaymentService paymentService;
     private final ProviderRepository providerRepository;
+    private final IUserService userService; // para obtener usuario logueado
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
-    // 🔹 Credenciales producción Mercado Pago
     private static final String CLIENT_ID = "6454226836460176";
     private static final String CLIENT_SECRET = "U1VcT34dzWTtxL6MHozt7mIRnfrHinC9";
 
-    // --- Checkout y webhook existentes ---
+    // --- Checkout y webhook ---
     @PostMapping("/payment/checkout/{orderId}")
     public ResponseEntity<Map<String, String>> checkout(@PathVariable Long orderId) {
         try {
@@ -53,23 +54,24 @@ public class MarketplacePaymentController {
             return ResponseEntity.ok("OK");
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.ok("Received with errors"); // siempre 200 para Mercado Pago
+            return ResponseEntity.ok("Received with errors");
         }
     }
 
     // --- OAuth proveedores ---
     @GetMapping("/providers/oauth-url")
-    public String getOAuthUrl() {
+    public ResponseEntity<Map<String, String>> getOAuthUrl() {
         String redirectUri = frontendUrl + "/providers/oauth-callback";
-        return "https://www.mercadopago.com.uy/developers/panel/credentials/oauth/authorize" +
+        String url = "https://www.mercadopago.com.uy/developers/panel/credentials/oauth/authorize" +
                 "?client_id=" + CLIENT_ID +
                 "&response_type=code" +
                 "&platform_id=mp" +
                 "&redirect_uri=" + redirectUri;
+        return ResponseEntity.ok(Map.of("url", url));
     }
 
     @PostMapping("/providers/oauth-callback")
-    public ResponseEntity<String> oauthCallback(@RequestParam String code) {
+    public ResponseEntity<Void> oauthCallback(@RequestParam String code) {
         try {
             RestTemplate restTemplate = new RestTemplate();
             String url = "https://api.mercadopago.com/oauth/token";
@@ -92,7 +94,6 @@ public class MarketplacePaymentController {
             String refreshToken = (String) body.get("refresh_token");
             String mpAccountId = String.valueOf(body.get("user_id"));
 
-            // Guardar tokens en Provider
             Provider provider = new Provider();
             provider.setMpAccessToken(accessToken);
             provider.setMpRefreshToken(refreshToken);
@@ -100,31 +101,33 @@ public class MarketplacePaymentController {
             provider.setVerified(true);
             providerRepository.save(provider);
 
-            return ResponseEntity.ok("Proveedor registrado correctamente");
+            // 🔹 Redirigir al frontend con éxito
+            String redirectTo = frontendUrl + "/dashboard/provider?connected=true&providerId=" + provider.getId();
+            HttpHeaders redirectHeaders = new HttpHeaders();
+            redirectHeaders.add("Location", redirectTo);
+            return new ResponseEntity<>(redirectHeaders, HttpStatus.FOUND);
+
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error registrando proveedor: " + e.getMessage());
+            String redirectTo = frontendUrl + "/dashboard/provider?connected=false";
+            HttpHeaders redirectHeaders = new HttpHeaders();
+            redirectHeaders.add("Location", redirectTo);
+            return new ResponseEntity<>(redirectHeaders, HttpStatus.FOUND);
         }
     }
+
+
     // --- Obtener info del proveedor logueado ---
     @GetMapping("/providers/me")
-    public ResponseEntity<Provider> getLoggedProvider(@RequestParam(required = false) Long providerId) {
+    public ResponseEntity<Provider> getLoggedProvider() {
         try {
-            // Si viene providerId lo usamos (para pruebas), sino tomamos el primero
-            Provider provider;
-            if (providerId != null) {
-                provider = providerRepository.findById(providerId)
-                        .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
-            } else {
-                // Para simplificar: tomamos el primer proveedor registrado (en producción usar auth)
-                provider = providerRepository.findAll().stream().findFirst()
-                        .orElse(null);
-            }
+            var user = userService.getLoggedUser();
+            if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
 
-            if (provider == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-            }
+            Provider provider = providerRepository.findByUserId(user.getId())
+                    .orElse(null);
+
+            if (provider == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
             return ResponseEntity.ok(provider);
         } catch (Exception e) {
             e.printStackTrace();
