@@ -74,4 +74,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
         return buildResponse("Error inesperado: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    public class PaymentProcessingException extends RuntimeException {
+        public PaymentProcessingException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    }
 }

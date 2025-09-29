@@ -13,6 +13,7 @@ import com.ediflow.backend.repository.IPaymentRepository;
 import com.ediflow.backend.service.IAdminService;
 import com.ediflow.backend.service.IPaymentService;
 import com.ediflow.backend.service.IUserService;
+import com.ediflow.backend.service.impl.payment.ResidentPaymentService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -52,6 +54,12 @@ public class PaymentController {
 
     @Autowired
     private PaymentMapper paymentMapper;
+
+    private final ResidentPaymentService residentPaymentService;
+
+    public PaymentController(ResidentPaymentService residentPaymentService) {
+        this.residentPaymentService = residentPaymentService;
+    }
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
@@ -159,6 +167,50 @@ public class PaymentController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
     ) throws IOException {
         paymentService.exportReportToCSV(response, buildingId, fromDate, toDate);
+    }
+
+    // --- Checkout MercadoPago ---
+
+    @PostMapping("/checkout/{paymentId}")
+    public ResponseEntity<String> createCheckout(@PathVariable Long paymentId,
+                                                 @AuthenticationPrincipal(expression = "username") String username) {
+        String initPoint = residentPaymentService.createCheckout(paymentId, username);
+        return ResponseEntity.ok(initPoint);
+    }
+
+    // --- Webhook MercadoPago ---
+    @PostMapping("/webhook")
+    public ResponseEntity<String> webhook(@RequestBody String rawBody,
+                                          @RequestParam Long adminId) {
+        residentPaymentService.handleWebhook(rawBody, adminId);
+        return ResponseEntity.ok("Webhook procesado");
+    }
+
+    @GetMapping("/checkout/all-by-resident/{residentId}")
+    public ResponseEntity<List<Map<String, String>>> getAllPreferencesByResident(
+            @PathVariable Long residentId,
+            @AuthenticationPrincipal(expression = "username") String username) {
+
+        List<PaymentDTO> payments = paymentService.findPaymentsByResidentId(residentId);
+
+        List<Map<String, String>> paymentsWithPreference = payments.stream()
+                .map(p -> {
+                    if (p.getStatus() == PaymentStatus.PENDING) {
+                        String initPoint = residentPaymentService.createCheckout(p.getId(), username);
+                        return Map.of(
+                                "id", p.getId().toString(),
+                                "preferenceId", initPoint
+                        );
+                    } else {
+                        return Map.of(
+                                "id", p.getId().toString(),
+                                "preferenceId", ""
+                        );
+                    }
+                })
+                .toList();
+
+        return ResponseEntity.ok(paymentsWithPreference);
     }
 }
 

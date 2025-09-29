@@ -17,7 +17,6 @@ import com.ediflow.backend.service.IAdminService;
 import com.ediflow.backend.service.IResidentService;
 import com.ediflow.backend.service.IUserService;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;

@@ -1,12 +1,10 @@
 package com.ediflow.backend.controller;
 
-import com.ediflow.backend.dto.apartment.ApartmentSummaryDTO;
 import com.ediflow.backend.dto.resident.RegisterOrReplaceResidentRequest;
 import com.ediflow.backend.dto.resident.ReplaceResidentRequestDTO;
 import com.ediflow.backend.dto.resident.ResidentDTO;
 import com.ediflow.backend.dto.resident.ResidentResponseDTO;
 import com.ediflow.backend.entity.Resident;
-import com.ediflow.backend.entity.User;
 import com.ediflow.backend.repository.IUserRepository;
 import com.ediflow.backend.service.IResidentService;
 import jakarta.validation.Valid;
@@ -19,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

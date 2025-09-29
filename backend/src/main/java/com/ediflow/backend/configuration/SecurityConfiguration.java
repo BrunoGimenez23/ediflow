@@ -69,6 +69,8 @@ public class SecurityConfiguration {
                         .requestMatchers("/resident/me").hasAnyAuthority("ROLE_RESIDENT", "ROLE_ADMIN")
                         .requestMatchers("/apartment/me").hasAnyAuthority("ROLE_RESIDENT", "ROLE_ADMIN")
                         .requestMatchers("/payment/by-resident/**").hasAuthority("ROLE_RESIDENT")
+                        .requestMatchers("/payment/checkout/**").hasAuthority("ROLE_RESIDENT")
+                        .requestMatchers("/payment/webhook").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/residents/fix-assign-admin-account").hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
                         .requestMatchers("/auth/me").authenticated()
 

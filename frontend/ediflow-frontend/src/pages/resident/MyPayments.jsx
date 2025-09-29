@@ -69,6 +69,20 @@ const MyPayments = () => {
     statusFilter === "ALL" ? true : p.status === statusFilter
   );
 
+  const handlePay = async (paymentId) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/payment/checkout/${paymentId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const initPoint = await res.text(); // tu endpoint devuelve solo el initPoint
+      window.location.href = initPoint; // redirige al checkout
+    } catch (err) {
+      alert("Error al iniciar el pago: " + (err.message || "desconocido"));
+    }
+  };
+
   if (loading || loadingResident)
     return <p className="text-center mt-10 text-gray-600 animate-pulse">Cargando pagos...</p>;
 
@@ -135,18 +149,14 @@ const MyPayments = () => {
         <table className="min-w-full table-auto divide-y divide-gray-200 border border-gray-300 rounded-lg overflow-hidden">
           <thead className="bg-gray-100">
             <tr>
-              {[
-                { label: "Concepto", key: "concept" },
+              {[{ label: "Concepto", key: "concept" },
                 { label: "Fecha emisión", key: "issueDate" },
                 { label: "Vencimiento", key: "dueDate" },
                 { label: "Fecha pago", key: "paymentDate" },
                 { label: "Monto", key: "amount" },
                 { label: "Estado", key: "status" },
-              ].map(({ label, key }) => (
-                <th
-                  key={key}
-                  className="py-3 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide"
-                >
+                { label: "Acción", key: "action" }].map(({ label, key }) => (
+                <th key={key} className="py-3 px-6 text-left text-sm font-semibold text-gray-700 uppercase tracking-wide">
                   {label}
                 </th>
               ))}
@@ -154,27 +164,26 @@ const MyPayments = () => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {filteredPayments.map((pay) => (
-              <tr
-                key={pay.id}
-                className={`hover:bg-blue-50 transition-colors ${
-                  pay.status === "OVERDUE" ? "bg-red-50" : ""
-                }`}
-              >
+              <tr key={pay.id} className={`hover:bg-blue-50 transition-colors ${pay.status === "OVERDUE" ? "bg-red-50" : ""}`}>
                 <td className="py-3 px-6 text-gray-700">{pay.concept || "-"}</td>
                 <td className="py-3 px-6 text-gray-700">{formatDate(pay.issueDate)}</td>
                 <td className="py-3 px-6 text-gray-700">{formatDate(pay.dueDate)}</td>
-                <td className="py-3 px-6 text-gray-700">
-                  {pay.paymentDate ? formatDate(pay.paymentDate) : "-"}
-                </td>
+                <td className="py-3 px-6 text-gray-700">{pay.paymentDate ? formatDate(pay.paymentDate) : "-"}</td>
                 <td className="py-3 px-6 text-gray-700">{formatterCurrency.format(pay.amount)}</td>
                 <td className="py-3 px-6">
-                  <span
-                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                      statusStyles[pay.status] || "bg-gray-100 text-gray-700"
-                    }`}
-                  >
+                  <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${statusStyles[pay.status] || "bg-gray-100 text-gray-700"}`}>
                     {statusLabels[pay.status] || pay.status}
                   </span>
+                </td>
+                <td className="py-3 px-6">
+                  {pay.status !== "PAID" && (
+                    <button
+                      onClick={() => handlePay(pay.id)}
+                      className="px-3 py-1 bg-ediblue text-white rounded hover:bg-ediblue-dark text-sm"
+                    >
+                      Pagar
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -185,35 +194,24 @@ const MyPayments = () => {
       {/* Versión mobile (cards) */}
       <div className="md:hidden space-y-4">
         {filteredPayments.map((pay) => (
-          <div
-            key={pay.id}
-            className={`p-4 border rounded-lg shadow-sm ${
-              pay.status === "OVERDUE" ? "bg-red-50" : "bg-gray-50"
-            }`}
-          >
-            <p className="text-sm text-gray-600">
-              <strong>Concepto:</strong> {pay.concept || "-"}
-            </p>
-            <p className="text-sm text-gray-600">
-              <strong>Emitido:</strong> {formatDate(pay.issueDate)}
-            </p>
-            <p className="text-sm text-gray-600">
-              <strong>Vencimiento:</strong> {formatDate(pay.dueDate)}
-            </p>
-            <p className="text-sm text-gray-600">
-              <strong>Pago:</strong> {pay.paymentDate ? formatDate(pay.paymentDate) : "-"}
-            </p>
-            <p className="text-sm text-gray-600">
-              <strong>Monto:</strong> {formatterCurrency.format(pay.amount)}
-            </p>
-            <div className="mt-2">
-              <span
-                className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                  statusStyles[pay.status] || "bg-gray-100 text-gray-700"
-                }`}
-              >
+          <div key={pay.id} className={`p-4 border rounded-lg shadow-sm ${pay.status === "OVERDUE" ? "bg-red-50" : "bg-gray-50"}`}>
+            <p className="text-sm text-gray-600"><strong>Concepto:</strong> {pay.concept || "-"}</p>
+            <p className="text-sm text-gray-600"><strong>Emitido:</strong> {formatDate(pay.issueDate)}</p>
+            <p className="text-sm text-gray-600"><strong>Vencimiento:</strong> {formatDate(pay.dueDate)}</p>
+            <p className="text-sm text-gray-600"><strong>Pago:</strong> {pay.paymentDate ? formatDate(pay.paymentDate) : "-"}</p>
+            <p className="text-sm text-gray-600"><strong>Monto:</strong> {formatterCurrency.format(pay.amount)}</p>
+            <div className="mt-2 flex items-center justify-between">
+              <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusStyles[pay.status] || "bg-gray-100 text-gray-700"}`}>
                 {statusLabels[pay.status] || pay.status}
               </span>
+              {pay.status !== "PAID" && (
+                <button
+                  onClick={() => handlePay(pay.id)}
+                  className="px-3 py-1 bg-ediblue text-white rounded hover:bg-ediblue-dark text-sm"
+                >
+                  Pagar
+                </button>
+              )}
             </div>
           </div>
         ))}

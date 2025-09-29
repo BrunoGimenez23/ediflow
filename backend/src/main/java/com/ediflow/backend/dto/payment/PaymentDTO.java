@@ -31,4 +31,5 @@ public class PaymentDTO {
     private PaymentStatus status;
     private ResidentDTO residentDTO;
     private List<PaymentDTO> payment;
+    private String preferenceId;
 }

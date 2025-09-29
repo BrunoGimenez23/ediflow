@@ -47,4 +47,12 @@ public class Admin {
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, unique = true)
     private User user;
 
+    // ⚡ Token de prueba (sandbox) de MercadoPago
+    @Column(name = "mp_token_sandbox")
+    private String mpTokenSandbox;
+
+    // ⚡ Token de producción (opcional, cuando pases a producción)
+    private String mpTokenProd;
+
+
 }

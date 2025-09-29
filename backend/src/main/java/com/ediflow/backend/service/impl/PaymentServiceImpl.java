@@ -67,16 +67,13 @@ public class PaymentServiceImpl implements IPaymentService {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
         }
 
-
         if (loggedUser.getAdminAccount() != null) {
-
             Long adminAccountId = loggedUser.getAdminAccount().getId();
             if (resident.getUser() == null || resident.getUser().getAdminAccount() == null
                     || !resident.getUser().getAdminAccount().getId().equals(adminAccountId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permiso para crear pago para este residente");
             }
         } else {
-
             Long adminId = loggedUser.getAdmin() != null ? loggedUser.getAdmin().getId() : null;
             if (adminId == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Usuario no autenticado");
@@ -99,6 +96,17 @@ public class PaymentServiceImpl implements IPaymentService {
             payment.setStatus(newPayment.getStatus());
             payment.setResident(resident);
 
+
+            Admin admin;
+            if (loggedUser.getAdminAccount() != null) {
+
+                admin = resident.getApartment().getBuilding().getAdmin();
+            } else {
+
+                admin = loggedUser.getAdmin();
+            }
+            payment.setAdmin(admin);
+
             paymentRepository.save(payment);
             return new ResponseEntity<>("Pago creado con éxito", HttpStatus.CREATED);
 
@@ -106,7 +114,6 @@ public class PaymentServiceImpl implements IPaymentService {
             return new ResponseEntity<>("Error al crear el pago: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 
 
     @Override
