@@ -8,6 +8,7 @@ import com.ediflow.backend.repository.marketplace.ProviderRepository;
 import com.ediflow.backend.service.marketplace.MarketplacePaymentService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mercadopago.MercadoPagoConfig;
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
 import com.mercadopago.client.preference.PreferenceClient;
@@ -17,7 +18,6 @@ import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
 import com.mercadopago.resources.preference.Preference;
-import com.mercadopago.MercadoPagoConfig;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 
@@ -38,21 +39,21 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
 
     private PaymentClient paymentClient;
 
-    // Token sandbox para producción
-    @Value("${mercadopago.token.sandbox}")
-    private String mpTokenSandbox;
+    // Token de producción
+    private static final String MP_TOKEN_PROD = "APP_USR-6454226836460176-070819-a786a2a17c080291233853e9fada9869-59994041";
 
-    // URL pública del frontend (para redirecciones)
+    // URLs producción
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
-    // URL pública del backend (para webhooks)
     @Value("${app.backend.url}")
     private String backendUrl;
 
     @PostConstruct
     public void init() {
         this.paymentClient = new PaymentClient();
+        MercadoPagoConfig.setAccessToken(MP_TOKEN_PROD);
+        log.info("Mercado Pago configurado para producción con token {}...", MP_TOKEN_PROD.substring(0, 10));
     }
 
     @Override
@@ -63,9 +64,6 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
 
             Provider provider = providerRepository.findById(order.getProviderId())
                     .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
-
-            // ⚡ En producción con sandbox usamos el token de prueba Connect
-            MercadoPagoConfig.setAccessToken(mpTokenSandbox);
 
             PreferenceClient preferenceClient = new PreferenceClient();
 
@@ -78,17 +76,15 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
                                     .title(itemTitle)
                                     .description(order.getDescription() != null ? order.getDescription() : itemTitle)
                                     .quantity(1)
-                                    .unitPrice(order.getTotalAmount() != null ? new BigDecimal(order.getTotalAmount()) : BigDecimal.ZERO)
+                                    .unitPrice(new BigDecimal(order.getTotalAmount()).setScale(2, RoundingMode.HALF_UP))
                                     .currencyId("UYU")
                                     .build()
                     ))
-                    // URLs de redirección al frontend
                     .backUrls(PreferenceBackUrlsRequest.builder()
                             .success(frontendUrl + "/success")
                             .pending(frontendUrl + "/pending")
                             .failure(frontendUrl + "/failure")
                             .build())
-                    // URL de notificación al backend
                     .notificationUrl(backendUrl + "/marketplace/payment/webhook")
                     .autoReturn("approved")
                     .build();
@@ -97,7 +93,7 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
             return preference.getInitPoint();
 
         } catch (MPException | MPApiException e) {
-            e.printStackTrace();
+            log.error("Error al crear checkout de Mercado Pago", e);
             throw new RuntimeException("Error al crear checkout: " + e.getMessage(), e);
         }
     }
