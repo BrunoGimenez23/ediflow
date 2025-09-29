@@ -33,7 +33,9 @@ public class Provider {
 
     private Double rating = 0.0;
     private Integer totalReviews = 0;
-    private String mpAccessToken;
+    private String mpAccessToken;  // token OAuth para cobrar pagos directos
+    private String mpRefreshToken; // para renovar el access token
+    private String mpAccountId;    // opcional: ID de la cuenta Mercado Pago
 
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();

@@ -8,7 +8,6 @@ import com.ediflow.backend.repository.marketplace.ProviderRepository;
 import com.ediflow.backend.service.marketplace.MarketplacePaymentService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mercadopago.MercadoPagoConfig;
 import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.client.preference.PreferenceBackUrlsRequest;
 import com.mercadopago.client.preference.PreferenceClient;
@@ -39,9 +38,6 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
 
     private PaymentClient paymentClient;
 
-    // Token de producción
-    private static final String MP_TOKEN_PROD = "APP_USR-6454226836460176-070819-a786a2a17c080291233853e9fada9869-59994041";
-
     // URLs producción
     @Value("${app.frontend.url}")
     private String frontendUrl;
@@ -52,8 +48,7 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
     @PostConstruct
     public void init() {
         this.paymentClient = new PaymentClient();
-        MercadoPagoConfig.setAccessToken(MP_TOKEN_PROD);
-        log.info("Mercado Pago configurado para producción con token {}...", MP_TOKEN_PROD.substring(0, 10));
+        log.info("Mercado Pago inicializado (token por proveedor se setea dinámicamente)");
     }
 
     @Override
@@ -65,6 +60,8 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
             Provider provider = providerRepository.findById(order.getProviderId())
                     .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
 
+            // 🔹 Token dinámico del proveedor
+            com.mercadopago.MercadoPagoConfig.setAccessToken(provider.getMpAccessToken());
             PreferenceClient preferenceClient = new PreferenceClient();
 
             String itemTitle = order.getDescription() != null ? order.getDescription() : "Servicio";
@@ -124,11 +121,26 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
 
         try {
             Long paymentId = Long.parseLong(paymentIdStr);
-            Payment payment = paymentClient.get(paymentId);
 
-            Long orderId = Long.valueOf(payment.getExternalReference());
-            ServiceOrder order = orderRepository.findById(orderId)
+            // 🔹 Obtener orden primero para tomar token del proveedor
+            Payment payment;
+            Long orderId = null;
+            ServiceOrder order = null;
+
+            // Intentamos parsear external_reference desde el pago
+            PaymentClient tempClient = new PaymentClient();
+            payment = tempClient.get(paymentId);
+            orderId = Long.valueOf(payment.getExternalReference());
+
+            order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
+
+            Provider provider = providerRepository.findById(order.getProviderId())
+                    .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+
+            // 🔹 Setear token del proveedor antes de consultar el pago
+            com.mercadopago.MercadoPagoConfig.setAccessToken(provider.getMpAccessToken());
+            payment = new PaymentClient().get(paymentId);
 
             switch (payment.getStatus()) {
                 case "approved" -> {
