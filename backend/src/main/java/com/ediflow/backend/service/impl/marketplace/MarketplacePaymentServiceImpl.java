@@ -21,7 +21,11 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,6 +41,10 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
     private final ProviderRepository providerRepository;
 
     private PaymentClient paymentClient;
+
+    // OAuth de tu app
+    private static final String CLIENT_ID = "6454226836460176";
+    private static final String CLIENT_SECRET = "U1VcT34dzWTtxL6MHozt7mIRnfrHinC9";
 
     // URLs producción
     @Value("${app.frontend.url}")
@@ -59,6 +67,9 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
 
             Provider provider = providerRepository.findById(order.getProviderId())
                     .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+
+            // 🔹 Renovar token si es necesario
+            refreshProviderTokenIfNeeded(provider);
 
             // 🔹 Token dinámico del proveedor
             com.mercadopago.MercadoPagoConfig.setAccessToken(provider.getMpAccessToken());
@@ -124,10 +135,9 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
 
             // 🔹 Obtener orden primero para tomar token del proveedor
             Payment payment;
-            Long orderId = null;
-            ServiceOrder order = null;
+            Long orderId;
+            ServiceOrder order;
 
-            // Intentamos parsear external_reference desde el pago
             PaymentClient tempClient = new PaymentClient();
             payment = tempClient.get(paymentId);
             orderId = Long.valueOf(payment.getExternalReference());
@@ -137,6 +147,9 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
 
             Provider provider = providerRepository.findById(order.getProviderId())
                     .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+
+            // 🔹 Renovar token si es necesario
+            refreshProviderTokenIfNeeded(provider);
 
             // 🔹 Setear token del proveedor antes de consultar el pago
             com.mercadopago.MercadoPagoConfig.setAccessToken(provider.getMpAccessToken());
@@ -162,5 +175,46 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
         } catch (Exception e) {
             log.error("Error procesando webhook", e);
         }
+    }
+
+    // 🔹 Método para renovar access token si caduca
+    private void refreshProviderTokenIfNeeded(Provider provider) {
+        try {
+            if (provider.getMpAccessToken() == null || tokenExpirado(provider)) {
+                RestTemplate restTemplate = new RestTemplate();
+                String url = "https://api.mercadopago.com/oauth/token";
+
+                MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+                params.add("grant_type", "refresh_token");
+                params.add("client_id", CLIENT_ID);
+                params.add("client_secret", CLIENT_SECRET);
+                params.add("refresh_token", provider.getMpRefreshToken());
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+                HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+
+                ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+                Map<String, Object> body = response.getBody();
+
+                if (body != null) {
+                    String newAccessToken = (String) body.get("access_token");
+                    String newRefreshToken = (String) body.get("refresh_token");
+
+                    provider.setMpAccessToken(newAccessToken);
+                    provider.setMpRefreshToken(newRefreshToken);
+                    providerRepository.save(provider);
+
+                    log.info("Token del proveedor {} renovado correctamente", provider.getId());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error renovando token del proveedor {}", provider.getId(), e);
+        }
+    }
+
+    private boolean tokenExpirado(Provider provider) {
+        // Por ahora siempre devuelve false; podés guardar fecha de expiración en la DB si querés
+        return false;
     }
 }
