@@ -56,7 +56,12 @@ useEffect(() => {
   // --- Conectar con Mercado Pago ---
   const handleConnect = async () => {
   try {
-    const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/marketplace/providers/oauth-url`);
+    const token = localStorage.getItem("token");
+const { data } = await axios.get(
+  `${import.meta.env.VITE_API_URL}/marketplace/providers/oauth-url`,
+  { headers: { Authorization: `Bearer ${token}` } }
+);
+
 
     const url = typeof data === "string" ? data : data.url;
     console.log("Redirigiendo a:", url);  // 🔹 Debug
