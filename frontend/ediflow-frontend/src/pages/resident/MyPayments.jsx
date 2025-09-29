@@ -71,7 +71,8 @@ const MyPayments = () => {
 
   const handlePay = async (paymentId) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/payment/checkout/${paymentId}`, {
+      // PASAR production=true para que se use el modo real de Mercado Pago
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/payment/checkout/${paymentId}?production=true`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
