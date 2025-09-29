@@ -172,11 +172,14 @@ public class PaymentController {
     // --- Checkout MercadoPago ---
 
     @PostMapping("/checkout/{paymentId}")
-    public ResponseEntity<String> createCheckout(@PathVariable Long paymentId,
-                                                 @AuthenticationPrincipal(expression = "username") String username) {
-        String initPoint = residentPaymentService.createCheckout(paymentId, username);
+    public ResponseEntity<String> createCheckout(
+            @PathVariable Long paymentId,
+            @AuthenticationPrincipal(expression = "username") String username,
+            @RequestParam(defaultValue = "false") boolean production) { // <- nuevo parámetro
+        String initPoint = residentPaymentService.createCheckout(paymentId, username, production);
         return ResponseEntity.ok(initPoint);
     }
+
 
     // --- Webhook MercadoPago ---
     @PostMapping("/webhook")
@@ -196,7 +199,8 @@ public class PaymentController {
         List<Map<String, String>> paymentsWithPreference = payments.stream()
                 .map(p -> {
                     if (p.getStatus() == PaymentStatus.PENDING) {
-                        String initPoint = residentPaymentService.createCheckout(p.getId(), username);
+                        // <-- agregar el parámetro boolean
+                        String initPoint = residentPaymentService.createCheckout(p.getId(), username, false); // false = sandbox
                         return Map.of(
                                 "id", p.getId().toString(),
                                 "preferenceId", initPoint
@@ -212,6 +216,7 @@ public class PaymentController {
 
         return ResponseEntity.ok(paymentsWithPreference);
     }
+
 }
 
 

@@ -45,15 +45,19 @@ public class ResidentPaymentService {
 
     @PostConstruct
     public void init() {
+        // Inicializamos con sandbox por defecto
         MercadoPagoConfig.setAccessToken(mpTokenSandbox);
         this.preferenceClient = new PreferenceClient();
         log.info("ResidentPaymentService inicializado con TOKEN SANDBOX: {}", mpTokenSandbox.substring(0, 10) + "...");
     }
 
     /**
-     * Crear preferencia de pago en Sandbox
+     * Crear preferencia de pago
+     * @param paymentId Id del pago
+     * @param userEmail Email del residente
+     * @param useProduction true = producción, false = sandbox
      */
-    public String createCheckout(Long paymentId, String userEmail) {
+    public String createCheckout(Long paymentId, String userEmail, boolean useProduction) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new RuntimeException("Pago no encontrado"));
 
@@ -63,13 +67,12 @@ public class ResidentPaymentService {
             throw new RuntimeException("No tenés permiso para pagar este expensa");
         }
 
-        // Obtener token del Admin asociado al pago
-        String mpToken = payment.getAdmin().getMpTokenSandbox(); // o mpTokenProd si estás en producción
+        // Elegir token según ambiente
+        String mpToken = useProduction ? payment.getAdmin().getMpTokenProd() : payment.getAdmin().getMpTokenSandbox();
         MercadoPagoConfig.setAccessToken(mpToken);
         this.preferenceClient = new PreferenceClient();
 
         try {
-            // Crear preferencia de pago
             BigDecimal amount = payment.getAmount();
             PreferenceRequest request = PreferenceRequest.builder()
                     .externalReference(payment.getId().toString())
@@ -89,12 +92,14 @@ public class ResidentPaymentService {
                             .pending(frontendUrl + "/payments/pending")
                             .failure(frontendUrl + "/payments/failure")
                             .build())
-                    .notificationUrl(backendUrl + "/payment/webhook")
+                    .notificationUrl(backendUrl + "/payment/webhook?adminId=" + payment.getAdmin().getId())
                     .autoReturn("approved")
                     .build();
 
             Preference preference = preferenceClient.create(request);
-            return preference.getSandboxInitPoint();
+
+            // Retornar init point según ambiente
+            return useProduction ? preference.getInitPoint() : preference.getSandboxInitPoint();
 
         } catch (MPException | MPApiException e) {
             throw new PaymentProcessingException("Error al crear checkout de Mercado Pago", e);
@@ -115,10 +120,12 @@ public class ResidentPaymentService {
             String paymentIdStr = String.valueOf(data.get("id"));
             Long mpPaymentId = Long.parseLong(paymentIdStr);
 
-            // ⚡ Tomar token del admin
             Admin admin = adminRepository.findById(adminId)
                     .orElseThrow(() -> new RuntimeException("Admin no encontrado"));
-            String token = admin.getMpTokenSandbox();
+
+            // Tomar token según si es sandbox o producción
+            String token = payload.get("live_mode") != null && (Boolean)payload.get("live_mode")
+                    ? admin.getMpTokenProd() : admin.getMpTokenSandbox();
             MercadoPagoConfig.setAccessToken(token);
 
             var mpPayment = new com.mercadopago.client.payment.PaymentClient().get(mpPaymentId);
@@ -137,11 +144,13 @@ public class ResidentPaymentService {
             }
 
             paymentRepository.save(payment);
-            log.info("Pago {} actualizado según webhook Sandbox", localPaymentId);
+            log.info("Pago {} actualizado según webhook {}", localPaymentId, payload.get("live_mode").toString());
 
         } catch (Exception e) {
-            log.error("Error procesando webhook Sandbox", e);
+            log.error("Error procesando webhook", e);
         }
     }
-
 }
+
+
+
