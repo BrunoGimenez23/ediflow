@@ -39,7 +39,8 @@ useEffect(() => {
     // Traer info actualizada del proveedor
     const fetchProvider = async () => {
       try {
-        const { data } = await axios.get(`/marketplace/providers/me?providerId=${providerId}`);
+        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/marketplace/providers/me?providerId=${providerId}`);
+
         setProvider(data);
         // Limpiar query string para no repetir la acción
         navigate("/dashboard/provider", { replace: true });
@@ -55,7 +56,8 @@ useEffect(() => {
   // --- Conectar con Mercado Pago ---
   const handleConnect = async () => {
   try {
-    const { data } = await axios.get("/marketplace/providers/oauth-url");
+    const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/marketplace/providers/oauth-url`);
+
     const url = typeof data === "string" ? data : data.url;
     console.log("Redirigiendo a:", url);  // 🔹 Debug
     window.location.href = url;
