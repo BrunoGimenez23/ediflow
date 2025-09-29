@@ -41,10 +41,12 @@ const ProviderDashboard = () => {
     fetchProvider();
   }, []);
 
+  // --- Conectar con Mercado Pago ---
   const handleConnect = async () => {
     try {
-      const { data } = await axios.get("/marketplace/providers/oauth-url");
-      window.location.href = data; // redirige a Mercado Pago
+      const response = await axios.get("/marketplace/providers/oauth-url");
+      const url = typeof response.data === "string" ? response.data : response.data.url;
+      window.location.href = url; // redirige a Mercado Pago
     } catch (e) {
       console.error("Error obteniendo URL OAuth", e);
     }
