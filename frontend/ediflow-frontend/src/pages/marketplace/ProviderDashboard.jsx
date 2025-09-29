@@ -54,14 +54,16 @@ useEffect(() => {
 
   // --- Conectar con Mercado Pago ---
   const handleConnect = async () => {
-    try {
-      const response = await axios.get("/marketplace/providers/oauth-url");
-      const url = typeof response.data === "string" ? response.data : response.data.url;
-      window.location.href = url; // redirige a Mercado Pago
-    } catch (e) {
-      console.error("Error obteniendo URL OAuth", e);
-    }
-  };
+  try {
+    const { data } = await axios.get("/marketplace/providers/oauth-url");
+    const url = typeof data === "string" ? data : data.url;
+    console.log("Redirigiendo a:", url);  // 🔹 Debug
+    window.location.href = url;
+  } catch (e) {
+    console.error("Error obteniendo URL OAuth", e);
+  }
+};
+
 
   if (loading) return <p className="text-center p-10 text-gray-500">Cargando datos...</p>;
   if (error) return <p className="text-red-500 text-center p-10">{error}</p>;
