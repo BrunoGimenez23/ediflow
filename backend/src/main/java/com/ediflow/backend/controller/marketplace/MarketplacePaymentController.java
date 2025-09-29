@@ -62,13 +62,14 @@ public class MarketplacePaymentController {
     @GetMapping("/providers/oauth-url")
     public ResponseEntity<Map<String, String>> getOAuthUrl() {
         String redirectUri = frontendUrl + "/providers/oauth-callback";
-        String url = "https://www.mercadopago.com.uy/developers/panel/credentials/oauth/authorize" +
+        String url = "https://auth.mercadopago.com.uy/authorization" +
                 "?client_id=" + CLIENT_ID +
                 "&response_type=code" +
                 "&platform_id=mp" +
                 "&redirect_uri=" + redirectUri;
         return ResponseEntity.ok(Map.of("url", url));
     }
+
 
     @PostMapping("/providers/oauth-callback")
     public ResponseEntity<Void> oauthCallback(@RequestParam String code) {
