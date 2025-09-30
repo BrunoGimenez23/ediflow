@@ -30,6 +30,10 @@ public class MarketplacePaymentController {
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
+
+    @Value("${app.backend.url}")
+    private String backendUrl;
+
     private static final String CLIENT_ID = "6454226836460176";
     private static final String CLIENT_SECRET = "U1VcT34dzWTtxL6MHozt7mIRnfrHinC9";
 
@@ -87,7 +91,7 @@ public class MarketplacePaymentController {
             params.add("client_id", CLIENT_ID);
             params.add("client_secret", CLIENT_SECRET);
             params.add("code", code);
-            params.add("redirect_uri", frontendUrl + "/providers/oauth-callback");
+            params.add("redirect_uri", backendUrl + "/providers/oauth-callback");
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
