@@ -66,7 +66,7 @@ public class MarketplacePaymentController {
     @GetMapping("/providers/oauth-url")
     public ResponseEntity<Map<String, String>> getOAuthUrl() {
         // Redirect URI que debe coincidir exactamente con la app en Mercado Pago
-        String redirectUri = backendUrl + "/providers/oauth-callback";
+        String redirectUri = backendUrl + "/marketplace/providers/oauth-callback";
 
         // URL de autorización para producción
         String url = "https://auth.mercadopago.com/authorization" +
@@ -91,7 +91,7 @@ public class MarketplacePaymentController {
             params.add("client_id", CLIENT_ID);
             params.add("client_secret", CLIENT_SECRET);
             params.add("code", code);
-            params.add("redirect_uri", backendUrl + "/providers/oauth-callback");
+            params.add("redirect_uri", backendUrl + "/marketplace/providers/oauth-callback");
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
