@@ -16,13 +16,12 @@ import com.mercadopago.client.preference.PreferenceRequest;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
 import com.mercadopago.resources.payment.Payment;
-import com.mercadopago.resources.preference.Preference;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -39,14 +38,14 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
 
     private PaymentClient paymentClient;
 
-    @Value("${mercadopago.client_id}")
-    private String clientId;
+    @Value("${mercadopago.env}")
+    private String env;
 
-    @Value("${mercadopago.client_secret}")
-    private String clientSecret;
+    @Value("${mercadopago.access_token.prod}")
+    private String prodToken;
 
-    @Value("${mercadopago.access_token}")
-    private String accessToken; // token del perfil activo (local o prod)
+    @Value("${mercadopago.token.sandbox}")
+    private String sandboxToken;
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
@@ -57,7 +56,14 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
     @PostConstruct
     public void init() {
         this.paymentClient = new PaymentClient();
-        log.info("Mercado Pago inicializado (token dinámico por proveedor o por defecto)");
+        log.info("Mercado Pago inicializado (entorno: {})", env);
+    }
+
+    private String getTokenForProvider(Provider provider) {
+        if (provider != null && StringUtils.hasText(provider.getMpAccessToken())) {
+            return provider.getMpAccessToken();
+        }
+        return "prod".equals(env) ? prodToken : sandboxToken;
     }
 
     @Override
@@ -66,26 +72,20 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
             ServiceOrder order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
 
-            Provider provider = providerRepository.findById(order.getProviderId())
-                    .orElse(null);
-
-            // 🔹 Si hay proveedor, usar su token; si no, usar token por defecto del perfil
-            String token = provider != null && provider.getMpAccessToken() != null
-                    ? provider.getMpAccessToken()
-                    : accessToken;
+            Provider provider = providerRepository.findById(order.getProviderId()).orElse(null);
+            String token = getTokenForProvider(provider);
 
             com.mercadopago.MercadoPagoConfig.setAccessToken(token);
-
             PreferenceClient preferenceClient = new PreferenceClient();
 
-            String itemTitle = order.getDescription() != null ? order.getDescription() : "Servicio";
+            String itemTitle = StringUtils.hasText(order.getDescription()) ? order.getDescription() : "Servicio";
 
             PreferenceRequest request = PreferenceRequest.builder()
                     .externalReference(orderId.toString())
                     .items(List.of(
                             PreferenceItemRequest.builder()
                                     .title(itemTitle)
-                                    .description(order.getDescription() != null ? order.getDescription() : itemTitle)
+                                    .description(itemTitle)
                                     .quantity(1)
                                     .unitPrice(new BigDecimal(order.getTotalAmount()).setScale(2, RoundingMode.HALF_UP))
                                     .currencyId("UYU")
@@ -100,8 +100,7 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
                     .autoReturn("approved")
                     .build();
 
-            Preference preference = preferenceClient.create(request);
-            return preference.getInitPoint();
+            return preferenceClient.create(request).getInitPoint();
 
         } catch (MPException | MPApiException e) {
             log.error("Error al crear checkout de Mercado Pago", e);
@@ -129,16 +128,15 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
         try {
             Long paymentId = Long.parseLong(paymentIdStr);
             Payment payment = new PaymentClient().get(paymentId);
+
             Long orderId = Long.valueOf(payment.getExternalReference());
             ServiceOrder order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
 
             Provider provider = providerRepository.findById(order.getProviderId()).orElse(null);
-            String token = provider != null && provider.getMpAccessToken() != null
-                    ? provider.getMpAccessToken()
-                    : accessToken;
-
+            String token = getTokenForProvider(provider);
             com.mercadopago.MercadoPagoConfig.setAccessToken(token);
+
             payment = new PaymentClient().get(paymentId);
 
             switch (payment.getStatus()) {
