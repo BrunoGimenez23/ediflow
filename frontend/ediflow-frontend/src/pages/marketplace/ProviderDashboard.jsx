@@ -10,31 +10,29 @@ const ProviderDashboard = () => {
   const location = useLocation();
   const { orders, quotes, createQuoteFromRequest, loading, error } = useMarketplace();
 
-  const [modalOrder, setModalOrder] = useState(null); 
+  const [modalOrder, setModalOrder] = useState(null);
   const [provider, setProvider] = useState(null);
 
   // --- Estadísticas ---
-  const pendientes = orders.filter(
-    o => ["REQUESTED", "PENDING"].includes(o.status?.toUpperCase())
+  const pendientes = orders.filter(o =>
+    ["REQUESTED", "PENDING"].includes(o.status?.toUpperCase())
   ).length;
 
-  const completadas = orders.filter(
-    o => ["COMPLETED", "ACCEPTED"].includes(o.status?.toUpperCase())
+  const completadas = orders.filter(o =>
+    ["COMPLETED", "ACCEPTED"].includes(o.status?.toUpperCase())
   ).length;
 
-  const cotizacionesEnviadas = quotes.filter(q => q.status?.toUpperCase() === "SENT").length;
+  const cotizacionesEnviadas = quotes.filter(
+    q => q.status?.toUpperCase() === "SENT"
+  ).length;
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/");
   };
 
-
-useEffect(() => {
-  const query = new URLSearchParams(location.search);
-  const connected = query.get("connected");
-
-  if (connected === "true") {
+  // 🔹 Traer proveedor logueado al montar
+  useEffect(() => {
     const fetchProvider = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -42,38 +40,57 @@ useEffect(() => {
           `${import.meta.env.VITE_API_URL}/marketplace/providers/me`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
         setProvider(data);
-        // Limpiar query string
-        navigate("/dashboard/provider", { replace: true });
       } catch (e) {
-        console.error("Error fetching provider after OAuth", e);
+        console.error("Error al obtener proveedor logueado:", e);
       }
     };
     fetchProvider();
-  }
-}, [location.search, navigate]);
+  }, []);
 
+  // 🔹 Si vuelve del OAuth con connected=true, actualizar provider
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const connected = query.get("connected");
 
+    if (connected === "true") {
+      const fetchProviderAfterOAuth = async () => {
+        try {
+          const token = localStorage.getItem("token");
+          const { data } = await axios.get(
+            `${import.meta.env.VITE_API_URL}/marketplace/providers/me`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+
+          setProvider(data);
+          // Limpiar query string
+          navigate("/dashboard/provider", { replace: true });
+        } catch (e) {
+          console.error("Error fetching provider after OAuth", e);
+        }
+      };
+      fetchProviderAfterOAuth();
+    }
+  }, [location.search, navigate]);
 
   // --- Conectar con Mercado Pago ---
   const handleConnect = async () => {
-  try {
-    const token = localStorage.getItem("token");
-const { data } = await axios.get(
-  `${import.meta.env.VITE_API_URL}/marketplace/providers/oauth-url?providerId=${provider.id}`,
-  { headers: { Authorization: `Bearer ${token}` } }
-);
+    if (!provider) return console.warn("Proveedor no cargado aún");
 
+    try {
+      const token = localStorage.getItem("token");
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/marketplace/providers/oauth-url`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    const url = typeof data === "string" ? data : data.url;
-    console.log("Redirigiendo a:", url);  // 🔹 Debug
-    window.location.href = url;
-  } catch (e) {
-    console.error("Error obteniendo URL OAuth", e);
-  }
-};
-
+      const url = typeof data === "string" ? data : data.url;
+      console.log("Redirigiendo a:", url);
+      window.location.href = url;
+    } catch (e) {
+      console.error("Error obteniendo URL OAuth", e);
+    }
+  };
 
   if (loading) return <p className="text-center p-10 text-gray-500">Cargando datos...</p>;
   if (error) return <p className="text-red-500 text-center p-10">{error}</p>;
@@ -100,8 +117,8 @@ const { data } = await axios.get(
             <span className="text-red-500 font-medium">No conectado ❌</span>
           )}
 
-          <button 
-            onClick={handleLogout} 
+          <button
+            onClick={handleLogout}
             className="bg-red-500 text-white px-5 py-2 rounded-lg hover:bg-red-600 transition shadow"
           >
             Cerrar Sesión
@@ -124,17 +141,13 @@ const { data } = await axios.get(
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
             {orders.map(order => (
-              <OrderCard 
-                key={order.id} 
-                order={order} 
-                openModal={() => setModalOrder(order)}
-              />
+              <OrderCard key={order.id} order={order} openModal={() => setModalOrder(order)} />
             ))}
           </div>
         )}
       </section>
 
-      {/* Cotizaciones Enviadas como cards */}
+      {/* Cotizaciones Enviadas */}
       <section className="bg-white shadow rounded-xl p-6">
         <h2 className="text-xl font-semibold mb-4 border-b pb-2">Cotizaciones Enviadas</h2>
         {quotes.filter(q => q.status?.toUpperCase() === "SENT").length === 0 ? (
@@ -160,8 +173,8 @@ const { data } = await axios.get(
             </button>
             <h3 className="text-lg font-semibold mb-4">Crear Cotización</h3>
             <QuoteForm
-              order={modalOrder} 
-              createQuoteFromRequest={createQuoteFromRequest} 
+              order={modalOrder}
+              createQuoteFromRequest={createQuoteFromRequest}
               onSuccess={() => setModalOrder(null)}
             />
           </div>
@@ -214,7 +227,7 @@ const OrderCard = ({ order, openModal }) => {
   );
 };
 
-const colorEstado = (estado) => {
+const colorEstado = estado => {
   switch (estado?.toUpperCase()) {
     case "PENDING":
     case "REQUESTED": return "bg-yellow-200 text-yellow-800";
@@ -227,7 +240,7 @@ const colorEstado = (estado) => {
   }
 };
 
-const nombreEstado = (estado) => {
+const nombreEstado = estado => {
   switch (estado?.toUpperCase()) {
     case "PENDING":
     case "REQUESTED": return "Pendiente";
