@@ -58,7 +58,7 @@ useEffect(() => {
   try {
     const token = localStorage.getItem("token");
 const { data } = await axios.get(
-  `${import.meta.env.VITE_API_URL}/marketplace/providers/oauth-url`,
+  `${import.meta.env.VITE_API_URL}/marketplace/providers/oauth-url?providerId=${provider.id}`,
   { headers: { Authorization: `Bearer ${token}` } }
 );
 

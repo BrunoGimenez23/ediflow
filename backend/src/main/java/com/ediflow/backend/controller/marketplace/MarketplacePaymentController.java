@@ -64,19 +64,21 @@ public class MarketplacePaymentController {
 
     // --- OAuth proveedores ---
     @GetMapping("/providers/oauth-url")
-    public ResponseEntity<Map<String, String>> getOAuthUrl() {
+    public ResponseEntity<Map<String, String>> getOAuthUrl(@RequestParam Long providerId) {
         // Redirect URI que debe coincidir exactamente con la app en Mercado Pago
-        String redirectUri = backendUrl + "/marketplace/providers/oauth-callback";
+        String redirectUri = backendUrl + "/marketplace/providers/oauth-callback?providerId=" + providerId;
 
-        // URL de autorización para producción
+        // URL de autorización usando el endpoint global (no .com.uy)
         String url = "https://auth.mercadopago.com/authorization" +
                 "?client_id=" + CLIENT_ID +
                 "&response_type=code" +
                 "&platform_id=mp" +
+                "&site_id=MLU" +  // fuerza sitio de Uruguay
                 "&redirect_uri=" + redirectUri;
 
         return ResponseEntity.ok(Map.of("url", url));
     }
+
 
 
 
