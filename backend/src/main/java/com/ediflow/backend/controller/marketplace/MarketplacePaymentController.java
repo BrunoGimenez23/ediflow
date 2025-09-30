@@ -35,8 +35,11 @@ public class MarketplacePaymentController {
     @Value("${app.backend.url}")
     private String backendUrl;
 
-    private static final String CLIENT_ID = "6454226836460176";
-    private static final String CLIENT_SECRET = "U1VcT34dzWTtxL6MHozt7mIRnfrHinC9";
+    @Value("${mercadopago.client_id}")
+    private String clientId; // Usa el valor de application.properties
+
+    @Value("${mercadopago.client_secret}")
+    private String clientSecret; // Usa el valor de application.properties
 
     // --- Checkout y webhook ---
     @PostMapping("/payment/checkout/{orderId}")
@@ -71,18 +74,14 @@ public class MarketplacePaymentController {
         Provider provider = providerRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
 
-        // Redirect URI exacto registrado en Mercado Pago (no incluir query params aquí)
         String redirectUri = backendUrl + "/marketplace/providers/oauth-callback";
-
-        // Usamos 'state' para pasar providerId (y en producción añadir un nonce seguro)
         String state = "providerId=" + provider.getId();
         String encodedRedirect = URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
         String encodedState = URLEncoder.encode(state, StandardCharsets.UTF_8);
 
-        String url = "https://auth.mercadopago.com/authorization" +
-                "?client_id=" + CLIENT_ID +
+        String url = "https://auth.mercadopago.com.uy/authorization" + // Usa .uy para MLU
+                "?client_id=" + clientId +
                 "&response_type=code" +
-                "&platform_id=mp" +
                 "&site_id=MLU" +
                 "&redirect_uri=" + encodedRedirect +
                 "&state=" + encodedState;
@@ -90,48 +89,37 @@ public class MarketplacePaymentController {
         return ResponseEntity.ok(Map.of("url", url));
     }
 
-    /**
-     * Callback que recibe Mercado Pago (navegador -> GET ?code=...&state=...)
-     * IMPORTANTE: debe ser GET porque MP redirige el browser con 302 -> GET
-     */
     @GetMapping("/providers/oauth-callback")
     public ResponseEntity<Void> oauthCallback(@RequestParam String code,
                                               @RequestParam(required = false) String state) {
         try {
-            // --- Recuperar providerId desde state (si viene) ---
             Long providerId = null;
             if (state != null && state.startsWith("providerId=")) {
                 try {
                     String idStr = state.substring("providerId=".length());
                     providerId = Long.parseLong(idStr);
                 } catch (Exception ex) {
-                    // ignore, fallback abajo
                     providerId = null;
                 }
             }
 
             Provider provider = null;
-
-            // Si vino providerId en el state, usarlo (no dependemos del Authorization header aquí)
             if (providerId != null) {
                 provider = providerRepository.findById(providerId)
                         .orElseThrow(() -> new RuntimeException("Proveedor no encontrado (state)"));
             } else {
-                // Fallback: intentar obtener user logueado (si tenés sesión cookie)
                 var user = userService.getLoggedUser();
                 if (user == null) throw new RuntimeException("Usuario no logueado y no se recibió state");
                 provider = providerRepository.findByUserId(user.getId())
                         .orElseThrow(() -> new RuntimeException("Proveedor no encontrado (user)"));
             }
 
-            // --- Intercambiar código por tokens en Mercado Pago ---
             RestTemplate restTemplate = new RestTemplate();
             String url = "https://api.mercadopago.com/oauth/token";
-
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             params.add("grant_type", "authorization_code");
-            params.add("client_id", CLIENT_ID);
-            params.add("client_secret", CLIENT_SECRET);
+            params.add("client_id", clientId);
+            params.add("client_secret", clientSecret);
             params.add("code", code);
             params.add("redirect_uri", backendUrl + "/marketplace/providers/oauth-callback");
 
@@ -146,7 +134,6 @@ public class MarketplacePaymentController {
             String refreshToken = (String) body.get("refresh_token");
             String mpAccountId = String.valueOf(body.get("user_id"));
 
-            // --- Actualizar el proveedor existente ---
             provider.setMpAccessToken(accessToken);
             provider.setMpRefreshToken(refreshToken);
             provider.setMpAccountId(mpAccountId);
@@ -154,7 +141,6 @@ public class MarketplacePaymentController {
 
             providerRepository.save(provider);
 
-            // Redirigir al frontend con success
             String redirectTo = frontendUrl + "/dashboard/provider?connected=true&providerId=" + provider.getId();
             HttpHeaders redirectHeaders = new HttpHeaders();
             redirectHeaders.add("Location", redirectTo);

@@ -21,20 +21,17 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
+
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MarketplacePaymentServiceImpl implements MarketplacePaymentService {
 
     private final OrderRepository orderRepository;
@@ -42,11 +39,15 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
 
     private PaymentClient paymentClient;
 
-    // OAuth de tu app
-    private static final String CLIENT_ID = "6454226836460176";
-    private static final String CLIENT_SECRET = "U1VcT34dzWTtxL6MHozt7mIRnfrHinC9";
+    @Value("${mercadopago.client_id}")
+    private String clientId;
 
-    // URLs producción
+    @Value("${mercadopago.client_secret}")
+    private String clientSecret;
+
+    @Value("${mercadopago.access_token}")
+    private String accessToken; // token del perfil activo (local o prod)
+
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
@@ -56,7 +57,7 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
     @PostConstruct
     public void init() {
         this.paymentClient = new PaymentClient();
-        log.info("Mercado Pago inicializado (token por proveedor se setea dinámicamente)");
+        log.info("Mercado Pago inicializado (token dinámico por proveedor o por defecto)");
     }
 
     @Override
@@ -66,13 +67,15 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
                     .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
 
             Provider provider = providerRepository.findById(order.getProviderId())
-                    .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+                    .orElse(null);
 
-            // 🔹 Renovar token si es necesario
-            refreshProviderTokenIfNeeded(provider);
+            // 🔹 Si hay proveedor, usar su token; si no, usar token por defecto del perfil
+            String token = provider != null && provider.getMpAccessToken() != null
+                    ? provider.getMpAccessToken()
+                    : accessToken;
 
-            // 🔹 Token dinámico del proveedor
-            com.mercadopago.MercadoPagoConfig.setAccessToken(provider.getMpAccessToken());
+            com.mercadopago.MercadoPagoConfig.setAccessToken(token);
+
             PreferenceClient preferenceClient = new PreferenceClient();
 
             String itemTitle = order.getDescription() != null ? order.getDescription() : "Servicio";
@@ -110,7 +113,6 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
     public void handleWebhook(String rawBody) {
         ObjectMapper mapper = new ObjectMapper();
         Map<String, Object> payload;
-
         try {
             payload = mapper.readValue(rawBody, Map.class);
         } catch (JsonProcessingException e) {
@@ -119,52 +121,30 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
         }
 
         Map<String, Object> data = (Map<String, Object>) payload.get("data");
-        if (data == null) {
-            log.warn("Webhook recibido sin campo data");
-            return;
-        }
+        if (data == null) return;
 
         String paymentIdStr = String.valueOf(data.get("id"));
-        if ("123456".equals(paymentIdStr)) {
-            log.info("Webhook de prueba recibido correctamente, id=123456");
-            return;
-        }
+        if ("123456".equals(paymentIdStr)) return; // webhook de prueba
 
         try {
             Long paymentId = Long.parseLong(paymentIdStr);
-
-            // 🔹 Obtener orden primero para tomar token del proveedor
-            Payment payment;
-            Long orderId;
-            ServiceOrder order;
-
-            PaymentClient tempClient = new PaymentClient();
-            payment = tempClient.get(paymentId);
-            orderId = Long.valueOf(payment.getExternalReference());
-
-            order = orderRepository.findById(orderId)
+            Payment payment = new PaymentClient().get(paymentId);
+            Long orderId = Long.valueOf(payment.getExternalReference());
+            ServiceOrder order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new RuntimeException("Orden no encontrada"));
 
-            Provider provider = providerRepository.findById(order.getProviderId())
-                    .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+            Provider provider = providerRepository.findById(order.getProviderId()).orElse(null);
+            String token = provider != null && provider.getMpAccessToken() != null
+                    ? provider.getMpAccessToken()
+                    : accessToken;
 
-            // 🔹 Renovar token si es necesario
-            refreshProviderTokenIfNeeded(provider);
-
-            // 🔹 Setear token del proveedor antes de consultar el pago
-            com.mercadopago.MercadoPagoConfig.setAccessToken(provider.getMpAccessToken());
+            com.mercadopago.MercadoPagoConfig.setAccessToken(token);
             payment = new PaymentClient().get(paymentId);
 
             switch (payment.getStatus()) {
-                case "approved" -> {
-                    order.setStatus(OrderStatus.PAID);
-                    order.setPaid(true);
-                }
+                case "approved" -> { order.setStatus(OrderStatus.PAID); order.setPaid(true); }
                 case "pending" -> order.setStatus(OrderStatus.ACCEPTED);
-                case "rejected", "cancelled" -> {
-                    order.setStatus(OrderStatus.REQUESTED);
-                    order.setPaid(false);
-                }
+                case "rejected", "cancelled" -> { order.setStatus(OrderStatus.REQUESTED); order.setPaid(false); }
             }
 
             orderRepository.save(order);
@@ -175,46 +155,5 @@ public class MarketplacePaymentServiceImpl implements MarketplacePaymentService 
         } catch (Exception e) {
             log.error("Error procesando webhook", e);
         }
-    }
-
-    // 🔹 Método para renovar access token si caduca
-    private void refreshProviderTokenIfNeeded(Provider provider) {
-        try {
-            if (provider.getMpAccessToken() == null || tokenExpirado(provider)) {
-                RestTemplate restTemplate = new RestTemplate();
-                String url = "https://api.mercadopago.com/oauth/token";
-
-                MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-                params.add("grant_type", "refresh_token");
-                params.add("client_id", CLIENT_ID);
-                params.add("client_secret", CLIENT_SECRET);
-                params.add("refresh_token", provider.getMpRefreshToken());
-
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-                HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
-
-                ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
-                Map<String, Object> body = response.getBody();
-
-                if (body != null) {
-                    String newAccessToken = (String) body.get("access_token");
-                    String newRefreshToken = (String) body.get("refresh_token");
-
-                    provider.setMpAccessToken(newAccessToken);
-                    provider.setMpRefreshToken(newRefreshToken);
-                    providerRepository.save(provider);
-
-                    log.info("Token del proveedor {} renovado correctamente", provider.getId());
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error renovando token del proveedor {}", provider.getId(), e);
-        }
-    }
-
-    private boolean tokenExpirado(Provider provider) {
-        // Por ahora siempre devuelve false; podés guardar fecha de expiración en la DB si querés
-        return false;
     }
 }
