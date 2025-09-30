@@ -16,6 +16,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @RestController
@@ -69,28 +71,60 @@ public class MarketplacePaymentController {
         Provider provider = providerRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
 
+        // Redirect URI exacto registrado en Mercado Pago (no incluir query params aquí)
         String redirectUri = backendUrl + "/marketplace/providers/oauth-callback";
+
+        // Usamos 'state' para pasar providerId (y en producción añadir un nonce seguro)
+        String state = "providerId=" + provider.getId();
+        String encodedRedirect = URLEncoder.encode(redirectUri, StandardCharsets.UTF_8);
+        String encodedState = URLEncoder.encode(state, StandardCharsets.UTF_8);
 
         String url = "https://auth.mercadopago.com/authorization" +
                 "?client_id=" + CLIENT_ID +
                 "&response_type=code" +
                 "&platform_id=mp" +
                 "&site_id=MLU" +
-                "&redirect_uri=" + redirectUri;
+                "&redirect_uri=" + encodedRedirect +
+                "&state=" + encodedState;
 
         return ResponseEntity.ok(Map.of("url", url));
     }
 
-    @PostMapping("/providers/oauth-callback")
-    public ResponseEntity<Void> oauthCallback(@RequestParam String code) {
+    /**
+     * Callback que recibe Mercado Pago (navegador -> GET ?code=...&state=...)
+     * IMPORTANTE: debe ser GET porque MP redirige el browser con 302 -> GET
+     */
+    @GetMapping("/providers/oauth-callback")
+    public ResponseEntity<Void> oauthCallback(@RequestParam String code,
+                                              @RequestParam(required = false) String state) {
         try {
-            var user = userService.getLoggedUser();
-            if (user == null) throw new RuntimeException("Usuario no logueado");
+            // --- Recuperar providerId desde state (si viene) ---
+            Long providerId = null;
+            if (state != null && state.startsWith("providerId=")) {
+                try {
+                    String idStr = state.substring("providerId=".length());
+                    providerId = Long.parseLong(idStr);
+                } catch (Exception ex) {
+                    // ignore, fallback abajo
+                    providerId = null;
+                }
+            }
 
-            Provider provider = providerRepository.findByUserId(user.getId())
-                    .orElseThrow(() -> new RuntimeException("Proveedor no encontrado"));
+            Provider provider = null;
 
-            // --- Solicitar tokens a Mercado Pago ---
+            // Si vino providerId en el state, usarlo (no dependemos del Authorization header aquí)
+            if (providerId != null) {
+                provider = providerRepository.findById(providerId)
+                        .orElseThrow(() -> new RuntimeException("Proveedor no encontrado (state)"));
+            } else {
+                // Fallback: intentar obtener user logueado (si tenés sesión cookie)
+                var user = userService.getLoggedUser();
+                if (user == null) throw new RuntimeException("Usuario no logueado y no se recibió state");
+                provider = providerRepository.findByUserId(user.getId())
+                        .orElseThrow(() -> new RuntimeException("Proveedor no encontrado (user)"));
+            }
+
+            // --- Intercambiar código por tokens en Mercado Pago ---
             RestTemplate restTemplate = new RestTemplate();
             String url = "https://api.mercadopago.com/oauth/token";
 
@@ -120,7 +154,7 @@ public class MarketplacePaymentController {
 
             providerRepository.save(provider);
 
-            // Redirigir al frontend
+            // Redirigir al frontend con success
             String redirectTo = frontendUrl + "/dashboard/provider?connected=true&providerId=" + provider.getId();
             HttpHeaders redirectHeaders = new HttpHeaders();
             redirectHeaders.add("Location", redirectTo);
