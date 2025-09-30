@@ -33,16 +33,18 @@ const ProviderDashboard = () => {
 useEffect(() => {
   const query = new URLSearchParams(location.search);
   const connected = query.get("connected");
-  const providerId = query.get("providerId");
 
-  if (connected === "true" && providerId) {
-    // Traer info actualizada del proveedor
+  if (connected === "true") {
     const fetchProvider = async () => {
       try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API_URL}/marketplace/providers/me?providerId=${providerId}`);
+        const token = localStorage.getItem("token");
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_API_URL}/marketplace/providers/me`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
         setProvider(data);
-        // Limpiar query string para no repetir la acción
+        // Limpiar query string
         navigate("/dashboard/provider", { replace: true });
       } catch (e) {
         console.error("Error fetching provider after OAuth", e);
@@ -51,6 +53,7 @@ useEffect(() => {
     fetchProvider();
   }
 }, [location.search, navigate]);
+
 
 
   // --- Conectar con Mercado Pago ---
