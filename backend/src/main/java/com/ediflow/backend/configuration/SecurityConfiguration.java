@@ -44,6 +44,7 @@ public class SecurityConfiguration {
                         // endpoints públicos
                         .requestMatchers("/auth/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/marketplace/providers/oauth-callback").permitAll()
+                        .requestMatchers("/admin/mercadopago/oauth-callback").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // preflight OPTIONS permitido
 
                         // === Admin & Employee ===
