@@ -2,6 +2,7 @@ package com.ediflow.backend.service.impl;
 
 import com.ediflow.backend.dto.user.CreateUserRequestDTO;
 import com.ediflow.backend.dto.user.UserResponseDTO;
+import com.ediflow.backend.entity.Admin;
 import com.ediflow.backend.entity.AdminAccount;
 import com.ediflow.backend.entity.Building;
 import com.ediflow.backend.entity.User;
@@ -46,6 +47,15 @@ public class UserServiceImpl implements IUserService {
 
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    }
+
+    @Override
+    public Admin getLoggedAdmin() {
+        User user = getLoggedUser(); // obtenemos el usuario logueado
+        if (user.getAdmin() == null) {
+            throw new RuntimeException("El usuario logueado no tiene un admin asociado");
+        }
+        return user.getAdmin();
     }
 
     @Override

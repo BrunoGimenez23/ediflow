@@ -3,12 +3,12 @@ package com.ediflow.backend.service.impl.payment;
 import com.ediflow.backend.entity.Admin;
 import com.ediflow.backend.entity.Payment;
 import com.ediflow.backend.enums.PaymentStatus;
-import com.ediflow.backend.exception.GlobalExceptionHandler;
 import com.ediflow.backend.exception.PaymentProcessingException;
 import com.ediflow.backend.repository.IAdminRepository;
 import com.ediflow.backend.repository.IPaymentRepository;
 import com.ediflow.backend.service.IResidentService;
 import com.mercadopago.MercadoPagoConfig;
+import com.mercadopago.client.payment.PaymentClient;
 import com.mercadopago.client.preference.*;
 import com.mercadopago.exceptions.MPApiException;
 import com.mercadopago.exceptions.MPException;
@@ -40,15 +40,23 @@ public class ResidentPaymentService {
     @Value("${app.backend.url}")
     private String backendUrl;
 
+    @Value("${mercadopago.env}")
+    private String mpEnv;
+
     @Value("${mercadopago.token.sandbox}")
     private String mpTokenSandbox;
 
+    @Value("${mercadopago.token.prod}")
+    private String mpTokenProd;
+
     @PostConstruct
     public void init() {
-        // Inicializamos con sandbox por defecto
-        MercadoPagoConfig.setAccessToken(mpTokenSandbox);
+        // Inicializamos según el ambiente configurado
+        String token = "prod".equalsIgnoreCase(mpEnv) ? mpTokenProd : mpTokenSandbox;
+        MercadoPagoConfig.setAccessToken(token);
         this.preferenceClient = new PreferenceClient();
-        log.info("ResidentPaymentService inicializado con TOKEN SANDBOX: {}", mpTokenSandbox.substring(0, 10) + "...");
+        log.info("ResidentPaymentService inicializado en {} con TOKEN {}",
+                mpEnv, token != null ? token.substring(0, 10) + "..." : "NULL");
     }
 
     /**
@@ -67,8 +75,13 @@ public class ResidentPaymentService {
             throw new RuntimeException("No tenés permiso para pagar este expensa");
         }
 
-        // Elegir token según ambiente
+        // Elegir token según ambiente y Admin
         String mpToken = useProduction ? payment.getAdmin().getMpTokenProd() : payment.getAdmin().getMpTokenSandbox();
+        if (mpToken == null || mpToken.isBlank()) {
+            throw new PaymentProcessingException("El administrador no tiene configurado un token de Mercado Pago", new RuntimeException());
+
+        }
+
         MercadoPagoConfig.setAccessToken(mpToken);
         this.preferenceClient = new PreferenceClient();
 
@@ -88,9 +101,9 @@ public class ResidentPaymentService {
                             .email(userEmail)
                             .build())
                     .backUrls(PreferenceBackUrlsRequest.builder()
-                            .success(frontendUrl + "/resident")
-                            .pending(frontendUrl + "/resident")
-                            .failure(frontendUrl + "/resident")
+                            .success(frontendUrl + "/mis-pagos/" + payment.getId())
+                            .pending(frontendUrl + "/mis-pagos/" + payment.getId())
+                            .failure(frontendUrl + "/mis-pagos/" + payment.getId())
                             .build())
                     .notificationUrl(backendUrl + "/payment/webhook?adminId=" + payment.getAdmin().getId())
                     .autoReturn("approved")
@@ -123,12 +136,12 @@ public class ResidentPaymentService {
             Admin admin = adminRepository.findById(adminId)
                     .orElseThrow(() -> new RuntimeException("Admin no encontrado"));
 
-            // Tomar token según si es sandbox o producción
-            String token = payload.get("live_mode") != null && (Boolean)payload.get("live_mode")
-                    ? admin.getMpTokenProd() : admin.getMpTokenSandbox();
+            // Determinar si es producción o sandbox
+            boolean liveMode = Boolean.parseBoolean(String.valueOf(payload.get("live_mode")));
+            String token = liveMode ? admin.getMpTokenProd() : admin.getMpTokenSandbox();
             MercadoPagoConfig.setAccessToken(token);
 
-            var mpPayment = new com.mercadopago.client.payment.PaymentClient().get(mpPaymentId);
+            var mpPayment = new PaymentClient().get(mpPaymentId);
             Long localPaymentId = Long.valueOf(mpPayment.getExternalReference());
 
             Payment payment = paymentRepository.findById(localPaymentId)
@@ -144,13 +157,11 @@ public class ResidentPaymentService {
             }
 
             paymentRepository.save(payment);
-            log.info("Pago {} actualizado según webhook {}", localPaymentId, payload.get("live_mode").toString());
+            log.info("Pago {} actualizado a {} (live_mode={})",
+                    localPaymentId, mpPayment.getStatus(), liveMode);
 
         } catch (Exception e) {
             log.error("Error procesando webhook", e);
         }
     }
 }
-
-
-

@@ -54,5 +54,18 @@ public class Admin {
     // ⚡ Token de producción (opcional, cuando pases a producción)
     private String mpTokenProd;
 
+    @Column(name = "mp_access_token")
+    private String mpAccessToken;
+
+    @Column(name = "mp_refresh_token")
+    private String mpRefreshToken;
+
+    @Column(name = "mp_account_id")
+    private String mpAccountId;
+
+    @Column(name = "mp_verified")
+    private Boolean mpVerified = false;
+
+
 
 }

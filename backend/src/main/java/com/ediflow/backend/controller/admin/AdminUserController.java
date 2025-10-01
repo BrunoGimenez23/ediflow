@@ -1,4 +1,4 @@
-package com.ediflow.backend.controller;
+package com.ediflow.backend.controller.admin;
 
 import com.ediflow.backend.dto.user.CreateUserRequestDTO;
 import com.ediflow.backend.dto.user.UserResponseDTO;

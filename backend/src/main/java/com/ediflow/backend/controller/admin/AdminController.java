@@ -1,4 +1,4 @@
-package com.ediflow.backend.controller;
+package com.ediflow.backend.controller.admin;
 
 import com.ediflow.backend.dto.admin.AdminDTO;
 import com.ediflow.backend.dto.building.BuildingDTO;

@@ -2,6 +2,7 @@ package com.ediflow.backend.service;
 
 import com.ediflow.backend.dto.user.CreateUserRequestDTO;
 import com.ediflow.backend.dto.user.UserResponseDTO;
+import com.ediflow.backend.entity.Admin;
 import com.ediflow.backend.entity.AdminAccount;
 import com.ediflow.backend.entity.User;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public interface IUserService {
     Optional<AdminAccount> getAdminAccountById(Long id);
     Optional<User> findByEmailOptional(String email);
     User getLoggedUser();
+    Admin getLoggedAdmin();
     boolean userHasAccessToBuilding(User user, Long buildingId);
     UserResponseDTO createPorter(CreateUserRequestDTO request, Long adminAccountId);
 }

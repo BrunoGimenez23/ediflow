@@ -1,4 +1,3 @@
-// src/components/dashboard/DashboardOverview.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from 'react-router-dom';
 import { Building2, Users2, DollarSign, MapPin, ClipboardList } from "lucide-react";
@@ -161,8 +160,8 @@ const DashboardOverview = () => {
   const { user, token } = useAuth();
   const { buildings = [], selectedBuilding, setSelectedBuilding } = useBuildingsContext();
 
-  // --- ESTADO LOCAL PARA CONTROLAR EL SELECT ---
   const [localSelectedBuilding, setLocalSelectedBuilding] = useState(selectedBuilding || null);
+  const [mpConnected, setMpConnected] = useState(false);
 
   const buildingId = localSelectedBuilding?.id || null;
 
@@ -171,6 +170,11 @@ const DashboardOverview = () => {
     residentCount, commonAreasCount, logHistoryCount, paymentsCount, totals,
     globalResidentCount, globalCommonAreasCount, globalLogHistoryCount, globalPaymentsCount, globalTotals
   } = useDashboardData(token, buildingId);
+
+  // --- MARCAR MP COMO CONECTADO SI YA EXISTE EN BACKEND ---
+  useEffect(() => {
+    if (user?.mpVerified) setMpConnected(true);
+  }, [user]);
 
   const baseStats = useMemo(() => ([
     { type: 'Edificios', number: buildings.length, icon: <Building2 className="w-10 h-10 transition-transform duration-500" />, color: COLORS.Edificios, link: '/admin/buildings', feature: 'canViewBuildings' },
@@ -193,6 +197,20 @@ const DashboardOverview = () => {
 
   const showPaymentsChart = user?.role?.toUpperCase() === ROLES.ADMIN && hasFeature(user, "canSeePayments");
 
+  // --- NUEVO HANDLE PARA MERCADO PAGO ---
+  const handleConnectMP = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/admin/mercadopago/connect`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.url) {
+        window.location.href = res.data.url; // redirige al flujo de conexión
+      }
+    } catch (err) {
+      console.error("Error conectando con Mercado Pago", err);
+    }
+  };
+
   if (loading) return (
     <div className="p-6 max-w-7xl mx-auto flex flex-col gap-10">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -206,6 +224,22 @@ const DashboardOverview = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto flex flex-col gap-10">
+      
+      {/* Botón conectar Mercado Pago */}
+      {user?.role?.toUpperCase() === ROLES.ADMIN && (
+        <div className="flex items-center gap-4">
+          {mpConnected ? (
+            <span className="text-green-600 font-semibold">Cuenta Mercado Pago conectada ✅</span>
+          ) : (
+            <button
+              onClick={handleConnectMP}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition"
+            >
+              Conectar Mercado Pago
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Selector de edificio */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -217,7 +251,7 @@ const DashboardOverview = () => {
             onChange={(e) => {
               const value = e.target.value;
               if (value === "") {
-                setLocalSelectedBuilding(null); // Todos los edificios
+                setLocalSelectedBuilding(null);
                 setSelectedBuilding(null);
               } else {
                 const b = buildings.find(b => b.id === Number(value)) || null;
