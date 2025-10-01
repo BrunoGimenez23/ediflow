@@ -228,7 +228,7 @@ const DashboardOverview = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.data?.url) {
-        window.location.href = res.data.url; // redirige al flujo de conexión
+        window.location.href = res.data.url; // redirig al flujo de conexión
       }
     } catch (err) {
       console.error("Error conectando con Mercado Pago", err);
