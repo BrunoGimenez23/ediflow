@@ -266,7 +266,92 @@ const DashboardOverview = () => {
       )}
 
       {/* Selector de edificio */}
-      {/* ... resto de tu componente queda igual ... */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-800">Dashboard</h2>
+        <div className="w-auto md:w-auto">
+          <select
+            className="w-full md:w-auto p-2 border rounded-lg shadow-sm bg-white text-gray-700"
+            value={localSelectedBuilding?.id || ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "") {
+                setLocalSelectedBuilding(null);
+                setSelectedBuilding(null);
+              } else {
+                const b = buildings.find(b => b.id === Number(value)) || null;
+                setLocalSelectedBuilding(b);
+                setSelectedBuilding(b);
+              }
+            }}
+          >
+            <option value="">Todos los edificios</option>
+            {buildings.map((building) => (
+              <option key={building.id} value={building.id}>{building.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Cards filtradas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {filteredStats.map((stat) => (
+          <Link
+            to={stat.link}
+            key={stat.type}
+            className={`block rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-500 p-5 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gradient-to-br ${stat.color} bg-opacity-80 backdrop-blur-sm relative`}
+            aria-label={`Ver detalles de ${stat.type}`}
+          >
+            <div className="hidden sm:flex flex-col items-center justify-center text-center relative">
+              <div className="relative">
+                <div className="bg-white/30 rounded-full p-3 mb-3 flex items-center justify-center backdrop-blur-sm hover:scale-110 transition-transform duration-500 z-10">
+                  {stat.icon}
+                </div>
+                {stat.type === "Pagos" && totals.pending > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-yellow-500 text-white text-[10px] px-1.5 py-0.5 rounded-full shadow" title={`${totals.pending} pagos pendientes`}>
+                    {totals.pending}
+                  </span>
+                )}
+                {stat.type === "Pagos" && totals.overdue > 0 && (
+                  <span className="absolute -top-5 -right-1 bg-red-600 text-white text-[10px] px-1.5 py-0.5 rounded-full shadow" title={`${totals.overdue} pagos vencidos`}>
+                    {totals.overdue}
+                  </span>
+                )}
+              </div>
+              <p className="text-3xl font-bold text-gray-900 drop-shadow-sm">{stat.number}</p>
+              <p className="text-gray-700 mt-1">{stat.type}</p>
+            </div>
+            <div className="flex sm:hidden items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-white/30 rounded-full p-2 backdrop-blur-sm">{stat.icon}</div>
+                <div>
+                  <p className="text-lg font-semibold">{stat.type}</p>
+                  <p className="text-xl font-bold text-gray-900">{stat.number}</p>
+                </div>
+              </div>
+              <div className="text-gray-400">{">"}</div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Gráfico de pagos */}
+      {showPaymentsChart && (
+        <div className="flex flex-col gap-4">
+          <h2 className="text-2xl font-semibold text-indigo-600">Resumen de pagos</h2>
+          <div className="bg-white/50 backdrop-blur-md rounded-xl shadow-lg overflow-hidden transition-all duration-700 animate-fade-in">
+            <PaymentsChart buildingId={buildingId} />
+          </div>
+        </div>
+      )}
+
+      {/* Tickets y reclamos */}
+      {user?.role?.toUpperCase() === ROLES.ADMIN && (
+        <div className="flex flex-col gap-4 mt-8">
+          <h2 className="text-2xl font-semibold text-indigo-600">Tickets y reclamos</h2>
+          <TicketsOverview buildingId={buildingId} />
+        </div>
+      )}
+
     </div>
   );
 };
