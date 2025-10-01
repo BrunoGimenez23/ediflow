@@ -110,7 +110,7 @@ public class AdminOAuthController {
 
         // Redirigir al frontend indicando conexión exitosa
         HttpHeaders redirectHeaders = new HttpHeaders();
-        redirectHeaders.add("Location", frontendUrl + "/dashboard/admin?connected=true");
+        redirectHeaders.add("Location", frontendUrl + "/admin?connected=true");
         return new ResponseEntity<>(redirectHeaders, HttpStatus.FOUND);
     }
 }
