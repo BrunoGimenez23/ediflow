@@ -38,7 +38,7 @@ public class SecurityConfiguration {
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors() // habilita CORS usando CorsFilter bean
+                .cors() // habilita CORS usando CorsFilter bea
                 .and()
                 .authorizeHttpRequests(auth -> auth
                         // endpoints públicos
