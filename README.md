@@ -3,6 +3,7 @@
 
 Ediflow es una plataforma web para la administración de edificios y consorcios, que integra gestión de residentes, apartamentos, pagos, reservas de áreas comunes y proveedores mediante un marketplace. Soporta multiusuario y pagos online con Mercado Pago.
 
+
 📌 Tabla de Contenidos
 
 Características
@@ -22,6 +23,7 @@ Flujos Principales
 Contribución
 
 Licencia
+
 
 ✨ Características
 
@@ -47,6 +49,7 @@ Frontend: React, Vite, Tailwind CSS, React Router, Axios
 Backend: Java 17, Spring Boot, Spring Security, JWT, MySQL
 Despliegue: Frontend en Vercel, Backend en Railway o servidor compatible
 
+
 ⚡ Instalación
 Backend
 git clone https://github.com/BrunoGimenez23/ediflow.git
@@ -66,7 +69,10 @@ ediflow/
 ├─ README.md
 └─ ...
 
+
 💡 Funcionalidades
+
+
 1️⃣ Autenticación y Usuarios
 
 🔑 Registro y login (Admin, Residente)
@@ -145,6 +151,8 @@ ADMIN	Gestión completa de edificios, residentes, pagos, reservas, marketplace y
 RESIDENT	Visualizar pagos, historial, reservas y realizar pagos online
 EMPLOYEE	Funciones limitadas según permisos del AdminAccount
 SUPPORT	Funciones de soporte y control interno, sin acceso a pagos sensibles
+
+
 🔄 Flujos Principales
 
 Pago de residente
@@ -166,9 +174,6 @@ Portería
 
 Visita llega → Portería registra → Verifica reservas/pagos → Acceso permitido/denegado → Aviso al residente
 
-🤝 Contribución
-
-Se aceptan contribuciones mediante pull requests. Abrir un issue antes de realizar cambios significativos.
 
 📄 Licencia
 
