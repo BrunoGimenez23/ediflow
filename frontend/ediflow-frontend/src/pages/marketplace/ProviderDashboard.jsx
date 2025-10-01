@@ -64,7 +64,7 @@ const ProviderDashboard = () => {
 
           setProvider(data);
           // Limpiar query string
-          navigate("/dashboard/provider", { replace: true });
+          navigate("/provider", { replace: true });
         } catch (e) {
           console.error("Error fetching provider after OAuth", e);
         }

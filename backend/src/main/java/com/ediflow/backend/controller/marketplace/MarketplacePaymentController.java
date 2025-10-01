@@ -98,7 +98,7 @@ public class MarketplacePaymentController {
             providerRepository.save(provider);
 
             HttpHeaders redirectHeaders = new HttpHeaders();
-            redirectHeaders.add("Location", frontendUrl + "/dashboard/provider?connected=true&providerId=" + provider.getId());
+            redirectHeaders.add("Location", frontendUrl + "/provider?connected=true&providerId=" + provider.getId());
             return new ResponseEntity<>(redirectHeaders, HttpStatus.FOUND);
 
         } catch (Exception e) {
