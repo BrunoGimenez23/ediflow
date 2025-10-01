@@ -28,6 +28,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   return (
     <>
+      {/* Fondo para móviles */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-30 z-40 md:hidden transition-opacity"
@@ -41,6 +42,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         ${isOpen ? "translate-x-0 z-[70]" : "-translate-x-full z-[50]"}
         md:translate-x-0 md:static md:flex md:z-auto
       `}>
+        {/* Botón cerrar móvil */}
         <div className="w-full flex justify-end md:hidden mb-4">
           <button
             onClick={() => setIsOpen(false)}
@@ -51,12 +53,15 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           </button>
         </div>
 
+        {/* Logo */}
         <div className="mb-8 w-full flex justify-center">
           <img src={logo} alt="Ediflow Logo" className="w-44" />
         </div>
 
+        {/* Menú */}
         <div className="flex-grow flex flex-col justify-start w-full mt-4 md:mt-0">
           <ul className="space-y-4 text-lg font-medium w-full">
+            {/* Inicio */}
             <li>
               <Link
                 to="/admin"
@@ -68,6 +73,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               </Link>
             </li>
 
+            {/* Módulos para Admin o Employee */}
             {(isAdmin || isEmployee) && (
               <>
                 <li>
@@ -103,6 +109,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               </>
             )}
 
+            {/* Pagos (Admin, plan Profesional o superior) */}
             {isAdmin && ["PROFESIONAL","PREMIUM_PLUS","ENTERPRISE"].includes(plan) && (
               <li>
                 <Link
@@ -116,6 +123,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               </li>
             )}
 
+            {/* Reservas (Admin o Support, plan Profesional o superior) */}
             {(isAdmin || isSupport) && ["PROFESIONAL","PREMIUM_PLUS","ENTERPRISE"].includes(plan) && (
               <li>
                 <Link
@@ -129,8 +137,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               </li>
             )}
 
+            {/* Módulos Premium Plus */}
             {isAdmin && plan === "PREMIUM_PLUS" && (
               <>
+                {/* Gestión de usuarios */}
                 <li>
                   <Link
                     to="/admin/users"
@@ -141,6 +151,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                     Gestión de Usuarios
                   </Link>
                 </li>
+
+                {/* Historial Portero */}
                 <li>
                   <Link
                     to="/admin/historial"
@@ -152,7 +164,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                   </Link>
                 </li>
 
-                {/* Marketplace con submenú colapsable */}
+                {/* Marketplace con submenú */}
                 <li>
                   <button
                     onClick={() => toggleMenu("marketplace")}
@@ -197,6 +209,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                   )}
                 </li>
 
+                {/* Reporte de Pagos */}
                 <li>
                   <Link
                     to="/admin/payment/report"
@@ -207,6 +220,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                     Reporte de Pagos
                   </Link>
                 </li>
+
+                {/* Avisos y Reclamos */}
                 <li>
                   <Link
                     to="/admin/avisos"

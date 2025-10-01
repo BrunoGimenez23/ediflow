@@ -9,7 +9,6 @@ const HeroSection = () => {
 
   return (
     <header className="relative w-full h-screen overflow-hidden" role="main">
-      
       {/* Video de fondo con blur leve + overlay */}
       <video
         src={heroVideo}
@@ -32,18 +31,21 @@ const HeroSection = () => {
             Gestioná tu edificio de manera simple y eficiente
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-md md:max-w-lg mx-auto md:mx-0 drop-shadow-lg">
-            Con Ediflow, podés controlar pagos, reservas, avisos y comunicación con los residentes desde un solo panel moderno y fácil de usar.
+            Con Ediflow, controlá pagos, reservas, proveedores y comunicación con los residentes desde un solo panel moderno y fácil de usar. Ahorrá tiempo y reducí errores.
           </p>
 
           <ul className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center md:justify-start mt-4">
             <li className="flex items-center gap-2 text-white bg-black/30 rounded-full px-3 py-2 text-sm sm:text-base shadow-sm hover:bg-green-500 hover:text-white transition-colors duration-300">
-              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" /> Pagos y expensas claros y organizados
+              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" /> Pagos y expensas organizados al instante
             </li>
             <li className="flex items-center gap-2 text-white bg-black/30 rounded-full px-3 py-2 text-sm sm:text-base shadow-sm hover:bg-green-500 hover:text-white transition-colors duration-300">
-              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" /> Reservas de espacios comunes al instante
+              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" /> Reservas de espacios comunes sin conflictos
             </li>
             <li className="flex items-center gap-2 text-white bg-black/30 rounded-full px-3 py-2 text-sm sm:text-base shadow-sm hover:bg-green-500 hover:text-white transition-colors duration-300">
-              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" /> Avisos y comunicación rápida con los residentes
+              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" /> Avisos y comunicación inmediata con residentes
+            </li>
+            <li className="flex items-center gap-2 text-white bg-black/30 rounded-full px-3 py-2 text-sm sm:text-base shadow-sm hover:bg-green-500 hover:text-white transition-colors duration-300">
+              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-500" /> Contratá y pagá proveedores desde la plataforma
             </li>
           </ul>
 
@@ -57,7 +59,6 @@ const HeroSection = () => {
             >
               Probá Ediflow gratis por 14 días
             </Button>
-            
           </div>
           <p className="mt-2 text-sm text-white/70">
             Sin tarjeta de crédito. Activá tu prueba hoy mismo.

@@ -7,9 +7,9 @@ const plans = [
     icon: "💼",
     price: 1000,
     description: [
-      "Gestión de edificios, apartamentos y residentes",
+      "Gestioná edificios, apartamentos y residentes fácilmente",
       "Panel gratuito para residentes",
-      "Ideal para comunidades pequeñas",
+      "Ideal para comunidades pequeñas y ahorro de tiempo inmediato",
     ],
   },
   {
@@ -18,10 +18,11 @@ const plans = [
     price: 3000,
     description: [
       "Todo lo del plan Esencial",
-      "Pagos y expensas con estados (pendiente, pagado, vencido)",
-      "Reservas de espacios comunes",
-      "Reportes y gráficos mensuales",
+      "Pagos y expensas claros con actualizaciones automáticas",
+      "Reservas de espacios comunes sin conflictos",
+      "Reportes y gráficos mensuales para decisiones rápidas",
       "Soporte rápido por email",
+      "Contratá proveedores y registrá pagos online fácilmente",
     ],
     popular: true,
   },
@@ -31,10 +32,11 @@ const plans = [
     price: 10000,
     description: [
       "Todo lo del plan Profesional",
-      "Soporte multiusuario para equipos",
-      "Portería digital y gestión de morosos (exportación a CSV)",
+      "Soporte multiusuario para equipos de administración",
+      "Portería digital y gestión de morosos con reportes exportables",
       "Atención telefónica prioritaria",
       "Funciones exclusivas y personalización avanzada",
+      "Optimización completa de pagos, reservas y comunicación",
     ],
   },
 ];
