@@ -23,12 +23,12 @@ const HeroSection = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/30"></div>
 
       {/* Contenido encima del video */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-20 sm:py-32 flex flex-col items-center md:flex-row md:items-center md:justify-between gap-8 sm:gap-12 h-full">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-24 sm:py-32 flex flex-col items-center md:flex-row md:items-center md:justify-between gap-8 sm:gap-12 h-full">
         
         {/* Texto y bullets */}
         <div className="md:flex-1 text-center md:text-left space-y-6">
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold text-white leading-tight drop-shadow-2xl">
-            Gestioná tu edificio de manera simple y eficiente
+            Cansado de planillas y reclamos?
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-md md:max-w-lg mx-auto md:mx-0 drop-shadow-lg">
             Con Ediflow, controlá pagos, reservas, proveedores y comunicación con los residentes desde un solo panel moderno y fácil de usar. Ahorrá tiempo y reducí errores.
