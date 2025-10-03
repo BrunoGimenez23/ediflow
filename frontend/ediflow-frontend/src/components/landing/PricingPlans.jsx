@@ -21,8 +21,7 @@ const plans = [
       "Pagos y expensas claros con actualizaciones automáticas",
       "Reservas de espacios comunes sin conflictos",
       "Reportes y gráficos mensuales para decisiones rápidas",
-      "Soporte rápido por email",
-      "Contratá proveedores y registrá pagos online fácilmente",
+      "Soporte rápido por email"
     ],
     popular: true,
   },
