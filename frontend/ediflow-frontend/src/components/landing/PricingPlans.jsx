@@ -5,7 +5,7 @@ const plans = [
   {
     name: "Esencial",
     icon: "💼",
-    price: 1000,
+    price: 15, // USD
     description: [
       "Gestioná edificios, apartamentos y residentes fácilmente",
       "Panel gratuito para residentes",
@@ -15,20 +15,20 @@ const plans = [
   {
     name: "Profesional",
     icon: "🚀",
-    price: 3000,
+    price: 29, // USD
     description: [
       "Todo lo del plan Esencial",
       "Pagos y expensas claros con actualizaciones automáticas",
       "Reservas de espacios comunes sin conflictos",
       "Reportes y gráficos mensuales para decisiones rápidas",
-      "Soporte rápido por email"
+      "Soporte rápido por email",
     ],
     popular: true,
   },
   {
     name: "Premium Plus",
     icon: "🏆",
-    price: 10000,
+    price: 49, // USD
     description: [
       "Todo lo del plan Profesional",
       "Soporte multiusuario para equipos de administración",
@@ -37,6 +37,7 @@ const plans = [
       "Funciones exclusivas y personalización avanzada",
       "Optimización completa de pagos, reservas y comunicación",
     ],
+    showQuoteButton: true,
   },
 ];
 
@@ -48,7 +49,6 @@ const PricingPlans = ({ id, isUpgrade, onUpgradeClick }) => {
   const initialBilling = query.get("billing") === "yearly" ? "yearly" : "monthly";
   const [billing, setBilling] = useState(initialBilling);
 
-  // Determinar si estamos en Home
   const isHomePage = location.pathname === "/" || location.pathname === "/home";
 
   useEffect(() => {
@@ -57,11 +57,9 @@ const PricingPlans = ({ id, isUpgrade, onUpgradeClick }) => {
     window.history.replaceState({}, "", `${location.pathname}?${params.toString()}`);
   }, [billing, location.pathname, location.search]);
 
-  // Pasamos billing y generamos URL-friendly planName
   const handleButtonClick = (planName, selectedBilling) => {
-    const urlName = planName.toLowerCase().replace(/\s+/g, "-"); // Premium Plus → premium-plus
+    const urlName = planName.toLowerCase().replace(/\s+/g, "-");
 
-    // Si estamos en Home y es prueba gratis, redirigir al registro
     if (!isUpgrade && isHomePage) {
       navigate("/auth/register-admin");
       return;
@@ -70,10 +68,12 @@ const PricingPlans = ({ id, isUpgrade, onUpgradeClick }) => {
     if (isUpgrade && onUpgradeClick) {
       onUpgradeClick(planName, selectedBilling);
     } else {
-      navigate(
-        `/admin/plan-confirmation/${urlName}?billing=${selectedBilling}&units=1`
-      );
+      navigate(`/admin/plan-confirmation/${urlName}?billing=${selectedBilling}&units=1`);
     }
+  };
+
+  const handleQuoteClick = () => {
+    navigate("/contacto?tipo=cotizacion");
   };
 
   const calculatePrice = (monthlyPrice) => {
@@ -98,7 +98,7 @@ const PricingPlans = ({ id, isUpgrade, onUpgradeClick }) => {
         <p className="text-gray-600 mb-4">
           {isUpgrade
             ? "Seleccioná el plan que querés activar para tu comunidad."
-            : "Probá Ediflow gratis por 14 días. Después elegí el plan que mejor se adapte a tu comunidad."}
+            : "Probá Ediflow gratis por 14 días. Después elegí el plan que mejor se adapte a tu administración."}
         </p>
 
         {/* Toggle mensual/anual */}
@@ -131,9 +131,9 @@ const PricingPlans = ({ id, isUpgrade, onUpgradeClick }) => {
             const savings = calculateSavings(plan.price);
             const priceText =
               billing === "monthly"
-                ? `${price.toLocaleString()} UYU/mes`
-                : `${price.toLocaleString()} UYU/año ${
-                    savings > 0 ? `(ahorrás ${savings.toLocaleString()} UYU)` : ""
+                ? `Desde USD ${price}/mes`
+                : `Desde USD ${price}/año ${
+                    savings > 0 ? `(ahorrás USD ${savings})` : ""
                   }`;
 
             return (
@@ -159,7 +159,9 @@ const PricingPlans = ({ id, isUpgrade, onUpgradeClick }) => {
                       Más popular
                     </p>
                   )}
-                  <p className="text-lg font-bold text-gray-800 mb-4">{priceText}</p>
+                  <p className="text-lg font-bold text-gray-800 mb-4">
+                    {priceText}
+                  </p>
 
                   <ul className="mb-6 space-y-2 text-left text-gray-700">
                     {plan.description.map((item, idx) => (
@@ -171,19 +173,43 @@ const PricingPlans = ({ id, isUpgrade, onUpgradeClick }) => {
                   </ul>
                 </div>
 
-                <button
-                  className={`mt-6 py-3 px-6 rounded-lg font-semibold transition ${
-                    plan.popular
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "bg-blue-500 text-white hover:bg-blue-600"
-                  }`}
-                  onClick={() => handleButtonClick(plan.name, billing)}
-                >
-                  {isUpgrade ? "Actualizar a este plan" : "Probar 14 días gratis"}
-                </button>
+                <div className="flex flex-col gap-3">
+                  <button
+                    className={`py-3 px-6 rounded-lg font-semibold transition ${
+                      plan.popular
+                        ? "bg-blue-600 text-white hover:bg-blue-700"
+                        : "bg-blue-500 text-white hover:bg-blue-600"
+                    }`}
+                    onClick={() => handleButtonClick(plan.name, billing)}
+                  >
+                    {isUpgrade ? "Actualizar a este plan" : "Probar 14 días gratis"}
+                  </button>
+
+                  {plan.showQuoteButton && (
+                    <button
+                      onClick={handleQuoteClick}
+                      className="py-2 px-4 rounded-lg border border-blue-500 text-blue-600 font-semibold hover:bg-blue-50 transition"
+                    >
+                      Solicitar cotización
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
+        </div>
+
+        {/* Pie de sección */}
+        <div className="mt-16 text-gray-700">
+          <p>
+            ¿Administrás más de 10 edificios o querés un plan personalizado?{" "}
+            <button
+              onClick={handleQuoteClick}
+              className="text-blue-600 font-semibold underline hover:text-blue-800"
+            >
+              Contactanos para una cotización a medida.
+            </button>
+          </p>
         </div>
       </div>
     </section>
